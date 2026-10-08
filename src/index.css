@@ -1,0 +1,145 @@
+/*
+  13:33 — Digital Studio · visual system
+
+  1. Subject & audience — business owners in Bulgaria. In three seconds:
+     "a serious studio; they build sites, shops and systems; I can start here."
+  2. Reference — editorial studio sites: one dark field, big quiet type, the work
+     carries the colour.
+  3. Palette — graphite #080A0F (+2 close shades), bone #F4F1EB, mist #A7ABB5,
+     one accent #5B7CFA (primary action + current state only). Ice #A8D8FF is
+     light inside the scene, never UI chrome.
+  4. Type — Sofia Sans Condensed (display, light weights) + Sofia Sans (body).
+     Both drawn by a Bulgarian foundry with proper Bulgarian Cyrillic forms
+     (lang="bg" switches on the locl glyphs). Fixed scale below.
+  5. Signature — the flight into the Horizon that lands on the WorksWheel.
+*/
+@import "tailwindcss";
+@import "@fontsource-variable/sofia-sans";
+@import "@fontsource-variable/sofia-sans-condensed";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-background: #080a0f;
+  --color-surface: #0d1017;
+  --color-surface-2: #131722;
+  --color-foreground: #f4f1eb;
+  --color-muted: #131722;
+  --color-muted-foreground: #a7abb5;
+  --color-primary: #5b7cfa;
+  --color-primary-foreground: #080a0f;
+  --color-accent: #5b7cfa;
+  --color-ice: #a8d8ff;
+  --color-border: rgb(244 241 235 / 0.1);
+  --color-ring: #a8d8ff;
+  --color-destructive: #f07a6a;
+
+  --font-sans: "Sofia Sans Variable", "Sofia Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Sofia Sans Condensed Variable", "Sofia Sans Condensed", "Sofia Sans Variable", ui-sans-serif, sans-serif;
+
+  /* The scale. Nothing in between. */
+  --text-label: 0.75rem;
+  --text-label--letter-spacing: 0.22em;
+  --text-label--line-height: 1.4;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.65;
+  --text-lead: clamp(1.1875rem, 1.05rem + 0.5vw, 1.4375rem);
+  --text-lead--line-height: 1.5;
+  --text-title: clamp(1.625rem, 1.3rem + 1.1vw, 2.25rem);
+  --text-title--line-height: 1.15;
+  --text-heading: clamp(2.75rem, 1.6rem + 4.6vw, 5.5rem);
+  --text-heading--line-height: 0.98;
+  --text-display: clamp(7.25rem, 2rem + 19vw, 19rem);
+  --text-display--line-height: 0.82;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-background);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: var(--text-body);
+    line-height: 1.65;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: rgb(91 124 250 / 0.45);
+    color: var(--color-foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  /* Anchor targets clear the fixed header. */
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+}
+
+@layer components {
+  /* Every section opens the same way: label → heading → lead. */
+  .eyebrow {
+    @apply text-label text-muted-foreground font-medium uppercase;
+  }
+  .section {
+    @apply relative px-5 py-28 sm:px-8 md:py-40 lg:px-14;
+  }
+  .container-wide {
+    @apply mx-auto w-full max-w-[88rem];
+  }
+  .hairline {
+    @apply border-border border-t;
+  }
+
+  /* Horizon hero — the classes the provided component expected but shipped
+     without. Kept small; the layout itself is Tailwind. */
+  .horizon-title .title-char {
+    display: inline-block;
+    will-change: transform, opacity;
+  }
+  .vertical-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .horizon-fallback {
+    background:
+      radial-gradient(120% 60% at 50% 72%, rgb(168 216 255 / 0.18), transparent 60%),
+      radial-gradient(70% 45% at 50% 64%, rgb(91 124 250 / 0.28), transparent 70%),
+      linear-gradient(180deg, #05070b 0%, #080a0f 45%, #0b1020 70%, #080a0f 100%);
+  }
+  .horizon-fallback::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, #f4f1eb 50%, transparent 51%),
+      radial-gradient(1px 1px at 28% 8%, #a8d8ff 50%, transparent 51%),
+      radial-gradient(1px 1px at 44% 26%, #f4f1eb 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 63% 12%, #f4f1eb 50%, transparent 51%),
+      radial-gradient(1px 1px at 78% 30%, #a8d8ff 50%, transparent 51%),
+      radial-gradient(1px 1px at 88% 6%, #f4f1eb 50%, transparent 51%),
+      radial-gradient(1px 1px at 6% 40%, #f4f1eb 50%, transparent 51%),
+      radial-gradient(1px 1px at 52% 44%, #a8d8ff 50%, transparent 51%),
+      radial-gradient(1px 1px at 94% 46%, #f4f1eb 50%, transparent 51%),
+      radial-gradient(1px 1px at 36% 50%, #f4f1eb 50%, transparent 51%);
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
