@@ -2,10 +2,11 @@
 // WorksWheel for 13:33.
 //
 // At rest the work sits in a ring around a title, each card tangent to the
-// circle. The first notch of scroll blows the ring open into a vertical drum:
-// the card at the front lies flat and full size, the ones above and below
-// rotate away into hard perspective and run off the top and bottom of the
-// frame. Keep turning and the drum carries the next piece round to the front.
+// circle. The first notch of scroll unwinds the ring into a 3D spiral: the card
+// at the front faces you full size, the next ones wind away round the axis and
+// down it, the previous ones up and behind. Keep turning and the spiral carries
+// the next piece round to the front. (13:33 brief: the original vertical drum
+// became a helix, with speed, pointer and idle motion for more life.)
 //
 // The whole thing is still one number - `turn` - read by a single rAF pass that
 // writes transforms straight to the DOM. 0 is the ring, 1 is the drum with item
@@ -67,28 +68,39 @@ const CARD_H = 0.38; // front card height, of the stage
 const CARD_MAX_W = 0.34; // ... but never wider than this much of the stage
 const CARD_MAX_W_NARROW = 0.86; // phones: the work has to be legible
 const CARD_RATIO = 1.45; // card width / height
-const STEP = 40; // degrees between cards on the drum
-const DRUM = 2.22; // drum radius, in card heights
+/* The spiral (helix). Each card sits a step further round a vertical axis and a
+   pitch further down it; turning the wheel winds the helix so the next piece
+   comes round to the front. Radius is in card widths, pitch in card heights. */
+const STEP = 38; // degrees between cards round the axis
+/* Neighbours stay clear of the front card only while the chord between them
+   (2·R·sin(STEP/2)) is about a card wide - hence a radius of ~1.45 widths. */
+const HELIX_R = 1.45;
+const PITCH = 0.62;
 const LENS = 2.7; // perspective distance
 const RING_R = 0.94; // ring radius
 /** How much of its arc each ring card fills. Lower = a lighter loop. */
 const RING_FILL = 0.6;
-/* The strip curves away round an arc whose centre sits off to the LEFT, so the
-   front piece is dead centre and its neighbours swing back left as well. */
-const BOW = 1.82;
 const TITLE = 0.124; // ring label and front-card title
 const INDEX = 0.04; // the index down the right-hand side
 /** Items either side of the front still worth drawing. */
-const CULL = 1.6;
+const CULL = 2.6;
 
 /** Pixels of page scroll that turn one item (mouse wheel / trackpad). */
 export const WHEEL_UNITS = 550;
 /** Pixels of drag (mouse) or swipe (touch) that turn one item. */
 export const DRAG_UNITS = 320;
 /** Quiet time after the last scroll before the wheel settles on an item. */
-const SETTLE = 140;
-/** Fraction of the remaining distance closed each frame. 1 = no smoothing. */
-const EASE = 0.12;
+const SETTLE = 200;
+/** Fraction of the remaining distance closed each frame. 1 = no smoothing.
+    Low on purpose: the spiral glides after the page instead of snapping. */
+const EASE = 0.075;
+/* Life. Speed tilts and opens the spiral; the pointer leans it; at rest it
+   breathes. All of it scales with `m`, so the closed ring stays calm. */
+const SPEED_TILT = 900; // degrees per (turns per frame)
+const MAX_TILT = 16;
+const SPEED_SPREAD = 16;
+const MAX_SPREAD = 0.5;
+const POINTER_TILT = { x: 5, y: 8 };
 /** Extra scroll at the end so the last project is held, not flung past. */
 const TAIL = 0.45;
 /** Share of an item that commits a turn in that direction. Below it the wheel
@@ -102,24 +114,25 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 
 type Stage = { w: number; h: number };
 
-/** How far left the arc has carried something `drumDeg` off the front. */
-const bowAt = (drumDeg: number, bow: number) =>
-  -bow * (1 - Math.cos(rad(drumDeg)));
-
-/** Both states in one chain: the ring terms fall away as `m` reaches the drum,
-    and the drum terms are still zero while the ring is up. */
+/** Both states in one chain: the ring terms fall away as `m` reaches the
+    helix, and the helix terms are still zero while the ring is up - so on the
+    way between, the ring visibly unwinds into the spiral. `d` is the card's
+    distance from the front, in items. */
 function place(
   ringDeg: number,
-  drumDeg: number,
   ringR: number,
-  drumR: number,
-  bow: number,
+  d: number,
+  helixR: number,
+  pitch: number,
   m: number,
 ) {
+  const a = rad(d * STEP);
+  const x = Math.sin(a) * helixR;
+  const z = (Math.cos(a) - 1) * helixR;
+  const y = d * pitch;
   return (
-    `translateX(${m * bowAt(drumDeg, bow)}px)` +
-    ` rotateZ(${(1 - m) * ringDeg}deg) translateY(${-(1 - m) * ringR}px)` +
-    ` rotateX(${m * drumDeg}deg) translateZ(${m * drumR}px)`
+    `translate3d(${m * x}px, ${m * y}px, ${m * z}px) rotateY(${m * d * STEP}deg)` +
+    ` rotateZ(${(1 - m) * ringDeg}deg) translateY(${-(1 - m) * ringR}px)`
   );
 }
 
@@ -141,6 +154,11 @@ export function WorksWheel({
   const labelRef = React.useRef<HTMLDivElement>(null);
   const headRef = React.useRef<HTMLDivElement>(null);
   const frontRef = React.useRef<HTMLDivElement>(null);
+  const dimRefs = React.useRef<(HTMLSpanElement | null)[]>([]);
+  const numRef = React.useRef<HTMLDivElement>(null);
+  const glowRef = React.useRef<HTMLDivElement>(null);
+  /** Pointer position over the stage, -1..1, for the lean. */
+  const pointer = React.useRef({ x: 0, y: 0 });
 
   // The wheel's position, and where it is heading. Only `active` and `open`
   // are state - everything else is written to the DOM.
@@ -172,13 +190,15 @@ export function WorksWheel({
     const maxW = narrow ? CARD_MAX_W_NARROW : CARD_MAX_W;
     const cardW = Math.min(h * CARD_H * CARD_RATIO, w * maxW);
     const cardH = cardW / CARD_RATIO;
-    const drumR = cardH * DRUM;
+    // Phones: too narrow to swing far sideways, so the spiral climbs instead.
+    const helixR = cardW * (narrow ? 0.75 : HELIX_R);
+    const pitch = cardH * (narrow ? 1.15 : PITCH);
     const ringR = cardH * (narrow ? RING_R * 0.62 : RING_R);
     const ringScale = count
       ? clamp((((2 * Math.PI * ringR) / count) * RING_FILL) / (cardW || 1), 0.16, 1)
       : 1;
     // The ring makes room for the section heading: right of it on desktop,
-    // below it on phones. It slides back to centre as it opens into the drum.
+    // below it on phones. It slides back to centre as it opens into the helix.
     const ringShift = narrow
       ? { x: 0, y: h * 0.1 }
       : { x: w * 0.13, y: h * 0.04 };
@@ -188,8 +208,8 @@ export function WorksWheel({
       ringR,
       ringShift,
       ringScale,
-      drumR,
-      bow: cardH * (narrow ? BOW * 0.7 : BOW),
+      helixR,
+      pitch,
       depth: Math.max(1, cardH * LENS),
       title: cardH * TITLE,
       index: cardH * INDEX,
@@ -205,16 +225,17 @@ export function WorksWheel({
 
   /** A scroll we started (index, keys, settling). While it runs, settling
       keeps its hands off; any input from the reader cancels it. */
-  const seek = React.useRef<{ y: number; at: number } | null>(null);
-  /** The item the wheel last rested on - settling is measured from here. */
+  const seek = React.useRef<{ y: number; at: number; turn: number } | null>(null);
+  /** The item the wheel last rested on - settling is measured from here. It
+      moves only once a scroll actually arrives: a seek the reader interrupts
+      must not count as having landed. */
   const anchor = React.useRef(0);
 
   const scrollToTurn = React.useCallback(
     (t: number) => {
       const next = clamp(t, 0, count);
-      anchor.current = Math.round(next);
       const y = Math.round(sectionTop() + next * unit);
-      seek.current = { y, at: performance.now() };
+      seek.current = { y, at: performance.now(), turn: Math.round(next) };
       window.scrollTo({ top: y, behavior: reduced ? "auto" : "smooth" });
     },
     [count, unit, reduced, sectionTop],
@@ -241,6 +262,7 @@ export function WorksWheel({
       if (s) {
         const arrived = Math.abs(window.scrollY - s.y) < 2;
         if (!arrived && performance.now() - s.at < 1500) return;
+        if (arrived) anchor.current = s.turn;
         seek.current = null;
       }
       const t = target.current;
@@ -315,7 +337,12 @@ export function WorksWheel({
     if (!stage.h || !count) return;
     let frame = 0;
     let visible = true;
-    const { ringR, ringScale, drumR, bow, ringShift } = metrics;
+    const { ringR, ringScale, helixR, pitch, ringShift, cardH } = metrics;
+    const still = reduced;
+    let speed = 0; // smoothed turns per frame
+    let lean = { x: 0, y: 0 };
+    let prev = turn.current;
+    const t0 = performance.now();
 
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
@@ -331,33 +358,56 @@ export function WorksWheel({
       frame = requestAnimationFrame(draw);
       const gap = target.current - turn.current;
       if (Math.abs(gap) < 0.0005) turn.current = target.current;
-      else turn.current += gap * (reduced ? 1 : EASE);
+      else turn.current += gap * (still ? 1 : EASE);
 
       const t = turn.current;
       const m = clamp(t, 0, 1);
       const pos = clamp(t - 1, 0, last);
 
-      // The drum is pulled back so its front face lands on the picture plane.
+      // Speed of the turn, smoothed; drives the tilt and the opening spiral.
+      speed += (t - prev - speed) * 0.18;
+      prev = t;
+      if (still) speed = 0;
+      const time = (performance.now() - t0) / 1000;
+      lean = {
+        x: lean.x + (pointer.current.x - lean.x) * 0.06,
+        y: lean.y + (pointer.current.y - lean.y) * 0.06,
+      };
+      const tiltX = still
+        ? 0
+        : m * (clamp(speed * SPEED_TILT, -MAX_TILT, MAX_TILT) - lean.y * POINTER_TILT.x);
+      const tiltY = still
+        ? 0
+        : m * (lean.x * POINTER_TILT.y + Math.sin(time * 0.5) * 1.6);
+      const spread = 1 + (still ? 0 : clamp(Math.abs(speed) * SPEED_SPREAD, 0, MAX_SPREAD));
+
       if (wheelRef.current) {
-        wheelRef.current.style.transform = `translate3d(${(1 - m) * ringShift.x}px, ${(1 - m) * ringShift.y}px, ${-m * drumR}px)`;
+        wheelRef.current.style.transform =
+          `translate3d(${(1 - m) * ringShift.x}px, ${(1 - m) * ringShift.y}px, 0)` +
+          ` rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
       }
 
       for (let i = 0; i < count; i++) {
         const d = i - pos;
         const card = cardRefs.current[i];
         if (!card) continue;
-        card.style.transform = place(d * (360 / count), d * STEP, ringR, drumR, bow, m);
-        // Culled by distance, not by angle: at a full turn the far side comes
-        // back round to face us.
-        const hidden = m > 0.5 && Math.abs(d) > CULL;
-        // Phones: the caption sits under the drum, so the piece coming up from
-        // below fades out before it reaches it.
-        const below = narrow && d < -0.35 ? clamp(1 - (-d - 0.35) * 2.2 * m, 0, 1) : 1;
+        card.style.transform = place(d * (360 / count), ringR, d, helixR, pitch * spread, m);
+        const far = Math.abs(d);
+        const hidden = m > 0.5 && far > CULL;
+        // Phones: the caption sits under the spiral, so the piece coming up
+        // from below fades out before it reaches it.
+        const below = narrow && d > 0.35 ? clamp(1 - (d - 0.35) * 2.2 * m, 0, 1) : 1;
         card.style.opacity = hidden ? "0" : String(below);
         card.style.visibility = hidden ? "hidden" : "visible";
-        card.style.zIndex = String(Math.round(100 - Math.abs(d) * 2));
+        card.style.zIndex = String(Math.round(100 - far * 10));
         const face = card.firstElementChild as HTMLElement | null;
-        if (face) face.style.transform = `scale(${lerp(ringScale, 1, m)})`;
+        if (face) {
+          const depthScale = 1 - Math.min(far, 2.5) * 0.07;
+          face.style.transform = `scale(${lerp(ringScale, depthScale, m)})`;
+        }
+        // Pieces turned away sink into the dark - the front one carries the light.
+        const dim = dimRefs.current[i];
+        if (dim) dim.style.opacity = String(m * Math.min(0.72, far * 0.4));
       }
 
       if (labelRef.current) {
@@ -367,8 +417,14 @@ export function WorksWheel({
       if (headRef.current) {
         headRef.current.style.opacity = String(clamp(1 - m * 1.6, 0, 1));
       }
-      if (frontRef.current) {
-        frontRef.current.style.opacity = String(clamp((m - 0.55) / 0.45, 0, 1));
+      const shown = clamp((m - 0.55) / 0.45, 0, 1);
+      if (frontRef.current) frontRef.current.style.opacity = String(shown);
+      if (numRef.current) {
+        numRef.current.style.opacity = String(shown);
+        numRef.current.style.transform = `translate3d(${-lean.x * 18}px, ${-speed * cardH * 30}px, 0)`;
+      }
+      if (glowRef.current) {
+        glowRef.current.style.opacity = String(m * (0.75 + 0.25 * Math.sin(time * 1.2)));
       }
       const near = clamp(Math.round(pos), 0, last);
       setActive((prev) => (prev === near ? prev : near));
@@ -394,6 +450,13 @@ export function WorksWheel({
     suppressClick.current = false;
   };
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse") {
+      const r = event.currentTarget.getBoundingClientRect();
+      pointer.current = {
+        x: ((event.clientX - r.left) / r.width) * 2 - 1,
+        y: ((event.clientY - r.top) / r.height) * 2 - 1,
+      };
+    }
     const d = drag.current;
     if (!d || d.id !== event.pointerId) return;
     if (!d.moved && Math.abs(event.clientY - d.start) > DRAG_SLOP) {
@@ -487,6 +550,9 @@ export function WorksWheel({
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
+          onPointerLeave={() => {
+            pointer.current = { x: 0, y: 0 };
+          }}
           className={cn(
             // z-0: its own stacking context, so 3D cards never paint over the captions.
             "absolute inset-0 z-0 touch-pan-y outline-none",
@@ -495,6 +561,31 @@ export function WorksWheel({
           )}
           style={{ perspective: `${metrics.depth}px` }}
         >
+          {/* Depth layers behind the spiral: the project number, huge and
+              hollow, and a soft light under the front card. */}
+          <div
+            ref={numRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 grid place-items-center opacity-0"
+          >
+            <span
+              key={active}
+              className="ww-num font-display leading-none font-[200] tracking-[-0.06em] text-transparent tabular-nums [-webkit-text-stroke:1px_rgb(168_216_255/0.14)]"
+              style={{ fontSize: metrics.cardH * (narrow ? 1.5 : 2.3) }}
+            >
+              {String(active + 1).padStart(2, "0")}
+            </span>
+          </div>
+          <div
+            ref={glowRef}
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0",
+              "bg-[radial-gradient(closest-side,rgb(91_124_250/0.22),rgb(168_216_255/0.06)_55%,transparent)]",
+              narrow ? "top-[44%]" : "top-1/2",
+            )}
+            style={{ width: metrics.cardW * 1.9, height: metrics.cardH * 2.1 }}
+          />
           <div
             ref={wheelRef}
             className={cn(
@@ -532,7 +623,7 @@ export function WorksWheel({
                       draggable={false}
                       loading={i < 3 ? "eager" : "lazy"}
                       decoding="async"
-                      className="absolute inset-0 size-full object-cover"
+                      className="absolute inset-0 size-full object-cover transition-transform duration-[1200ms] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
                     />
                     {item.video ? (
                       <CardVideo src={item.video} poster={item.image} playing={isFront} />
@@ -542,6 +633,13 @@ export function WorksWheel({
                         {item.badge}
                       </span>
                     ) : null}
+                    <span
+                      aria-hidden="true"
+                      ref={(node) => {
+                        dimRefs.current[i] = node;
+                      }}
+                      className="bg-background pointer-events-none absolute inset-0 opacity-0"
+                    />
                     {action && item.href && isFront ? (
                       <span className="bg-background/80 text-foreground pointer-events-none absolute right-3 bottom-3 flex translate-y-1 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium opacity-0 backdrop-blur-sm transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
                         {action}
@@ -575,7 +673,7 @@ export function WorksWheel({
             "absolute z-[110] opacity-0",
             narrow
               ? "from-background via-background/90 inset-x-0 bottom-0 bg-gradient-to-t to-transparent px-5 pt-20 pb-24 sm:px-8"
-              : "top-1/2 left-[6%] -translate-y-1/2",
+              : "bottom-[11%] left-[6%]",
             !open && "pointer-events-none",
           )}
           style={
@@ -585,12 +683,13 @@ export function WorksWheel({
           }
           aria-live="polite"
         >
-          <p className="eyebrow mb-3">
+          <p key={`e${active}`} className="ww-rise eyebrow mb-3">
             {String(active + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
             {current?.meta ? <span className="text-muted-foreground/80"> · {current.meta}</span> : null}
           </p>
           <p
-            className="font-display font-[350] tracking-[-0.02em] text-balance"
+            key={`t${active}`}
+            className="ww-rise ww-d1 font-display font-[350] tracking-[-0.02em] text-balance"
             style={{ fontSize: narrow ? "2rem" : clamp(metrics.title, 28, 56), lineHeight: 1.02 }}
           >
             {current?.title}
