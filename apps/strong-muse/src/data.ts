@@ -5,8 +5,8 @@ export type Program = {
   duration?: string;
   category: string;
   status: "planned";
-  color: string;
-  symbol: string;
+  /** Display word on the card cover — typography only, not a claim. */
+  word: string;
 };
 
 // Names, durations and subtitles are confirmed in the supplied Notion export.
@@ -19,8 +19,7 @@ export const programs: Program[] = [
     duration: "4 седмици",
     category: "Предизвикателство",
     status: "planned",
-    color: "peach",
-    symbol: "01",
+    word: "START",
   },
   {
     id: "strong",
@@ -29,8 +28,7 @@ export const programs: Program[] = [
     duration: "6 седмици",
     category: "Предизвикателство",
     status: "planned",
-    color: "plum",
-    symbol: "02",
+    word: "STRONG",
   },
   {
     id: "hiit",
@@ -38,8 +36,7 @@ export const programs: Program[] = [
     subtitle: "Твоята тренировка. На твоя терен.",
     category: "Домашни HIIT тренировки",
     status: "planned",
-    color: "sage",
-    symbol: "03",
+    word: "HIIT",
   },
   {
     id: "coaching",
@@ -47,8 +44,7 @@ export const programs: Program[] = [
     subtitle: "Индивидуален подход с мен",
     category: "Онлайн коучинг",
     status: "planned",
-    color: "rose",
-    symbol: "04",
+    word: "COACH",
   },
 ];
 

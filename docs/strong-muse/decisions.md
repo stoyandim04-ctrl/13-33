@@ -6,10 +6,13 @@
 - Prepare Strong Muse as a separate application in `apps/strong-muse`; preserve the root studio.
 - Prepare an initial review prototype based on the supplied brief; no live publication.
 
+- 2026-10-09: separate Vercel project `strong-muse` (https://strong-muse.vercel.app), deployed from `feat/strong-muse-prototype`.
+- 2026-10-09: restyle after a linktree-style reference the user supplied (pink grid, cut-out hero figure, poster cards) with a cinematic touch, using a photo of Anna the user supplied. Structure only — no FITQUEEN text, products or imagery.
+
 ## Implementation choices, still subject to design review
 
 - Shared root dependencies, no move of the studio checkout or source, independent Vite root and output. No workspace migration is needed for this first app.
-- Warm paper, plum/rose/peach/sage accents, Sofia Sans + Cormorant Garamond, subtle interactive states, original abstract graphics. These are proposals, not client-approved brand tokens.
+- Blush/rose pink grid, plum ink, Sofia Sans Condensed headings + Cormorant Garamond italics, film grain, letterbox intro, graded photo with vignette. Program covers: one cutout of Anna framed four ways under a cover word (START/STRONG/HIIT/COACH). These are proposals, not client-approved brand tokens.
 - Program details use a native modal dialog, no sales action. Mobile menu also uses native dialog for focus containment and Escape behavior.
 - Unknown bio/contact information is visibly pending in the review prototype; replace with approved facts before launch.
 - `noindex` and concept notice remain until explicit release approval. They are not access control; no private originals or actual nutrition PDFs belong in public assets.

@@ -14,6 +14,6 @@ npm run test:strong-muse
 
 The smoke test requires a built app and Chromium (or `CHROMIUM_PATH`); it starts and stops its own local preview. Outputs are `apps/strong-muse/dist`, separately from the studio's root `dist`.
 
-Shared brief, decisions, backlog and handoff live in `docs/strong-muse`. Current scope: review prototype only; planned programs, no checkout, accounts, downloads or collected inquiries. All illustrations are placeholders until authorized client photos arrive.
+Shared brief, decisions, backlog and handoff live in `docs/strong-muse`. Current scope: review prototype only; planned programs, no checkout, accounts, downloads or collected inquiries. Photos in `public/anna/` were supplied by the user (one shoot photo + its background-removed cutout); replace or extend them with the client's approved set.
 
 For a future separate hosting project, use repository root as the installation directory, `npm run build:strong-muse` as the build command, and `apps/strong-muse/dist` as the output. The studio remains `npm run build` → `dist`. Both projects can use their own domains. Configure hosting only after approval; no live project is created by these files.

@@ -6,7 +6,7 @@ Read `brief.md`, `decisions.md`, `backlog.md`, app `AGENTS.md` and the original 
 
 Studio remains in root `src/`; Strong Muse is `apps/strong-muse`. Root package scripts launch and build each independently. No production deployment, checkout, accounts, public PDFs, live contact collection or runtime Jev integration is present.
 
-Strong Muse has a hero with exact client slogans, original graphic placeholders, four planned program cards with working detail dialogs, Anna placeholder section, two nutrition-material cards, native FAQ, mobile menu and contact placeholder. No qualifications or prices are invented.
+Strong Muse has a pink-grid hero with Anna's cut-out photo and the exact client slogans, a cinematic featured card (graded photo, about Anna), four planned program poster cards with working detail dialogs, two nutrition-material cards, native FAQ, mobile menu and a contact placeholder over the dimmed photo. Motion (letterbox intro, figure reveal, scroll reveals, Ken Burns, grain) is off under reduced motion. No qualifications or prices are invented. Live at https://strong-muse.vercel.app (Vercel project `strong-muse`, build `npm run build:strong-muse`, output `apps/strong-muse/dist`).
 
 ## Commands (repository root)
 
