@@ -18,7 +18,7 @@ export function Faq() {
           {faq.map((item) => (
             <details key={item.q} className="group hairline last:border-b last:border-border">
               <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-7 [&::-webkit-details-marker]:hidden">
-                <span className="font-display text-title font-[350] tracking-[-0.01em] transition-colors group-hover:text-ice">
+                <span className="font-display text-title font-[500] tracking-[-0.025em] transition-colors group-hover:text-ice">
                   {item.q}
                 </span>
                 <Plus

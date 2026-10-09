@@ -20,11 +20,11 @@ export function Process() {
               {i < process.length - 1 ? (
                 <span aria-hidden="true" className="bg-border absolute top-16 bottom-3 left-[0.85rem] w-px lg:top-[1.75rem] lg:right-[-1.5rem] lg:bottom-auto lg:left-16 lg:h-px lg:w-auto" />
               ) : null}
-              <span className="font-display text-ice block text-[3.5rem] leading-none font-[200] tabular-nums">
+              <span className="font-display text-ice block text-[3.5rem] leading-none font-[500] tabular-nums">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <div className="lg:mt-8">
-                <h3 className="font-display text-title font-[350] tracking-[-0.01em]">{step.name}</h3>
+                <h3 className="font-display text-title font-[500] tracking-[-0.025em]">{step.name}</h3>
                 <p className="text-muted-foreground mt-3 max-w-[38ch] text-pretty">{step.body}</p>
               </div>
             </li>

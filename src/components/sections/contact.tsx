@@ -146,7 +146,7 @@ export function Contact() {
       <div className="container-wide grid gap-16 lg:grid-cols-12 lg:gap-10">
         <header className="lg:col-span-4">
           <p className="eyebrow mb-5">Започни проект</p>
-          <h2 id="kontakt-title" className="font-display text-heading font-[300] tracking-[-0.025em] text-balance">
+          <h2 id="kontakt-title" className="font-display text-heading font-[500] tracking-[-0.045em] text-balance">
             Какво искаш да създадем?
           </h2>
           <p className="text-lead text-muted-foreground mt-6 max-w-[32ch] text-pretty">
@@ -566,7 +566,7 @@ const ResultPanel = React.forwardRef<
     return (
       <div ref={ref} tabIndex={-1} role="status" className="border-ice/40 rounded-md border p-8 outline-none">
         <Check aria-hidden="true" className="text-ice size-6" />
-        <p className="font-display text-title mt-4 font-[350]">Получихме запитването ти.</p>
+        <p className="font-display text-title mt-4 font-[500]">Получихме запитването ти.</p>
         <p className="text-muted-foreground mt-3 max-w-[48ch]">Ще се свържем с теб на посочения контакт.</p>
         <Button variant="outline" size="sm" className="mt-6" onClick={onBack}>
           Ново запитване
@@ -578,7 +578,7 @@ const ResultPanel = React.forwardRef<
   return (
     <div ref={ref} tabIndex={-1} role="alert" className="border-border rounded-md border p-8 outline-none">
       <TriangleAlert aria-hidden="true" className="text-ice size-6" />
-      <p className="font-display text-title mt-4 font-[350]">
+      <p className="font-display text-title mt-4 font-[500]">
         {result.status === "not-configured" ? "Запитването не е изпратено." : "Не успяхме да изпратим запитването."}
       </p>
       <p className="text-muted-foreground mt-3 max-w-[52ch]">

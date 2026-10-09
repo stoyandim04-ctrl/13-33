@@ -11,6 +11,7 @@
     "media": "node scripts/build-concept-media.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/manrope": "^5.3.0",
     "@fontsource-variable/sofia-sans": "^5.3.0",
     "@fontsource-variable/sofia-sans-condensed": "^5.3.0",
     "class-variance-authority": "^0.7.1",

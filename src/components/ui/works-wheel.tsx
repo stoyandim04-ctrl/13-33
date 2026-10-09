@@ -529,7 +529,7 @@ export function WorksWheel({
           <div className="container-wide">
             <p className="eyebrow mb-4">{label}</p>
             {heading ? (
-              <h2 className="font-display text-heading font-[300] tracking-[-0.025em]">
+              <h2 className="font-display text-heading font-[500] tracking-[-0.045em]">
                 {heading}
               </h2>
             ) : null}
@@ -570,7 +570,7 @@ export function WorksWheel({
           >
             <span
               key={active}
-              className="ww-num font-display leading-none font-[200] tracking-[-0.06em] text-transparent tabular-nums [-webkit-text-stroke:1px_rgb(168_216_255/0.14)]"
+              className="ww-num font-display leading-none font-[500] tracking-[-0.06em] text-transparent tabular-nums [-webkit-text-stroke:1px_rgb(168_216_255/0.14)]"
               style={{ fontSize: metrics.cardH * (narrow ? 1.5 : 2.3) }}
             >
               {String(active + 1).padStart(2, "0")}
@@ -658,7 +658,7 @@ export function WorksWheel({
           ref={labelRef}
           aria-hidden="true"
           className={cn(
-            "font-display text-muted-foreground pointer-events-none absolute inset-x-0 grid place-items-center font-[350] tracking-[0.18em]",
+            "font-display text-muted-foreground pointer-events-none absolute inset-x-0 grid place-items-center font-[500] tracking-[0.18em]",
             narrow ? "top-0 h-[88%]" : "inset-y-0",
           )}
           style={{ fontSize: Math.max(14, metrics.title * 0.6) }}
@@ -689,7 +689,7 @@ export function WorksWheel({
           </p>
           <p
             key={`t${active}`}
-            className="ww-rise ww-d1 font-display font-[350] tracking-[-0.02em] text-balance"
+            className="ww-rise ww-d1 font-display font-[500] tracking-[-0.03em] text-balance"
             style={{ fontSize: narrow ? "2rem" : clamp(metrics.title, 28, 56), lineHeight: 1.02 }}
           >
             {current?.title}

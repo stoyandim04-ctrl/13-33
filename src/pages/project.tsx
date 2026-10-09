@@ -39,7 +39,7 @@ export default function ProjectPage() {
               <p className="eyebrow mb-5">
                 {project.category} · {project.sector}
               </p>
-              <h1 className="font-display text-heading font-[300] tracking-[-0.025em]">{project.name}</h1>
+              <h1 className="font-display text-heading font-[500] tracking-[-0.045em]">{project.name}</h1>
             </div>
             <div className="lg:col-span-4">
               <p className="inline-flex items-center gap-2 text-sm">
@@ -87,7 +87,7 @@ export default function ProjectPage() {
       <div className="section pt-20 md:pt-28">
         <div className="container-wide grid gap-16 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-7">
-            <p className="font-display text-title font-[350] tracking-[-0.01em] text-balance">{project.summary}</p>
+            <p className="font-display text-title font-[500] tracking-[-0.025em] text-balance">{project.summary}</p>
             <h2 className="eyebrow mt-14 mb-4">Бизнес нуждата</h2>
             <p className="text-muted-foreground max-w-[58ch] text-pretty">{project.need}</p>
             <h2 className="eyebrow mt-14 mb-2">Решението</h2>
@@ -135,14 +135,14 @@ export default function ProjectPage() {
         <div className="container-wide grid gap-10 md:grid-cols-2">
           <Link to={`/proekti/${next.slug}`} className="group hairline block pt-8">
             <p className="eyebrow mb-4">Следващ проект</p>
-            <p className="font-display text-title flex items-center gap-3 font-[350] transition-colors group-hover:text-ice">
+            <p className="font-display text-title flex items-center gap-3 font-[500] transition-colors group-hover:text-ice">
               {next.name}
               <ArrowRight aria-hidden="true" className="size-5 transition-transform duration-500 group-hover:translate-x-1" />
             </p>
           </Link>
           <Link to="/#kontakt" className="group hairline block pt-8">
             <p className="eyebrow mb-4">Имаш подобна нужда?</p>
-            <p className="font-display text-title flex items-center gap-3 font-[350] transition-colors group-hover:text-ice">
+            <p className="font-display text-title flex items-center gap-3 font-[500] transition-colors group-hover:text-ice">
               Започни проект
               <ArrowRight aria-hidden="true" className="size-5 transition-transform duration-500 group-hover:translate-x-1" />
             </p>

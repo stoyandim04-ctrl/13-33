@@ -61,7 +61,7 @@ export function SiteHeader() {
       >
         <div className="container-wide flex h-16 items-center justify-between px-5 sm:px-8 md:h-[4.5rem] lg:px-14">
           <Link to="/" className="flex items-baseline gap-2.5" aria-label="13:33 — Digital Studio, начало">
-            <span className="font-display text-[1.375rem] font-[450] tracking-[-0.02em]">13:33</span>
+            <span className="font-display text-[1.375rem] font-[650] tracking-[-0.03em]">13:33</span>
             <span className="text-label text-muted-foreground hidden tracking-[0.22em] uppercase sm:inline">
               Digital Studio
             </span>
@@ -119,7 +119,7 @@ export function SiteHeader() {
                   ref={i === 0 ? firstLink : undefined}
                   href={toHome(item.href, onHome)}
                   onClick={() => setOpen(false)}
-                  className="font-display block py-5 text-[2.5rem] leading-none font-[300] tracking-[-0.02em]"
+                  className="font-display block py-5 text-[2.5rem] leading-none font-[500] tracking-[-0.03em]"
                 >
                   {item.label}
                 </a>

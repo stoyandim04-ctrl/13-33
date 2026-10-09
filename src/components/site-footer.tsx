@@ -6,7 +6,7 @@ export function SiteFooter() {
       <div className="container-wide">
         <div className="flex flex-col justify-between gap-12 md:flex-row md:items-end">
           <div>
-            <p className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.85] font-[250] tracking-[-0.035em]">
+            <p className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.85] font-[400] tracking-[-0.06em]">
               13:33
             </p>
             <p className="eyebrow mt-4">Digital Studio · България</p>

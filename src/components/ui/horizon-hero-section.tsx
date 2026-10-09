@@ -276,7 +276,7 @@ export function HorizonHero({
             </p>
             <h1
               ref={titleRef}
-              className="horizon-title font-display text-display -ml-[0.04em] font-[250] tracking-[-0.035em]"
+              className="horizon-title font-display text-display -ml-[0.04em] font-[400] tracking-[-0.06em]"
             >
               <span aria-hidden="true" className="inline-block overflow-hidden pb-[0.04em]">
                 {chars.map((char, i) => (
@@ -293,7 +293,7 @@ export function HorizonHero({
             <div className="mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end md:gap-10">
               <p
                 ref={messageRef}
-                className="font-display text-title max-w-[17ch] font-[350] tracking-[-0.01em] text-balance md:col-span-6 lg:col-span-5 lg:text-[2.5rem] lg:leading-[1.08]"
+                className="font-display text-title max-w-[17ch] font-[500] tracking-[-0.025em] text-balance md:col-span-6 lg:col-span-5 lg:text-[2.5rem] lg:leading-[1.08]"
               >
                 {message}
               </p>
