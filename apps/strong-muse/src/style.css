@@ -726,55 +726,26 @@ summary:focus-visible {
 .nutrition-card:nth-child(2) .book {
   --cover-bg: linear-gradient(170deg, #eef3e8, #d6e2c8);
 }
-.book-cover {
+.cover.book .book-cover {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  top: auto;
+  left: auto;
+  translate: none;
+  filter: none;
+  max-width: 100%;
   width: 64%;
-  aspect-ratio: 3 / 4;
-  padding: 12% 8%;
-  border-radius: 4px 12px 12px 4px;
-  background: var(--cream);
+  height: auto;
+  border-radius: 3px 8px 8px 3px;
   box-shadow:
     inset 6px 0 0 rgba(42, 19, 32, 0.08),
     0 18px 30px -16px rgba(42, 19, 32, 0.45);
-  text-align: center;
   rotate: -3deg;
+  transition: rotate 0.5s var(--ease), scale 0.5s var(--ease);
 }
-.book-cover span {
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  color: var(--rose-deep);
-}
-.book-cover strong {
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: clamp(14px, 2.6vw, 22px);
-  line-height: 1.05;
-}
-.plate-symbol {
-  display: grid;
-  place-items: center;
-  width: 42%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1.5px solid var(--rose);
-}
-.plate-symbol span {
-  width: 58%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--rose) 0 50%,
-    #b9cf9f 0 75%,
-    #f5c08e 0
-  );
+.nutrition-card:hover .cover.book .book-cover {
+  rotate: 0deg;
+  scale: 1.03;
 }
 
 /* ---------- FAQ ---------- */
@@ -1097,7 +1068,7 @@ dialog::backdrop {
   .nutrition-grid .cover {
     aspect-ratio: 16 / 10;
   }
-  .nutrition-grid .book-cover {
+  .nutrition-grid .cover.book .book-cover {
     width: 30%;
   }
   .feature-media {

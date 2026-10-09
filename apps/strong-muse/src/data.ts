@@ -48,17 +48,21 @@ export const programs: Program[] = [
   },
 ];
 
+// Covers are the first pages of the PDFs Anna supplied. The PDFs themselves
+// are not in the repo or the site until the brief's review is done.
 export const nutrition = [
   {
     title: "Методът на чинията",
     subtitle: "Материал за хранене",
     type: "PDF · 7 страници",
     number: "01",
+    cover: "/nutrition/metodat-na-chiniyata-cover.webp",
   },
   {
     title: "7-дневен хранителен план",
     subtitle: "Материал за хранене",
     type: "PDF · 8 страници",
     number: "02",
+    cover: "/nutrition/7-dneven-plan-cover.webp",
   },
 ];

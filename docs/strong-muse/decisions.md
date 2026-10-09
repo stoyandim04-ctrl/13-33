@@ -8,6 +8,7 @@
 
 - 2026-10-09: separate Vercel project `strong-muse` (https://strong-muse.vercel.app), deployed from `feat/strong-muse-prototype`.
 - 2026-10-09: restyle after a linktree-style reference the user supplied (pink grid, cut-out hero figure, poster cards) with a cinematic touch, using a photo of Anna the user supplied. Structure only — no FITQUEEN text, products or imagery.
+- 2026-10-09: the user supplied both nutrition PDFs (`Strong_Muse_Metodat_na_chiniyata_BG.pdf`, 7 pages; `Strong_Muse_7_days.pdf`, 8 pages; daily totals 1034–1352 kcal without olive oil). Because the GitHub repo is public, the user chose "covers only": the site shows each PDF's first page as a card cover; the PDFs are not committed and not downloadable.
 
 ## Implementation choices, still subject to design review
 

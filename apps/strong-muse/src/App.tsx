@@ -301,15 +301,13 @@ export default function App() {
                 data-reveal
                 style={{ "--i": i } as CSSProperties}
               >
-                <div className="cover book" aria-hidden="true">
-                  <div className="book-cover">
-                    <span>STRONG MUSE</span>
-                    <div className="plate-symbol">
-                      <span />
-                    </div>
-                    <strong>{n.title}</strong>
-                    <span>{n.number} / ХРАНЕНЕ</span>
-                  </div>
+                <div className="cover book">
+                  <img
+                    className="book-cover"
+                    src={n.cover}
+                    alt={`Корица на „${n.title}“`}
+                    loading="lazy"
+                  />
                 </div>
                 <div className="card-label">
                   <h3>{n.title}</h3>
