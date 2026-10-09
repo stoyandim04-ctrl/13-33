@@ -1,0 +1,66 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "scope": {
+      "type": "score",
+      "score": 2.86,
+      "confidence": 0.87,
+      "legend": {
+        "0": "Unsupported implementation at this stage; defer",
+        "1": "Useful later after current dependencies are resolved",
+        "2": "Important preparation that can run alongside other tasks",
+        "3": "Essential blocker to correct scope or public release; address before dependent implementation"
+      },
+      "probabilities": { "0": 0.03, "1": 0.0, "2": 0.04, "3": 0.93 }
+    },
+    "location": {
+      "type": "score",
+      "score": 2.55,
+      "confidence": 0.53,
+      "legend": {
+        "0": "Unsupported implementation at this stage; defer",
+        "1": "Useful later after current dependencies are resolved",
+        "2": "Important preparation that can run alongside other tasks",
+        "3": "Essential blocker to correct scope or public release; address before dependent implementation"
+      },
+      "probabilities": { "0": 0.06, "1": 0.04, "2": 0.21, "3": 0.69 }
+    },
+    "prototype": {
+      "type": "score",
+      "score": 1.98,
+      "confidence": 0.66,
+      "legend": {
+        "0": "Unsupported implementation at this stage; defer",
+        "1": "Useful later after current dependencies are resolved",
+        "2": "Important preparation that can run alongside other tasks",
+        "3": "Essential blocker to correct scope or public release; address before dependent implementation"
+      },
+      "probabilities": { "0": 0.02, "1": 0.14, "2": 0.68, "3": 0.16 }
+    },
+    "assets": {
+      "type": "score",
+      "score": 2.51,
+      "confidence": 0.51,
+      "legend": {
+        "0": "Unsupported implementation at this stage; defer",
+        "1": "Useful later after current dependencies are resolved",
+        "2": "Important preparation that can run alongside other tasks",
+        "3": "Essential blocker to correct scope or public release; address before dependent implementation"
+      },
+      "probabilities": { "0": 0.04, "1": 0.03, "2": 0.31, "3": 0.62 }
+    },
+    "checkout": {
+      "type": "score",
+      "score": 0.28,
+      "confidence": 0.71,
+      "legend": {
+        "0": "Unsupported implementation at this stage; defer",
+        "1": "Useful later after current dependencies are resolved",
+        "2": "Important preparation that can run alongside other tasks",
+        "3": "Essential blocker to correct scope or public release; address before dependent implementation"
+      },
+      "probabilities": { "0": 0.89, "1": 0.02, "2": 0.0, "3": 0.09 }
+    }
+  },
+  "usage": { "input_tokens": 9512, "output_tokens": 69 }
+}

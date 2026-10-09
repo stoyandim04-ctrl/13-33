@@ -1,5 +1,18 @@
 # 13:33 — Digital Studio
 
+## Няколко сайта в едно хранилище
+
+Сайтът на студиото остава в корена (`src/` → `dist/`). Клиентските приложения се държат отделно в `apps/`, със собствени входни файлове, дизайн и build outputs.
+
+| Сайт | Development | Build | Output |
+| --- | --- | --- | --- |
+| 13:33 Studio | `npm run dev` | `npm run build` | `dist` |
+| Strong Muse — прототип | `npm run dev:strong-muse` | `npm run build:strong-muse` | `apps/strong-muse/dist` |
+
+`npm run build:all` проверява двата сайта. Всеки може да бъде свързан с отделен hosting project и домейн, като installation directory е коренът на repository, а build/output настройките са тези от таблицата. Нищо ново не е публикувано.
+
+Общите проектни файлове за Codex и Claude Code са в `docs/strong-muse`; виж и [инструкциите за приложението](apps/strong-muse/README.md).
+
 Сайтът на 13:33: React + TypeScript + Tailwind CSS v4 (shadcn-съвместима структура), Three.js и GSAP.
 
 ```bash

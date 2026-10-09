@@ -8,7 +8,12 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
-    "media": "node scripts/build-concept-media.mjs"
+    "media": "node scripts/build-concept-media.mjs",
+    "dev:strong-muse": "vite --config apps/strong-muse/vite.config.ts",
+    "build:strong-muse": "tsc --project apps/strong-muse/tsconfig.json && vite build --config apps/strong-muse/vite.config.ts",
+    "preview:strong-muse": "vite preview --config apps/strong-muse/vite.config.ts",
+    "build:all": "npm run build && npm run build:strong-muse",
+    "test:strong-muse": "node apps/strong-muse/tests/smoke.mjs"
   },
   "dependencies": {
     "@fontsource-variable/sofia-sans": "^5.3.0",
