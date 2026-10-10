@@ -510,6 +510,77 @@ summary:focus-visible {
   padding-bottom: 2px;
 }
 
+/* Photo strip under the feature: contact-sheet frames on the pink grid.
+   Phones: a swipeable strip; wider screens: a tilted triptych. */
+.film {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 74%;
+  align-items: center;
+  gap: 14px;
+  margin: 22px -16px 0;
+  padding: 10px 16px 18px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.film::-webkit-scrollbar {
+  display: none;
+}
+.film-frame {
+  scroll-snap-align: center;
+}
+.film-frame figure {
+  position: relative;
+  padding: 7px 7px 0;
+  border-radius: 22px;
+  background: var(--cream);
+  box-shadow: 0 24px 50px -30px rgba(59, 22, 48, 0.6);
+  transition:
+    rotate 0.6s var(--ease),
+    translate 0.6s var(--ease),
+    box-shadow 0.6s var(--ease);
+}
+.film-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 16px;
+  filter: contrast(1.06) saturate(0.88);
+}
+.film-frame:nth-child(1) img {
+  object-position: 50% 30%;
+}
+.film-frame:nth-child(2) img {
+  object-position: 42% 40%;
+}
+.film-frame:nth-child(3) img {
+  object-position: 50% 30%;
+}
+.film-frame figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 8px 11px;
+}
+.film-frame figcaption span {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+.film-frame figcaption strong {
+  font-family: var(--condensed);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--rose-deep);
+}
+
 /* ---------- Sections ---------- */
 .section {
   padding-block: 72px 8px;
@@ -997,9 +1068,48 @@ dialog::backdrop {
 }
 
 /* ---------- Breakpoints ---------- */
+@media (max-width: 699px) {
+  /* The flex photo is wide: size it by width so both fists stay in frame. */
+  .hero-figure {
+    top: 78px;
+    bottom: auto;
+    width: min(122vw, 560px);
+  }
+  .hero-figure img {
+    width: 100%;
+    height: auto;
+  }
+}
 @media (min-width: 700px) {
   .wrap {
     padding-inline: 32px;
+  }
+  .film {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr 1.35fr 1fr;
+    gap: 28px;
+    margin: 36px 0 0;
+    padding: 12px 8px 20px;
+    overflow: visible;
+  }
+  .film-frame.wide img {
+    aspect-ratio: 3 / 2;
+  }
+  .film-frame:nth-child(1) figure {
+    rotate: -3deg;
+    translate: 0 18px;
+  }
+  .film-frame:nth-child(2) figure {
+    rotate: 1.5deg;
+  }
+  .film-frame:nth-child(3) figure {
+    rotate: 2.5deg;
+    translate: 0 30px;
+  }
+  .film-frame figure:hover {
+    rotate: 0deg;
+    translate: 0 -6px;
+    box-shadow: 0 34px 60px -30px rgba(59, 22, 48, 0.7);
   }
   .card-grid {
     gap: 20px;

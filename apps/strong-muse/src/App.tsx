@@ -11,6 +11,15 @@ const links = [
 
 const CUTOUT = "/anna/anna-cutout.webp";
 const PHOTO = "/anna/anna-waterfall.webp";
+const HERO = "/anna/anna-flex-cutout.webp";
+
+// Photos Anna supplied on 2026-10-10. The words are typography for the frames,
+// not claims about her.
+const frames = [
+  { src: "/anna/anna-window.webp", w: 933, h: 1400, word: "ГРАЦИЯ", alt: "Анна Димитрова в профил пред светъл прозорец, ръцете вдигнати" },
+  { src: "/anna/anna-gym.webp", w: 960, h: 640, word: "СИЛА", alt: "Анна Димитрова показва бицепс в залата" },
+  { src: "/anna/anna-rest.webp", w: 933, h: 1400, word: "ФОКУС", alt: "Анна Димитрова облегната на кушетка" },
+];
 
 // Reveals sections once as they enter the viewport. Content stays visible
 // without JS and under reduced motion (see `.motion` in style.css).
@@ -183,10 +192,10 @@ export default function App() {
           </span>
           <div className="hero-figure">
             <img
-              src={CUTOUT}
-              alt="Анна Димитрова"
-              width={341}
-              height={1415}
+              src={HERO}
+              alt="Анна Димитрова показва бицепси"
+              width={1252}
+              height={1500}
               fetchPriority="high"
             />
           </div>
@@ -241,6 +250,24 @@ export default function App() {
               </a>
             </div>
           </div>
+          <ul className="film" aria-label="Снимки на Анна">
+            {frames.map((f, i) => (
+              <li
+                key={f.src}
+                className={`film-frame ${f.w > f.h ? "wide" : "tall"}`}
+                data-reveal
+                style={{ "--i": i } as CSSProperties}
+              >
+                <figure>
+                  <img src={f.src} alt={f.alt} width={f.w} height={f.h} loading="lazy" />
+                  <figcaption aria-hidden="true">
+                    <span>SM · 0{i + 2}</span>
+                    <strong>{f.word}</strong>
+                  </figcaption>
+                </figure>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section id="programs" className="section wrap" aria-labelledby="programs-title">

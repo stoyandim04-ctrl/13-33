@@ -10,6 +10,8 @@
 - 2026-10-09: restyle after a linktree-style reference the user supplied (pink grid, cut-out hero figure, poster cards) with a cinematic touch, using a photo of Anna the user supplied. Structure only — no FITQUEEN text, products or imagery.
 - 2026-10-09: the user supplied both nutrition PDFs (`Strong_Muse_Metodat_na_chiniyata_BG.pdf`, 7 pages; `Strong_Muse_7_days.pdf`, 8 pages; daily totals 1034–1352 kcal without olive oil). Because the GitHub repo is public, the user chose "covers only": the site shows each PDF's first page as a card cover; the PDFs are not committed and not downloadable.
 
+- 2026-10-10: Anna asked (via the user) for the biceps photo in the hero and the rest of the new shoot in the About section. Hero uses a background-removed cutout of that photo (`anna-flex-cutout.webp`, removed locally with rembg/isnet); About keeps the waterfall feature and adds a three-frame photo strip (`anna-window`, `anna-gym`, `anna-rest`). The frame words (ГРАЦИЯ/СИЛА/ФОКУС) are typography, not claims. Program covers still use the original `anna-cutout.webp`.
+
 ## Implementation choices, still subject to design review
 
 - Shared root dependencies, no move of the studio checkout or source, independent Vite root and output. No workspace migration is needed for this first app.
