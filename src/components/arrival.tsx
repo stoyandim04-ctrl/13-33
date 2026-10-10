@@ -4,8 +4,9 @@ import { ScrollTrigger, prefersReducedMotion } from "../lib/motion";
 
 /* The signature: a scroll-scrubbed walk from the reflecting pool, through the
    front door and the lobby, out to the courtyard. The film is a sequence of
-   stills (public/frames) drawn on a canvas - smoother and more reliable than
-   seeking a <video> - with a cross-fade between neighbouring frames. */
+   stills (public/frames, cut by motion so every step is the same size) drawn
+   on a canvas - steadier than seeking a <video> - with a light cross-fade
+   between neighbouring frames so slow scrolling never steps. */
 
 interface Manifest {
   count: number;
@@ -14,6 +15,9 @@ interface Manifest {
   /** Phone frames are a centre crop of the film: [left, width] as fractions. */
   crop: [number, number];
 }
+
+type Frame = ImageBitmap | HTMLImageElement;
+const dims = (f: Frame) => (f instanceof HTMLImageElement ? [f.naturalWidth, f.naturalHeight] : [f.width, f.height]);
 
 /** Scroll progress -> frame position, with holds where the copy needs time. */
 const SCHEDULE = [
@@ -27,7 +31,8 @@ const SCHEDULE = [
   { p: 1, s: 3 },
 ];
 
-const ease = (t: number) => t * t * (3 - 2 * t);
+/** Gentle in/out at the holds without slowing the middle of a shot. */
+const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t)) * 0.35 + t * 0.65;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const window01 = (p: number, a: number, b: number, fade = 0.025) =>
   Math.min(clamp01((p - a) / fade + 1), clamp01((b - p) / fade + 1));
@@ -46,6 +51,18 @@ function stopPosition(p: number, stops: number[]) {
 
 const frameUrl = (set: "d" | "m", i: number) => `/frames/${set}/${String(i + 1).padStart(4, "0")}.webp`;
 
+async function fetchFrame(url: string): Promise<Frame> {
+  if ("createImageBitmap" in window) {
+    // decoded off the main thread, and drawImage never has to decode it again
+    const blob = await (await fetch(url)).blob();
+    return createImageBitmap(blob);
+  }
+  const img = new Image();
+  img.src = url;
+  await img.decode();
+  return img;
+}
+
 export function Arrival() {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,84 +79,53 @@ export function Arrival() {
     if (!section || !canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    ctx.imageSmoothingQuality = "high";
 
     let disposed = false;
     let manifest: Manifest | null = null;
-    let frames: (HTMLImageElement | null)[] = [];
+    let frames: (Frame | null)[] = [];
     let set: "d" | "m" = "d";
     let target = 0;
     let shown = 0;
-    let progress = 0;
     let raf = 0;
+    let last = 0;
     let dirty = true;
+    let visible = true;
+    let activeIdx = 0;
     const still = prefersReducedMotion();
 
     const pickSet = () => (window.innerWidth / window.innerHeight < 0.85 ? "m" : "d");
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(canvas.clientWidth * dpr);
-      canvas.height = Math.round(canvas.clientHeight * dpr);
-      dirty = true;
-    };
-
-    /** Draws image cover-fitted; returns the transform so overlays can follow. */
-    const cover = (img: HTMLImageElement) => {
-      const cw = canvas.width;
-      const ch = canvas.height;
-      const s = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-      const w = img.naturalWidth * s;
-      const h = img.naturalHeight * s;
-      return { x: (cw - w) / 2, y: (ch - h) / 2, w, h };
+    /** Cover-fit rectangle for the current canvas size (all frames share a size). */
+    let rect = { x: 0, y: 0, w: 0, h: 0 };
+    const fit = (f: Frame) => {
+      const [fw, fh] = dims(f);
+      const s = Math.max(canvas.width / fw, canvas.height / fh);
+      rect = { x: (canvas.width - fw * s) / 2, y: (canvas.height - fh * s) / 2, w: fw * s, h: fh * s };
     };
 
     const nearest = (i: number) => {
       // the closest frame already in memory, so scrubbing never shows a hole
       for (let d = 0; d < frames.length; d++) {
-        const a = frames[i - d];
-        if (a?.complete && a.naturalWidth) return a;
-        const b = frames[i + d];
-        if (b?.complete && b.naturalWidth) return b;
+        if (frames[i - d]) return frames[i - d];
+        if (frames[i + d]) return frames[i + d];
       }
       return null;
     };
 
-    const placeHotspots = (img: HTMLImageElement) => {
+    const placeHotspots = () => {
       const box = hotspotsRef.current;
-      if (!box) return;
-      const r = cover(img);
+      if (!box || box.style.visibility === "hidden") return;
       const dpr = canvas.width / canvas.clientWidth;
       const [left, width] = set === "m" && manifest ? manifest.crop : [0, 1];
       box.querySelectorAll<HTMLElement>("[data-x]").forEach((el) => {
         const u = (Number(el.dataset.x) - left) / width;
         el.style.display = u < 0.04 || u > 0.96 ? "none" : "";
-        const x = (r.x + u * r.w) / dpr;
-        const y = (r.y + Number(el.dataset.y) * r.h) / dpr;
+        const x = (rect.x + u * rect.w) / dpr;
+        const y = (rect.y + Number(el.dataset.y) * rect.h) / dpr;
         el.dataset.flip = String(x > canvas.clientWidth * 0.6);
         el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
       });
-    };
-
-    const paintOverlays = (p: number) => {
-      arrival.chapters.forEach((c, i) => {
-        const el = layers.current[i];
-        if (!el) return;
-        const o = window01(p, c.from, c.to);
-        el.style.opacity = String(o);
-        el.style.transform = `translate3d(0, ${((1 - o) * 24).toFixed(1)}px, 0)`;
-        el.style.filter = o < 1 ? `blur(${((1 - o) * 8).toFixed(1)}px)` : "";
-        el.style.visibility = o < 0.01 ? "hidden" : "visible";
-      });
-      const idx = arrival.chapters.reduce((acc, c, i) => (p >= c.from - 0.03 ? i : acc), 0);
-      setActive(idx);
-      if (placeRef.current) placeRef.current.textContent = arrival.chapters[idx].place;
-      if (railRef.current) railRef.current.style.transform = `scaleY(${p})`;
-      const hs = hotspotsRef.current;
-      if (hs) {
-        const o = window01(p, 0.565, 0.655, 0.02);
-        hs.style.opacity = String(o);
-        hs.style.visibility = o < 0.01 ? "hidden" : "visible";
-      }
     };
 
     const draw = () => {
@@ -148,25 +134,65 @@ export function Arrival() {
       const f = shown - i;
       const a = nearest(i);
       if (!a) return;
-      const ra = cover(a);
+      if (!rect.w) fit(a);
       ctx.globalAlpha = 1;
-      ctx.drawImage(a, ra.x, ra.y, ra.w, ra.h);
+      ctx.drawImage(a, rect.x, rect.y, rect.w, rect.h);
       const b = frames[i + 1];
-      if (f > 0.01 && b?.complete && b.naturalWidth) {
+      if (f > 0.02 && b && a === frames[i]) {
         ctx.globalAlpha = f;
-        ctx.drawImage(b, ra.x, ra.y, ra.w, ra.h);
+        ctx.drawImage(b, rect.x, rect.y, rect.w, rect.h);
         ctx.globalAlpha = 1;
       }
-      placeHotspots(a);
+      placeHotspots();
     };
 
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.round(canvas.clientWidth * dpr);
+      const h = Math.round(canvas.clientHeight * dpr);
+      // mobile toolbars fire resize while scrolling; svh keeps the size, so skip
+      if (w === canvas.width && h === canvas.height) return;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.imageSmoothingQuality = "high";
+      rect = { x: 0, y: 0, w: 0, h: 0 };
+      draw(); // redraw at once - a resized canvas is blank until then
+    };
+
+    const paintOverlays = (p: number) => {
+      arrival.chapters.forEach((c, i) => {
+        const el = layers.current[i];
+        if (!el) return;
+        const o = window01(p, c.from, c.to);
+        el.style.opacity = o.toFixed(3);
+        el.style.transform = `translate3d(0, ${((1 - o) * 18).toFixed(1)}px, 0)`;
+        el.style.visibility = o < 0.01 ? "hidden" : "visible";
+      });
+      const idx = arrival.chapters.reduce((acc, c, i) => (p >= c.from - 0.03 ? i : acc), 0);
+      if (idx !== activeIdx) {
+        activeIdx = idx;
+        setActive(idx);
+        if (placeRef.current) placeRef.current.textContent = arrival.chapters[idx].place;
+      }
+      if (railRef.current) railRef.current.style.transform = `scaleY(${p.toFixed(4)})`;
+      const hs = hotspotsRef.current;
+      if (hs) {
+        const o = window01(p, 0.565, 0.655, 0.02);
+        hs.style.opacity = o.toFixed(3);
+        hs.style.visibility = o < 0.01 ? "hidden" : "visible";
+      }
+    };
+
+    const tick = (now: number) => {
+      raf = visible ? requestAnimationFrame(tick) : 0;
       if (!manifest) return;
-      const k = still ? 1 : 0.14;
+      const dt = last ? Math.min((now - last) / 16.67, 4) : 1;
+      last = now;
+      // frame-rate independent easing toward the scroll position
+      const k = still ? 1 : 1 - Math.pow(1 - 0.16, dt);
       const next = shown + (target - shown) * k;
-      if (Math.abs(next - shown) > 0.0005 || dirty) {
-        shown = Math.abs(target - next) < 0.001 ? target : next;
+      if (Math.abs(next - shown) > 0.0004 || dirty) {
+        shown = Math.abs(target - next) < 0.002 ? target : next;
         dirty = false;
         draw();
       }
@@ -179,36 +205,37 @@ export function Arrival() {
       manifest = m;
       set = pickSet();
       frames = new Array(m.count).fill(null);
-      // keyframes first (every 8th + the stops), then fill the gaps
-      const order: number[] = [];
-      const seen = new Set<number>();
-      const push = (i: number) => {
-        if (i >= 0 && i < m.count && !seen.has(i)) {
-          seen.add(i);
-          order.push(i);
+      const pending = new Set<number>(Array.from({ length: m.count }, (_, i) => i));
+      const coarse = new Set<number>([...m.stops, ...Array.from({ length: Math.ceil(m.count / 6) }, (_, i) => i * 6)]);
+      // next frame to fetch: a coarse frame near where the viewer is, then the
+      // gaps nearest to them - so wherever they scroll, the film is already there
+      const pick = () => {
+        let best = -1;
+        let bestScore = Infinity;
+        for (const i of pending) {
+          const score = Math.abs(i - target) + (coarse.has(i) ? 0 : 10000);
+          if (score < bestScore) {
+            bestScore = score;
+            best = i;
+          }
         }
+        if (best >= 0) pending.delete(best);
+        return best;
       };
-      m.stops.forEach(push);
-      for (const step of [8, 4, 2, 1]) for (let i = 0; i < m.count; i += step) push(i);
       let done = 0;
-      let cursor = 0;
       const worker = async () => {
-        while (cursor < order.length && !disposed) {
-          const i = order[cursor++];
-          const img = new Image();
-          img.decoding = "async";
-          img.src = frameUrl(set, i);
+        for (let i = pick(); i >= 0 && !disposed; i = pick()) {
           try {
-            await img.decode();
+            frames[i] = await fetchFrame(frameUrl(set, i));
           } catch {
             continue;
           }
-          frames[i] = img;
           done++;
-          if (done % 6 === 0 || done === m.count) setLoaded(done / m.count);
-          dirty = true;
+          if (done % 10 === 0 || done === m.count) setLoaded(done / m.count);
+          if (Math.abs(i - shown) < 2) dirty = true;
         }
       };
+      dirty = true;
       await Promise.all(Array.from({ length: 6 }, worker));
     };
 
@@ -221,20 +248,33 @@ export function Arrival() {
       start: "top top",
       end: "bottom bottom",
       onUpdate: (self) => {
-        progress = self.progress;
-        if (manifest) target = stopPosition(progress, manifest.stops);
-        paintOverlays(progress);
+        if (manifest) target = stopPosition(self.progress, manifest.stops);
+        paintOverlays(self.progress);
+      },
+      onRefresh: (self) => {
+        if (manifest) target = stopPosition(self.progress, manifest.stops);
       },
     });
     paintOverlays(0);
 
-    const onResize = () => resize();
-    window.addEventListener("resize", onResize);
+    // no drawing while the film is off screen
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !raf) {
+        last = 0;
+        raf = requestAnimationFrame(tick);
+      }
+    });
+    io.observe(section);
+
+    window.addEventListener("resize", resize);
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
       trigger.kill();
-      window.removeEventListener("resize", onResize);
+      io.disconnect();
+      window.removeEventListener("resize", resize);
+      frames.forEach((f) => f instanceof ImageBitmap && f.close());
     };
   }, []);
 
@@ -249,7 +289,6 @@ export function Arrival() {
           aria-hidden="true"
         />
         <canvas ref={canvasRef} className="absolute inset-0 size-full" aria-hidden="true" />
-        <div className="grain absolute inset-0" aria-hidden="true" />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -263,12 +302,12 @@ export function Arrival() {
         <div ref={hotspotsRef} className="pointer-events-none absolute inset-0 opacity-0" aria-hidden="true">
           {arrival.hotspots.map((h) => (
             <div key={h.label} data-x={h.x} data-y={h.y} className="group absolute left-0 top-0">
-              <span className="absolute -left-[5px] -top-[5px] size-[10px] rounded-full border border-cream/90 bg-cream/30 backdrop-blur-sm" />
+              <span className="absolute -left-[5px] -top-[5px] size-[10px] rounded-full border border-cream/90 bg-cream/40" />
               <span
                 className="absolute top-0 left-0 h-px w-10 origin-left -rotate-[35deg] bg-cream/60 group-data-[flip=true]:left-auto group-data-[flip=true]:right-0 group-data-[flip=true]:origin-right group-data-[flip=true]:rotate-[35deg]"
               />
               <span
-                className={`absolute -top-[3.1rem] whitespace-nowrap border border-cream/25 bg-night/45 px-3 py-1.5 text-[0.66rem] font-semibold tracking-[0.18em] uppercase backdrop-blur-md left-8 group-data-[flip=true]:left-auto group-data-[flip=true]:right-8`}
+                className={`absolute -top-[3.1rem] whitespace-nowrap border border-cream/25 bg-night/70 px-3 py-1.5 text-[0.66rem] font-semibold tracking-[0.18em] uppercase left-8 group-data-[flip=true]:left-auto group-data-[flip=true]:right-8`}
               >
                 {h.label}
               </span>
