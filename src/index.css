@@ -1,0 +1,100 @@
+@import "tailwindcss";
+@import "@fontsource-variable/manrope/wght.css";
+@import "@fontsource-variable/cormorant/wght.css";
+@import "@fontsource-variable/cormorant/wght-italic.css";
+
+/* The world, decided once:
+   1. Subject — a made-up residential building; it must feel calm, warm, unhurried.
+   2. Palette — limestone paper (3 close shades), warm ink + muted ink, one accent:
+      terracotta, only for the primary action and the current state.
+   3. Type — Cormorant (display, carries the Bulgarian Cyrillic forms) + Manrope.
+   4. Signature — the scroll is one day of sunlight on the building. */
+@theme {
+  --color-paper: #f4eee5;
+  --color-paper-2: #ebe3d6;
+  --color-paper-3: #ddd2c0;
+  --color-ink: #2b2520;
+  --color-mute: #7a6e63;
+  --color-line: rgb(43 37 32 / 0.14);
+  --color-accent: #b05d38;
+  --color-cream: #f6efe4;
+
+  --font-display: "Cormorant Variable", "Times New Roman", serif;
+  --font-sans: "Manrope Variable", system-ui, sans-serif;
+
+  --text-label: 0.72rem;
+  --text-label--letter-spacing: 0.2em;
+  --text-label--line-height: 1.4;
+  --text-body: 1rem;
+  --text-body--line-height: 1.7;
+  --text-lead: clamp(1.08rem, 0.95rem + 0.5vw, 1.3rem);
+  --text-lead--line-height: 1.6;
+  --text-title: clamp(1.9rem, 1.5rem + 1.4vw, 2.6rem);
+  --text-title--line-height: 1.1;
+  --text-heading: clamp(2.6rem, 1.6rem + 4.4vw, 5.6rem);
+  --text-heading--line-height: 1;
+  --text-display: clamp(4.6rem, 2rem + 13vw, 15rem);
+  --text-display--line-height: 0.86;
+
+  --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  --scene-ink: #2b2520;
+  --scene-scrim: rgb(244 238 229 / 0.62);
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+body { overflow-x: clip; }
+
+::selection { background: var(--color-accent); color: var(--color-cream); }
+
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+
+@layer components {
+.eyebrow {
+  font-size: var(--text-label);
+  letter-spacing: var(--text-label--letter-spacing);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.wrap { margin-inline: auto; width: 100%; max-width: 88rem; padding-inline: 1.25rem; }
+@media (min-width: 768px) { .wrap { padding-inline: 3rem; } }
+
+.section { padding-block: clamp(6rem, 4rem + 8vw, 11rem); }
+
+}
+
+/* film grain over the scene: a static SVG noise, so it costs nothing per frame */
+.grain {
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.16;
+  mix-blend-mode: multiply;
+}
+
+/* plan lines draw themselves when a residence is chosen */
+.plan-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.4s var(--ease-calm) forwards; }
+.plan-label { opacity: 0; animation: fade 0.8s var(--ease-calm) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes fade { to { opacity: 1; } }
+
+@keyframes cue { 0% { transform: scaleY(0); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+.cue { animation: cue 2.4s var(--ease-calm) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-line { animation: none; stroke-dashoffset: 0; }
+  .plan-label { animation: none; opacity: 1; }
+  .cue { animation: none; }
+}
