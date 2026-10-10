@@ -12,6 +12,8 @@
 
 - 2026-10-10: Anna asked (via the user) for the biceps photo in the hero and the rest of the new shoot in the About section. Hero uses a background-removed cutout of that photo (`anna-flex-cutout.webp`, removed locally with rembg/isnet); About keeps the waterfall feature and adds a three-frame photo strip (`anna-window`, `anna-gym`, `anna-rest`). The frame words (ГРАЦИЯ/СИЛА/ФОКУС) are typography, not claims. Program covers still use the original `anna-cutout.webp`.
 
+- 2026-10-10: Vercel project `strong-muse` now tracks `feat/strong-muse-prototype` as its production branch, and its Ignored Build Step skips every other branch (`[ "$VERCEL_GIT_COMMIT_REF" != "feat/strong-muse-prototype" ]`). A push to this branch publishes https://strong-muse.vercel.app.
+
 ## Implementation choices, still subject to design review
 
 - Shared root dependencies, no move of the studio checkout or source, independent Vite root and output. No workspace migration is needed for this first app.
