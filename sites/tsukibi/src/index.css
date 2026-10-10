@@ -1,0 +1,152 @@
+/*
+  Цукиби 月火 · визуална система
+
+  Луна и огън: тъмно като въглен поле, кремав „лунен“ текст и един акцент —
+  жарта (#FF5B24) — само за главното действие и текущото състояние.
+  Cormorant Garamond за заглавия (носи българските форми на кирилицата),
+  Manrope за текст.
+*/
+@import "tailwindcss";
+@import "@fontsource-variable/manrope";
+@import "@fontsource-variable/cormorant-garamond";
+@import "@fontsource-variable/cormorant-garamond/wght-italic.css";
+
+@theme {
+  --color-ink: #0b0a09;
+  --color-coal: #12100e;
+  --color-coal-2: #1a1714;
+  --color-bone: #f1e9db;
+  --color-muted: #9a9086;
+  --color-faint: #5d5650;
+  --color-ember: #ff5b24;
+  --color-ember-soft: #ff8a4c;
+  --color-line: rgb(241 233 219 / 0.12);
+
+  --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond Variable", "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-jp: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
+
+  --text-label: 0.6875rem;
+  --text-label--letter-spacing: 0.28em;
+  --text-label--line-height: 1.4;
+  --text-body: 1rem;
+  --text-body--line-height: 1.65;
+  --text-lead: clamp(1.125rem, 1rem + 0.45vw, 1.375rem);
+  --text-lead--line-height: 1.55;
+  --text-title: clamp(1.75rem, 1.3rem + 1.4vw, 2.75rem);
+  --text-title--line-height: 1.05;
+  --text-heading: clamp(2.75rem, 1.4rem + 5vw, 6.5rem);
+  --text-heading--line-height: 0.95;
+  --text-display: clamp(4.5rem, 1rem + 15vw, 15rem);
+  --text-display--line-height: 0.82;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: var(--color-ember);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ember);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  img {
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-label font-semibold uppercase text-ember;
+  }
+  .btn-ember {
+    @apply relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-ember px-7 py-4 text-sm font-semibold text-ink transition-transform duration-500 ease-out-expo;
+    box-shadow: 0 10px 40px -10px rgb(255 91 36 / 0.65);
+  }
+  .btn-ember::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--color-bone);
+    transform: translateY(101%);
+    border-radius: inherit;
+    transition: transform 0.6s var(--ease-out-expo);
+  }
+  .btn-ember:hover::before {
+    transform: translateY(0);
+  }
+  .btn-ember > * {
+    position: relative;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-3 rounded-full border border-line px-7 py-4 text-sm font-semibold text-bone transition-colors duration-300 hover:border-bone/60;
+  }
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    animation: grain 1.2s steps(6) infinite;
+  }
+}
+
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 38s linear infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { transform: scale(1, 1); opacity: 1; }
+  25% { transform: scale(0.96, 1.05); opacity: 0.92; }
+  50% { transform: scale(1.03, 0.97); opacity: 1; }
+  75% { transform: scale(0.98, 1.03); opacity: 0.95; }
+}
+.logo-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flicker 2.4s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

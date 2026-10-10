@@ -25,6 +25,7 @@ npm run media      # прерисува постерите/видеата на �
 | `src/pages/*` | Начало, страница на проект (`/proekti/:slug`), 404 |
 | `public/projects/<slug>/` | `poster.webp`, `preview.mp4`, `preview.webm` |
 | `scripts/` | Концептуалните мокъпи и скриптът, който рендерира медията им |
+| `sites/tsukibi/` | Отделен сайт: концепцията за ресторант Цукиби (Vite + React, собствени зависимости) |
 
 ## Какво е адаптирано спрямо оригиналните компоненти
 
@@ -34,7 +35,7 @@ npm run media      # прерисува постерите/видеата на �
 
 ## Материали за замяна
 
-1. **Проекти.** Всички 6 в портфолиото са **концепции на 13:33** (означени „Концепция“ навсякъде). Медията им е рендерирана от собствени мокъпи (`scripts/concept-mocks.mjs`) — без stock и без чужди сайтове. За реален проект: добави запис в `src/data/projects.ts` със `status` (`live`, `in-progress`, `prototype`, `own-product`) и сложи в `public/projects/<slug>/`:
+1. **Проекти.** Всички 7 в портфолиото са **концепции на 13:33** (означени „Концепция“ навсякъде). Медията им е рендерирана от собствени мокъпи (`scripts/concept-mocks.mjs`) — без stock и без чужди сайтове. Изключение е **Цукиби** — истински сайт в `sites/tsukibi/` (свой README); постерът и видеото му се записват от него със `scripts/build-tsukibi-media.mjs`. За реален проект: добави запис в `src/data/projects.ts` със `status` (`live`, `in-progress`, `prototype`, `own-product`) и сложи в `public/projects/<slug>/`:
    - `poster.webp` — 1450×1000 (съотношение 1.45);
    - `preview.mp4` (H.264) и `preview.webm` (VP9) — 6–10 s, без звук. Настройките на ffmpeg са в `scripts/build-concept-media.mjs`;
    - `liveUrl` — само ако сайтът е публичен и клиентът е съгласен.

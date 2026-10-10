@@ -5,8 +5,8 @@
 // - Never use another studio's or a client's site as ours without permission.
 // - Every entry below is a CONCEPT created by 13:33 to show range. The posters
 //   and recordings in /public/projects/<slug>/ are rendered from our own
-//   concept mock-ups (scripts/build-concept-media.mjs) - no stock, no third
-//   party sites.
+//   concept mock-ups (scripts/build-concept-media.mjs) or, for Tsukibi, from
+//   our own site in sites/tsukibi - no stock, no third party sites.
 //
 // To add a real project: copy an entry, set `status`, drop `poster.webp`
 // (1450×1000) and `preview.mp4` + `preview.webm`, ~6–10 s, muted,
@@ -83,6 +83,28 @@ const media = (slug: string) => ({
 });
 
 export const projects: Project[] = [
+  {
+    // Built as a real site in sites/tsukibi; poster and preview are recorded
+    // from it (scripts/build-tsukibi-media.mjs). Restaurant, menu and prices
+    // are invented for the concept.
+    name: "Цукиби 月火",
+    slug: "tsukibi",
+    category: "Сайт с меню и поръчки",
+    sector: "Азиатски ресторант",
+    summary:
+      "Анимиран сайт за измислен азиатски ресторант: кинематографично начало и меню, в което всяко ястие се разглежда отблизо и се добавя към поръчка.",
+    role: ["Бранд и лого", "Визуална концепция и анимация", "Интерактивно меню", "Работещ прототип"],
+    status: "concept",
+    ...media("tsukibi"),
+    need:
+      "Ресторантът продава атмосфера и вкус, а повечето менюта са PDF или дълъг списък. Гостът трябва да види чинията, да разбере какво има в нея и да поръча без обаждане.",
+    approach: [
+      "Начало с огън, искри и чиния, която се завърта при скрол — усещането за мястото идва преди текста.",
+      "Меню чиния по чиния: при посочване се изчертават надписи към съставките, скролът сменя ястието.",
+      "Поръчка за вкъщи от всяко ястие, резервация и омакасе на една страница.",
+    ],
+    year: 2026,
+  },
   {
     name: "Линия Архитекти",
     slug: "liniya-arhitekti",
