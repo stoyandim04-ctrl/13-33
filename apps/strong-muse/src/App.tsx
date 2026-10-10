@@ -230,26 +230,9 @@ export default function App() {
         </section>
 
         <section id="about" className="feature wrap" aria-labelledby="about-title">
-          <div className="feature-frame" data-reveal>
-            <div className="feature-media">
-              <img src={PHOTO} alt="Анна Димитрова сред скалите и водопада" loading="lazy" />
-              <span className="feature-tag">01 / ЧОВЕКЪТ ЗАД STRONG MUSE</span>
-              <div className="feature-title">
-                <h2 id="about-title">
-                  Анна <em>Димитрова.</em>
-                </h2>
-                <p className="feature-quote">„Бъди своето вдъхновение“</p>
-              </div>
-            </div>
-            <div className="feature-caption">
-              <p>
-                Историята на Анна ще бъде добавена след нейното одобрение.
-              </p>
-              <a className="text-link" href="#programs">
-                Открий Strong Muse <ArrowUpRight size={16} />
-              </a>
-            </div>
-          </div>
+          <h2 id="about-title" className="sr-only">
+            За Анна
+          </h2>
           <ul className="film" aria-label="Снимки на Анна">
             {frames.map((f, i) => (
               <li
@@ -261,7 +244,7 @@ export default function App() {
                 <figure>
                   <img src={f.src} alt={f.alt} width={f.w} height={f.h} loading="lazy" />
                   <figcaption aria-hidden="true">
-                    <span>SM · 0{i + 2}</span>
+                    <span>SM · 0{i + 1}</span>
                     <strong>{f.word}</strong>
                   </figcaption>
                 </figure>
