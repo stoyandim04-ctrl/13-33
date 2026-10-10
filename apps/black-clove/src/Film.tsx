@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SEQ } from "./seq";
 import { chapters, hero, orderCta } from "./content";
+import { Words } from "./words";
 
 /*
   The signature moment: a pinned, scroll-scrubbed film (rotate → open →
@@ -237,13 +238,14 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
         </div>
 
         <div ref={heroRef} className="hero-copy">
-          <p className="eyebrow">{hero.eyebrow}</p>
+          <p className="eyebrow pill">{hero.eyebrow}</p>
           <h1>
-            {hero.title.map((line, i) => (
-              <span key={i} className="line" style={{ "--d": `${0.25 + i * 0.12}s` } as React.CSSProperties}>
-                <span>{line}</span>
-              </span>
-            ))}
+            <span className="line">
+              <Words text={hero.title[0]} />
+            </span>
+            <span className="line accent">
+              <Words text={hero.title[1]} from={hero.title[0].split(" ").length} />
+            </span>
           </h1>
           <p className="hero-lead">{hero.lead}</p>
           <div className="hero-actions">
@@ -271,14 +273,16 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
             ref={(n) => {
               chapterRefs.current[i] = n;
             }}
-            className={`chapter chapter-${c.align}`}
+            className={`chapter chapter-${c.align}${active === i ? " is-on" : ""}`}
             aria-hidden={active !== i}
           >
             <p className="chapter-num">
               <span>{c.n}</span>
               <i aria-hidden="true" />
             </p>
-            <h2>{c.title}</h2>
+            <h2>
+              <Words text={c.title} />
+            </h2>
             <p>{c.text}</p>
             <ul className="chapter-facts">
               {c.facts.map((f) => (

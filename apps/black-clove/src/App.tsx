@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import Lenis from "lenis";
 import { Film } from "./Film";
+import { Words } from "./words";
 import { kitchen, nav, order, orderCta, process, taste, tube } from "./content";
 
 const STUDIO_URL = "https://13-33.vercel.app";
@@ -47,8 +48,10 @@ function useProgress<T extends HTMLElement>(cb: (p: number, el: T) => void) {
 function SectionHead({ eyebrow, title, lead, center = false }: { eyebrow: string; title: string; lead: string; center?: boolean }) {
   return (
     <header className={`sec-head${center ? " center" : ""}`} data-reveal>
-      <p className="eyebrow">{eyebrow}</p>
-      <h2>{title}</h2>
+      <p className="eyebrow pill">{eyebrow}</p>
+      <h2>
+        <Words text={title} />
+      </h2>
       <p className="lead">{lead}</p>
     </header>
   );
