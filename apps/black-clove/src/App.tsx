@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import Lenis from "lenis";
 import { Film } from "./Film";
-import { kitchen, nav, process, taste, tube } from "./content";
+import { kitchen, nav, order, orderCta, process, taste, tube } from "./content";
 
 const STUDIO_URL = "https://13-33.vercel.app";
 
@@ -85,6 +85,9 @@ function Header() {
           </a>
         ))}
       </nav>
+      <a className="header-cta" href={orderCta.href}>
+        {orderCta.label}
+      </a>
     </header>
   );
 }
@@ -217,10 +220,54 @@ function Tube() {
               </div>
             ))}
           </dl>
-          <a className="button" href={STUDIO_URL} data-reveal>
-            Проект на 13:33 Studio <span aria-hidden="true">→</span>
+          <a className="button gold" href={orderCta.href} data-reveal>
+            {orderCta.label} <span aria-hidden="true">→</span>
           </a>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function Order() {
+  const [sent, setSent] = useState(false);
+  return (
+    <section id="order" className="order section">
+      <div className="wrap order-grid">
+        <div>
+          <SectionHead {...order} />
+        </div>
+        <form
+          className="order-form"
+          data-reveal
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSent(true);
+          }}
+        >
+          <label>
+            <span>{order.fields.name}</span>
+            <input name="name" type="text" autoComplete="name" required />
+          </label>
+          <label>
+            <span>{order.fields.email}</span>
+            <input name="email" type="email" autoComplete="email" required />
+          </label>
+          <label>
+            <span>{order.fields.qty}</span>
+            <input name="qty" type="number" min={1} max={99} defaultValue={1} required />
+          </label>
+          <label>
+            <span>{order.fields.note}</span>
+            <textarea name="note" rows={3} />
+          </label>
+          <button className="button gold" type="submit" disabled={sent}>
+            {order.submit} <span aria-hidden="true">→</span>
+          </button>
+          <p className="order-done" role="status" aria-live="polite">
+            {sent ? order.done : ""}
+          </p>
+        </form>
       </div>
     </section>
   );
@@ -293,6 +340,7 @@ export default function App() {
         <Taste />
         <Kitchen />
         <Tube />
+        <Order />
       </main>
       <Footer />
     </>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SEQ } from "./seq";
-import { chapters, hero } from "./content";
+import { chapters, hero, orderCta } from "./content";
 
 /*
   The signature moment: a pinned, scroll-scrubbed film (rotate → open →
@@ -246,6 +246,19 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
             ))}
           </h1>
           <p className="hero-lead">{hero.lead}</p>
+          <div className="hero-actions">
+            <a className="button gold" href={orderCta.href}>
+              {orderCta.label} <span aria-hidden="true">→</span>
+            </a>
+            <a className="button ghost" href={hero.secondary.href}>
+              {hero.secondary.label}
+            </a>
+          </div>
+          <ul className="hero-points" aria-label="Накратко">
+            {hero.points.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
           <a className="scroll-cue" href="#process">
             <span className="scroll-cue-line" aria-hidden="true" />
             {hero.cue}
@@ -267,6 +280,11 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
             </p>
             <h2>{c.title}</h2>
             <p>{c.text}</p>
+            <ul className="chapter-facts">
+              {c.facts.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
           </div>
         ))}
 
