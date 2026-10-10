@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import Lenis from "lenis";
 import { Film } from "./Film";
 import { Words } from "./words";
-import { kitchen, nav, order, orderCta, process, taste, tube } from "./content";
+import { kitchen, nav, order, orderCta, process, statement, taste, tube } from "./content";
 
 const STUDIO_URL = "https://13-33.vercel.app";
 
@@ -142,6 +142,23 @@ function Taste() {
             ))}
           </ul>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function Statement() {
+  const ref = useProgress<HTMLElement>(
+    useCallback((p: number, el: HTMLElement) => el.style.setProperty("--p", p.toFixed(4)), []),
+  );
+  return (
+    <section ref={ref} className="statement" aria-label={statement.title}>
+      <img src="/media/pour.webp" alt="" loading="lazy" />
+      <div className="statement-copy" data-reveal>
+        <h2>
+          <Words text={statement.title} />
+        </h2>
+        <p>{statement.text}</p>
       </div>
     </section>
   );
@@ -341,6 +358,7 @@ export default function App() {
         <Film onReady={onReady} />
         <Process />
         <Taste />
+        <Statement />
         <Kitchen />
         <Tube />
         <Order />

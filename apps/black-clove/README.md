@@ -18,14 +18,22 @@ The hero is a scroll-scrubbed film drawn on a canvas (`src/Film.tsx`):
 rotate → open → pour → spread on toast. Frames come from three 5 s 1080p
 scenes generated with Higgsfield (Seedance 2.0, start/end keyframes made with
 GPT Image 2.5 from the brief's packaging photos), joined by
-`scripts/build-sequence.sh`:
+`scripts/build-sequence.sh` into three tiers:
 
-- `public/seq/d` — 16:9, 1600 px, desktop; the canvas keeps the subject in
-  view with a focal point per scroll position.
-- `public/seq/m` — 3:4 portrait crop that follows the subject, for phones.
+| tier | for | frames | size |
+| --- | --- | --- | --- |
+| `d` | desktop, landscape | 181 (every 2nd) | 1600×900, 14 MB |
+| `m` | phones, portrait | 181 (every 2nd) | 720×960 crop that follows the subject, 8 MB |
+| `s` | slow phones (≤3 GB RAM / ≤3 cores), data saver, 2G/3G | 121 (every 3rd) | 480×640, 3 MB |
 
-Frames load coarse-to-fine; the nearest loaded frame is always drawn.
-`TIMELINE` in `Film.tsx` adds short holds so each chapter can be read.
+Smoothness: the scroll position is damped in time and the two frames around
+the fractional position are cross-faded, so 12 fps source frames scrub
+without visible steps in either direction. Loading: a coarse skeleton first
+(every 8th frame, drives the loader), then whatever is nearest to the user's
+scroll position; the nearest loaded frame always stands in. `TIMELINE` adds
+short holds so each chapter can be read. Frames are decoded off-thread
+(`img.decode()`); a decode failure under memory pressure just skips that
+frame. Reduced motion: no damping, no entrance animations.
 
 ## Content rules
 

@@ -122,3 +122,8 @@ export const order = {
   // Concept site: nothing is sent anywhere. Say so honestly after submit.
   done: "Благодарим! Това е концептуален сайт — поръчки още не се обработват.",
 };
+
+export const statement = {
+  title: "Една скилидка. Цяла чиния.",
+  text: "Сладостта на карамела, дълбочината на балсамико и дълъг умами финал — в една хапка.",
+};

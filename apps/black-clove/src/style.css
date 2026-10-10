@@ -16,11 +16,12 @@
   --text: #f3ebdd;
   --muted: #bfb09b;
   --gold: #c9a25a;
+  --copper: #c27a45;
   --line: rgb(239 230 216 / 0.12);
   --display: "Manrope Variable", "Manrope", system-ui, sans-serif;
   --sans: "Manrope Variable", "Manrope", system-ui, sans-serif;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --pad: clamp(96px, 14vw, 200px);
+  --pad: clamp(112px, 15vw, 224px);
   color-scheme: dark;
 }
 * {
@@ -311,9 +312,9 @@ ul {
 .hero-copy h1 {
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(44px, 6.2vw, 104px);
-  line-height: 1.02;
-  letter-spacing: -0.045em;
+  font-size: clamp(46px, 7vw, 124px);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
   text-shadow: 0 2px 40px rgb(0 0 0 / 0.6);
 }
 .hero-copy h1 .line {
@@ -562,14 +563,14 @@ ul {
   padding-block: var(--pad);
 }
 .sec-head {
-  max-width: 680px;
+  max-width: 760px;
 }
 .sec-head.center {
   margin-inline: auto;
   text-align: center;
 }
 .sec-head .eyebrow {
-  margin-bottom: 26px;
+  margin-bottom: 30px;
 }
 .sec-head h2 {
   margin-top: 0;
@@ -577,16 +578,16 @@ ul {
 .sec-head h2 {
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(38px, 5vw, 76px);
-  line-height: 1.04;
-  letter-spacing: -0.045em;
+  font-size: clamp(40px, 5.6vw, 88px);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
   text-wrap: balance;
 }
 .sec-head .lead {
-  margin-top: 22px;
-  max-width: 46ch;
-  font-size: clamp(17px, 1.4vw, 20px);
-  line-height: 1.6;
+  margin-top: 26px;
+  max-width: 44ch;
+  font-size: clamp(18px, 1.5vw, 22px);
+  line-height: 1.55;
   color: var(--text);
   opacity: 0.85;
 }
@@ -715,6 +716,73 @@ ul {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/* Statement — full-bleed product frame with one editorial line */
+.statement {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-height: clamp(520px, 78vh, 820px);
+  padding: var(--pad) clamp(20px, 5vw, 64px);
+  background: var(--bg);
+}
+.statement img {
+  position: absolute;
+  z-index: -1;
+  inset: -12% 0;
+  width: 100%;
+  height: 124%;
+  object-fit: cover;
+  object-position: 50% 45%;
+  transform: translateY(calc((var(--p, 0.5) - 0.5) * -12%));
+  filter: brightness(0.62) saturate(0.9);
+}
+.statement::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(70% 60% at 50% 50%, rgb(11 9 7 / 0.1), rgb(11 9 7 / 0.8)),
+    linear-gradient(180deg, var(--bg), transparent 18%, transparent 82%, var(--bg-2));
+}
+.statement-copy {
+  max-width: 900px;
+  text-align: center;
+}
+.statement h2 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(44px, 7.4vw, 128px);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  text-shadow: 0 2px 40px rgb(0 0 0 / 0.6);
+}
+/* "Цяла чиния." in gold. */
+.statement h2 .w:nth-child(n + 3) > span {
+  color: var(--gold);
+}
+.statement p {
+  margin: 26px auto 0;
+  max-width: 46ch;
+  font-size: clamp(18px, 1.5vw, 22px);
+  font-weight: 500;
+  color: var(--text);
+  opacity: 0.9;
+}
+.motion .statement-copy h2 .w > span {
+  transform: translateY(110%) rotate(2deg);
+  opacity: 0;
+}
+.motion .statement-copy.is-in h2 .w > span {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform 1.2s var(--ease) calc(0.1s + var(--w, 0) * 70ms),
+    opacity 0.7s ease calc(0.1s + var(--w, 0) * 70ms);
 }
 
 /* Kitchen — horizontal film strip on desktop */
@@ -904,7 +972,8 @@ ul {
   box-shadow: 0 14px 40px -16px rgb(201 162 90 / 0.8);
 }
 .button.gold:hover {
-  background: #dbb56a;
+  background: var(--copper);
+  color: #fff6ea;
 }
 .button.ghost {
   background: rgb(243 235 221 / 0.08);
@@ -932,7 +1001,8 @@ ul {
   transition: background 0.3s;
 }
 .header-cta:hover {
-  background: #dbb56a;
+  background: var(--copper);
+  color: #fff6ea;
 }
 
 /* Order */

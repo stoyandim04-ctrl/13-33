@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { SEQ } from "./seq";
+import { SEQ, type Tier } from "./seq";
 import { chapters, hero, orderCta } from "./content";
 import { Words } from "./words";
 
 /*
   The signature moment: a pinned, scroll-scrubbed film (rotate → open →
-  pour → spread) drawn frame by frame on a canvas. Frames load coarse-to-fine
-  so scrubbing works before everything has arrived; the nearest loaded frame
-  is always drawn. Text chapters fade in and out over their own stretch.
+  pour → spread) drawn on a canvas.
+
+  Smoothness: scroll position is damped in time (not per frame), and the
+  two frames around the fractional position are cross-faded, so 12 fps
+  source frames scrub without visible steps in either direction.
+
+  Loading: a coarse skeleton first (every 8th frame), then whatever is
+  nearest to where the user is, so scrubbing works before everything has
+  arrived; the nearest loaded frame always stands in. Three tiers of
+  frames exist (desktop / phone / light), picked by screen and device.
 */
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -34,22 +41,36 @@ const TIMELINE: [number, number][] = [
   [1, 1],
 ];
 function frameAt(p: number, count: number) {
+  const last = Math.max(count - 1, 0);
   for (let k = 1; k < TIMELINE.length; k++) {
     const [p1, f1] = TIMELINE[k];
     if (p <= p1) {
       const [p0, f0] = TIMELINE[k - 1];
       const t = p1 === p0 ? 1 : (p - p0) / (p1 - p0);
-      return (f0 + (f1 - f0) * t) * Math.max(count - 1, 0);
+      return (f0 + (f1 - f0) * t) * last;
     }
   }
-  return Math.max(count - 1, 0);
+  return last;
 }
 
-function framePath(set: "d" | "m", i: number) {
-  return `/seq/${set}/${String(i + 1).padStart(4, "0")}.webp`;
+/** Which frame set this device gets. */
+function pickTier(): Tier {
+  const nav = navigator as Navigator & {
+    deviceMemory?: number;
+    connection?: { saveData?: boolean; effectiveType?: string };
+  };
+  const portraitPhone = innerWidth < 820 && innerHeight > innerWidth;
+  const slowNet = !!nav.connection?.saveData || /(^|[^4-9])[23]g$/.test(nav.connection?.effectiveType ?? "");
+  const weak = (nav.deviceMemory ?? 8) <= 3 || (navigator.hardwareConcurrency ?? 8) <= 3;
+  if (portraitPhone) return slowNet || weak ? "s" : "m";
+  return slowNet ? "m" : "d";
 }
 
-/** Coarse-to-fine order: 0, every 16th, every 8th … every frame. */
+function framePath(tier: Tier, i: number) {
+  return `/seq/${tier}/${String(i + 1).padStart(4, "0")}.webp`;
+}
+
+/** Coarse-to-fine order: 0, every 32nd, every 16th … every frame. */
 function loadOrder(n: number) {
   const order: number[] = [];
   const seen = new Set<number>();
@@ -61,7 +82,7 @@ function loadOrder(n: number) {
       }
     }
   }
-  if (!seen.has(n - 1)) order.push(n - 1);
+  if (n && !seen.has(n - 1)) order.push(n - 1);
   return order;
 }
 
@@ -78,38 +99,73 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
     const el = section.current;
     const cv = canvas.current;
     if (!el || !cv) return;
-    const ctx = cv.getContext("2d", { alpha: false });
+    const ctx = cv.getContext("2d", { alpha: false, desynchronized: true });
     if (!ctx) return;
 
-    const count = SEQ.count;
-    const set: "d" | "m" = innerWidth < 820 && innerHeight > innerWidth ? "m" : "d";
+    const tier = pickTier();
+    const count = SEQ[tier].count;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const frames: (HTMLImageElement | null)[] = new Array(count).fill(null);
+    const requested = new Uint8Array(count);
     let loaded = 0;
     let disposed = false;
+    let dirty = true;
 
     // Poster first so the hero is never empty.
     const poster = new Image();
     poster.src = "/media/hero.webp";
+    poster.decode().then(() => (dirty = true)).catch(() => {});
 
     const order = loadOrder(count);
-    const firstBatch = Math.min(order.length, 48);
+    const skeleton = order.filter((i) => i % 8 === 0).length;
     let cursor = 0;
-    const PARALLEL = 6;
-    const next = () => {
-      if (disposed || cursor >= order.length) return;
-      const i = order[cursor++];
-      const img = new Image();
-      img.decoding = "async";
-      img.onload = img.onerror = () => {
-        if (img.naturalWidth) frames[i] = img;
-        loaded++;
-        if (loaded <= firstBatch) onReady(loaded / firstBatch);
-        next();
-      };
-      img.src = framePath(set, i);
+    let inflight = 0;
+    const PARALLEL = tier === "d" ? 6 : 4;
+    const WINDOW = tier === "s" ? 12 : 24;
+    let current = 0;
+
+    /** Next frame to fetch: skeleton first, then nearest to the user. */
+    const pick = (): number => {
+      while (cursor < skeleton && requested[order[cursor]]) cursor++;
+      if (cursor < skeleton) return order[cursor++];
+      const c = Math.round(current);
+      for (let d = 0; d <= WINDOW; d++) {
+        if (c - d >= 0 && !requested[c - d]) return c - d;
+        if (c + d < count && !requested[c + d]) return c + d;
+      }
+      while (cursor < order.length && requested[order[cursor]]) cursor++;
+      return cursor < order.length ? order[cursor++] : -1;
     };
-    if (count) for (let k = 0; k < PARALLEL; k++) next();
-    else poster.onload = () => onReady(1);
+    const pump = () => {
+      while (!disposed && inflight < PARALLEL) {
+        const i = pick();
+        if (i < 0) return;
+        requested[i] = 1;
+        inflight++;
+        const img = new Image();
+        img.decoding = "async";
+        img.src = framePath(tier, i);
+        const done = () => {
+          inflight--;
+          loaded++;
+          if (loaded <= skeleton) onReady(loaded / skeleton);
+          dirty = true;
+          pump();
+        };
+        img
+          .decode()
+          .then(() => {
+            frames[i] = img;
+            done();
+          })
+          .catch(() => {
+            // Decode can fail on memory pressure; keep going with neighbours.
+            done();
+          });
+      }
+    };
+    if (count) pump();
+    else onReady(1);
 
     const nearest = (i: number) => {
       for (let d = 0; d < count; d++) {
@@ -122,18 +178,20 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
     let w = 0;
     let h = 0;
     const resize = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const cap = tier === "d" ? 2 : tier === "m" ? 1.5 : 1;
+      const dpr = Math.min(devicePixelRatio || 1, cap);
       w = cv.clientWidth;
       h = cv.clientHeight;
       cv.width = Math.round(w * dpr);
       cv.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingQuality = "high";
+      dirty = true;
     };
 
     // Where to keep the subject when a wide frame is cropped to a tall screen.
     const focal = (p: number) => {
-      if (set === "m") return 0.5;
+      if (tier !== "d") return 0.5;
       const keys: [number, number][] = [
         [0, 0.7],
         [0.33, 0.6],
@@ -150,11 +208,7 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
       return 0.45;
     };
 
-    let current = 0;
-    let raf = 0;
-    let lastActive = -1;
-
-    const draw = (img: HTMLImageElement, p: number, zoom: number) => {
+    const draw = (img: HTMLImageElement, p: number, zoom: number, alpha = 1) => {
       const ir = img.naturalWidth / img.naturalHeight;
       const cr = w / h;
       let dw: number;
@@ -169,23 +223,51 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
       const fx = focal(p);
       const dx = clamp(w / 2 - dw * fx, w - dw, 0);
       const dy = (h - dh) / 2;
+      ctx.globalAlpha = alpha;
       ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.globalAlpha = 1;
     };
 
-    const tick = () => {
+    let raf = 0;
+    let lastActive = -1;
+    let lastT = performance.now();
+    let lastDrawnAt = -1;
+    let lastDrawnA: HTMLImageElement | null = null;
+    let lastDrawnB: HTMLImageElement | null = null;
+    // Damping speed (1/s): higher = tighter to the finger/wheel.
+    const K = tier === "d" ? 11 : 14;
+
+    const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
+      const dt = Math.min(0.05, (now - lastT) / 1000);
+      lastT = now;
       const r = el.getBoundingClientRect();
       if (r.bottom < -50 || r.top > innerHeight + 50) return;
       const total = r.height - innerHeight;
       const p = clamp(-r.top / total);
       const target = frameAt(p, count);
-      current += (target - current) * 0.2;
-      if (Math.abs(target - current) < 0.01) current = target;
-      const idx = Math.round(current);
-      const img = (count && nearest(idx)) || (poster.complete && poster.naturalWidth ? poster : null);
+      if (reduced) current = target;
+      else {
+        current += (target - current) * (1 - Math.exp(-dt * K));
+        if (Math.abs(target - current) < 0.002) current = target;
+      }
+
+      const i0 = Math.floor(current);
+      const i1 = Math.min(count - 1, i0 + 1);
+      const t = current - i0;
+      const A = (count && nearest(i0)) || (poster.complete && poster.naturalWidth ? poster : null);
+      const B = count && t > 0.01 ? nearest(i1) : null;
       // Slow push-in over the whole film keeps even still frames alive.
       const zoom = 1.04 - 0.04 * p;
-      if (img) draw(img, p, zoom);
+      if (A && (dirty || Math.abs(current - lastDrawnAt) > 0.004 || A !== lastDrawnA || B !== lastDrawnB)) {
+        draw(A, p, zoom);
+        if (B && B !== A) draw(B, p, zoom, t);
+        lastDrawnAt = current;
+        lastDrawnA = A;
+        lastDrawnB = B;
+        dirty = false;
+      }
+      if (inflight < PARALLEL) pump();
 
       // Overlays.
       const heroO = 1 - smooth(0.0, 0.07, p);
@@ -218,12 +300,20 @@ export function Film({ onReady }: { onReady: (progress: number) => void }) {
     };
 
     resize();
-    addEventListener("resize", resize);
+    // iOS toolbars resize the stage while scrolling; follow without thrash.
+    let rt = 0;
+    const onResize = () => {
+      clearTimeout(rt);
+      rt = window.setTimeout(resize, 120);
+    };
+    const ro = new ResizeObserver(onResize);
+    ro.observe(cv);
     raf = requestAnimationFrame(tick);
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
-      removeEventListener("resize", resize);
+      clearTimeout(rt);
+      ro.disconnect();
     };
   }, [onReady]);
 
