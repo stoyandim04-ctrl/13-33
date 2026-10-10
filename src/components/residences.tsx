@@ -115,8 +115,24 @@ export function Residences() {
             <p className="mt-8 text-[0.8rem] text-mute">Площите са ориентировъчни — Варовик е концепция, не реален обект.</p>
           </div>
 
-          <div id="plan-panel" role="tabpanel" aria-labelledby={`tab-${r.id}`} className="self-center bg-paper-2 p-6 md:p-12">
-            <Plan r={r} />
+          <div id="plan-panel" role="tabpanel" aria-labelledby={`tab-${r.id}`} className="grid gap-4">
+            <div className="relative aspect-[16/10] overflow-hidden bg-paper-3">
+              {residences.map((x) => (
+                <img
+                  key={x.id}
+                  src={x.image}
+                  alt={x.id === r.id ? x.imageAlt : ""}
+                  aria-hidden={x.id !== r.id}
+                  loading="lazy"
+                  className={`absolute inset-0 size-full object-cover transition-[opacity,transform] duration-[1400ms] ease-[var(--ease-calm)] ${
+                    x.id === r.id ? "scale-100 opacity-100" : "scale-[1.04] opacity-0"
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="bg-paper-2 p-5 md:p-8">
+              <Plan r={r} />
+            </div>
           </div>
         </div>
       </div>

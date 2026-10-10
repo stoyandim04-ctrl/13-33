@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { DayStory } from "./components/day-story";
+import { Arrival } from "./components/arrival";
+import { Evening } from "./components/evening";
 import { Footer } from "./components/footer";
 import { Header } from "./components/header";
 import { Inquiry } from "./components/inquiry";
@@ -35,8 +36,9 @@ export default function App() {
       </a>
       <Header />
       <main>
-        <DayStory />
+        <Arrival />
         <Residences />
+        <Evening />
         <Materials />
         <Inquiry />
       </main>

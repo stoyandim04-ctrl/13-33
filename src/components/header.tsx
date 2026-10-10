@@ -6,7 +6,7 @@ export function Header() {
   const [solid, setSolid] = useState(false);
 
   useEffect(() => {
-    const day = document.getElementById("den");
+    const day = document.getElementById("pristigane");
     const onScroll = () => {
       const edge = day ? day.offsetTop + day.offsetHeight - 80 : 80;
       setSolid(window.scrollY > edge);
@@ -24,14 +24,13 @@ export function Header() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,color,border-color] duration-700 ${
-        solid ? "border-b border-line bg-paper/85 text-ink backdrop-blur-md" : "border-b border-transparent"
+        solid ? "border-b border-line bg-paper/85 text-ink backdrop-blur-md" : "border-b border-transparent text-cream"
       }`}
-      style={solid ? undefined : { color: "var(--scene-ink)" }}
     >
       <div className="wrap flex h-16 items-center justify-between gap-6">
-        <a href="#den" onClick={(e) => go(e, "#den")} className="flex items-baseline gap-3">
+        <a href="#pristigane" onClick={(e) => go(e, "#pristigane")} className="flex items-baseline gap-3">
           <span className="font-display text-[1.7rem] font-medium leading-none tracking-[-0.01em]">{site.name}</span>
-          <span className="eyebrow hidden text-[0.6rem] opacity-70 sm:inline">Концепция</span>
+          <span className="eyebrow hidden text-[0.6rem] opacity-70 sm:inline">{site.tagline} · концепция</span>
         </a>
         <nav aria-label="Основна навигация" className="flex items-center gap-5 text-[0.82rem] font-medium md:gap-9">
           {nav.map((n) => (
@@ -47,9 +46,11 @@ export function Header() {
           <a
             href="#zapitvane"
             onClick={(e) => go(e, "#zapitvane")}
-            className="border-b border-current pb-0.5 transition-colors hover:text-accent"
+            className={`px-4 py-2.5 text-[0.7rem] font-semibold tracking-[0.16em] uppercase transition-colors duration-500 ${
+              solid ? "bg-accent text-cream hover:bg-ink" : "bg-brass text-night hover:bg-cream"
+            }`}
           >
-            Запитване
+            Запази оглед
           </a>
         </nav>
       </div>

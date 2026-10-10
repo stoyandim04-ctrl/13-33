@@ -13,9 +13,9 @@ export function Inquiry() {
       <div className="wrap grid gap-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-24">
         <SectionHead
           id="zapitvane-h"
-          eyebrow="Запитване"
-          title="Искате да го видите отблизо?"
-          lead="Оставете име и телефон — така би изглеждала връзката с купувача на истински проект."
+          eyebrow="Оглед"
+          title="Елате да го видите на живо"
+          lead="Оставете име и телефон — така би изглеждала заявката за оглед при истински проект."
         />
 
         <div data-reveal>
@@ -65,7 +65,7 @@ export function Inquiry() {
                   type="submit"
                   className="bg-accent px-9 py-4 text-[0.82rem] font-semibold tracking-[0.16em] text-cream uppercase transition-colors duration-500 hover:bg-ink"
                 >
-                  Изпрати запитване
+                  Запази оглед
                 </button>
                 <p className="text-[0.8rem] text-mute">Демо форма — не изпраща данни.</p>
               </div>

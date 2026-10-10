@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { materials } from "../data/content";
-import { materialSwatch } from "../lib/textures";
 import { gsap, prefersReducedMotion } from "../lib/motion";
 import { SectionHead } from "./section-head";
 
@@ -9,12 +8,6 @@ import { SectionHead } from "./section-head";
 export function Materials() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const [swatches, setSwatches] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    setSwatches(Object.fromEntries(materials.map((m) => [m.id, materialSwatch(m.id)])));
-  }, []);
-
   useEffect(() => {
     const section = sectionRef.current;
     const track = trackRef.current;
@@ -76,15 +69,13 @@ export function Materials() {
             data-reveal
           >
             <div className="relative aspect-[4/5] overflow-hidden bg-paper-3 lg:aspect-auto lg:h-[72svh]">
-              {swatches[m.id] && (
-                <div
-                  data-swatch
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${swatches[m.id]})` }}
-                  role="img"
-                  aria-label={`Текстура — ${m.name}`}
-                />
-              )}
+              <img
+                data-swatch
+                src={m.image}
+                alt={`${m.name} — ${m.use.toLowerCase()}`}
+                loading="lazy"
+                className="absolute inset-0 size-full object-cover"
+              />
               <div className="absolute inset-0 shadow-[inset_0_0_8rem_rgb(43_37_32/0.18)]" aria-hidden="true" />
             </div>
             <div className="pb-2">

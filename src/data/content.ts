@@ -3,44 +3,70 @@
 
 export const site = {
   name: "Варовик",
+  tagline: "Резиденции",
   studio: "13:33 Digital Studio",
   conceptNote: "Измислен проект — концепция на студио 13:33. Няма инвеститор, цени или срокове.",
 };
 
 export const nav = [
-  { href: "#den", label: "Денят" },
+  { href: "#pristigane", label: "Сградата" },
   { href: "#zhilishta", label: "Жилища" },
   { href: "#materiali", label: "Материали" },
 ];
 
-/** One chapter per story beat in scene/day.ts, same order. */
-export const chapters = [
-  {
-    eyebrow: "Концепция · жилищна сграда",
-    title: "Варовик",
-    lead: "Пет етажа камък, стъкло и тераси в полите на планината. Скролнете — ще ви покажем един ден тук.",
-  },
-  {
-    eyebrow: "Утро",
-    title: "Светлината влиза първо в спалните",
-    lead: "Спалните гледат на изток. Денят започва с мека светлина, не с будилник.",
-  },
-  {
-    eyebrow: "Обед",
-    title: "Сянка точно когато трябва",
-    lead: "Дълбоките тераси спират високото лятно слънце, а ниското зимно пускат навътре.",
-  },
-  {
-    eyebrow: "Залез",
-    title: "Водата удвоява небето",
-    lead: "Басейнът стои на оста на сградата. Привечер в него се оглеждат терасите и планината.",
-  },
-  {
-    eyebrow: "Вечер",
-    title: "Къщата светва отвътре",
-    lead: "Топла светлина зад камъка и тишина, която се чува.",
-  },
-];
+/** The scroll walk. `from`/`to` are scroll windows (0..1) for each caption;
+ *  they line up with the holds in components/arrival.tsx. */
+export const arrival = {
+  chapters: [
+    {
+      place: "Пристигане",
+      eyebrow: "Резиденции в полите на планината",
+      title: "Варовик",
+      lead: "Камък, светлина и тишина. Елате — ще ви разведем.",
+      from: -1,
+      to: 0.06,
+    },
+    {
+      place: "Алеята",
+      eyebrow: "Към входа",
+      title: "Пътят минава по водата",
+      lead: "Пътят до вкъщи минава покрай басейна и стари маслини. Градът остава зад вас.",
+      from: 0.12,
+      to: 0.26,
+    },
+    {
+      place: "Входът",
+      eyebrow: "Порталът",
+      title: "Камък, който ви посреща",
+      lead: "Двоен по височина вход от травертин и стъкло. Вечер светлината отвътре се вижда от алеята.",
+      from: 0.295,
+      to: 0.4,
+    },
+    {
+      place: "Лобито",
+      eyebrow: "Лоби",
+      title: "Топло, тихо, високо",
+      lead: "Травертин, дъб и мека светлина. Тук не чакате — тук пристигате.",
+      from: 0.5,
+      to: 0.66,
+    },
+    {
+      place: "Дворът",
+      eyebrow: "Вътрешен двор",
+      title: "Градина само за живущите",
+      lead: "Басейн, маслини и кипариси зад стената, а над тях — планината.",
+      from: 0.87,
+      to: 2,
+    },
+  ],
+  /** Points on the lobby frame (0..1 of the film frame). */
+  hotspots: [
+    { label: "Стъкло към градината", x: 0.14, y: 0.32 },
+    { label: "Висящи лампи", x: 0.53, y: 0.24 },
+    { label: "Към двора", x: 0.5, y: 0.6 },
+    { label: "Рецепция", x: 0.8, y: 0.63 },
+  ],
+};
 
 export type Room = { x: number; y: number; w: number; h: number; label?: string; outdoor?: boolean };
 
@@ -49,6 +75,8 @@ export interface Residence {
   name: string;
   floors: string;
   note: string;
+  image: string;
+  imageAlt: string;
   area: number;
   outdoor: number;
   outdoorLabel: string;
@@ -64,6 +92,8 @@ export const residences: Residence[] = [
     name: "Градински",
     floors: "Партер",
     note: "Дневната излиза направо в собствена градина с маслини.",
+    image: "/media/residence-garden.webp",
+    imageAlt: "Дневна с травертинов под, отворена към градина с маслини",
     area: 118,
     outdoor: 90,
     outdoorLabel: "Градина",
@@ -83,6 +113,8 @@ export const residences: Residence[] = [
     name: "Терасов",
     floors: "Етажи 2–4",
     note: "Терасата е широка колкото цялото жилище и дълбока над три метра.",
+    image: "/media/residence-terrace.webp",
+    imageAlt: "Дневна и трапезария с дъбов под и тераса към планината по залез",
     area: 146,
     outdoor: 42,
     outdoorLabel: "Тераса",
@@ -102,7 +134,9 @@ export const residences: Residence[] = [
     id: "penthaus",
     name: "Пентхаус",
     floors: "Последен етаж",
-    note: "Терасата обикаля жилището от три страни. Планината е в дневната.",
+    note: "Терасата обикаля жилището от три страни, с басейн и планината отпред.",
+    image: "/media/residence-penthouse.webp",
+    imageAlt: "Покривна тераса с басейн и изглед към планината в синия час",
     area: 210,
     outdoor: 120,
     outdoorLabel: "Тераса",
@@ -122,21 +156,24 @@ export const residences: Residence[] = [
 
 export const materials = [
   {
-    id: "travertine" as const,
+    id: "travertine",
     name: "Травертин",
     use: "Фасада и тераси",
     text: "Порест, топъл и матов. С годините става по-мек, не по-стар.",
+    image: "/media/material-travertine.webp",
   },
   {
-    id: "oak" as const,
+    id: "oak",
     name: "Дъб",
     use: "Подове и дограма",
     text: "Масив с маслено покритие. Под бос крак е топъл и през зимата.",
+    image: "/media/material-oak.webp",
   },
   {
-    id: "linen" as const,
+    id: "linen",
     name: "Лен",
     use: "Завеси и тапицерия",
     text: "Пропуска светлината, спира погледа. Вечер прави прозорците да светят меко.",
+    image: "/media/material-linen.webp",
   },
 ];
