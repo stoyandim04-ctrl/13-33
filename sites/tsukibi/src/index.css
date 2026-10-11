@@ -150,3 +150,8 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+@keyframes pin-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(255 91 36 / 0.55); }
+  100% { box-shadow: 0 0 0 14px rgb(255 91 36 / 0); }
+}

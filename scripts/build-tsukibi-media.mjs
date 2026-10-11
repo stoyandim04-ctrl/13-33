@@ -22,48 +22,46 @@ await fs.mkdir(out, { recursive: true });
 const work = await fs.mkdtemp(path.join(os.tmpdir(), "1333-tsukibi-"));
 const browser = await chromium.launch({ executablePath: (await exists(executablePath)) ? executablePath : undefined });
 
-// Poster: the menu with the ingredient labels open.
+// Poster: the menu with the plate tilted and its ingredients standing up.
 {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1.25 });
   const page = await ctx.newPage();
   await page.goto(`${base}/menu?dish=wagyu`, { waitUntil: "networkidle" });
   await page.waitForTimeout(2200);
-  await page.mouse.move(W / 2, H / 2);
-  await page.waitForTimeout(1800);
+  await page.getByRole("button", { name: /Виж съставките/ }).click();
+  await page.mouse.move(W - 60, H - 60);
+  await page.waitForTimeout(2000);
   const png = path.join(work, "poster.png");
   await page.screenshot({ path: png });
   ffmpeg(["-i", png, "-c:v", "libwebp", "-quality", "82", path.join(out, "poster.webp")]);
   await ctx.close();
 }
 
-// Recording: labels on the plate, then two dishes rolled in with the wheel.
+// Recording: a dish rolls in, the plate tilts and shows its ingredients, then the next one.
 {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, recordVideo: { dir: work, size: { width: W, height: H } } });
   const page = await ctx.newPage();
   await page.goto(`${base}/menu?dish=wagyu`, { waitUntil: "networkidle" });
   await page.waitForTimeout(2000);
-  await page.mouse.move(W / 2 - 40, H / 2, { steps: 12 });
-  await page.waitForTimeout(1900);
-  await page.mouse.move(W - 120, 140, { steps: 8 });
-  await page.mouse.wheel(0, 120);
-  await page.waitForTimeout(1500);
-  await page.mouse.wheel(0, 120);
+  await page.mouse.move(W / 2, H / 2 + 20, { steps: 10 });
+  await page.waitForTimeout(500);
+  await page.mouse.click(W / 2, H / 2 + 20);
+  await page.waitForTimeout(2300);
+  await page.getByRole("button", { name: "Следващо ястие" }).click();
   await page.waitForTimeout(1300);
-  await page.getByRole("button", { name: /Добави към поръчката/ }).hover();
-  await page.waitForTimeout(300);
-  await page.getByRole("button", { name: /Добави към поръчката/ }).click();
-  await page.waitForTimeout(1400);
+  await page.getByRole("button", { name: /Виж съставките/ }).click();
+  await page.waitForTimeout(2600);
   const video = page.video();
   await ctx.close();
   const webm = await video.path();
   ffmpeg([
-    "-ss", "1.8", "-i", webm, "-t", "7.3",
+    "-ss", "1.9", "-i", webm, "-t", "7.3",
     "-vf", "scale=960:-2:flags=lanczos,fps=30",
     "-c:v", "libx264", "-preset", "slow", "-crf", "27", "-pix_fmt", "yuv420p",
     "-movflags", "+faststart", "-an", path.join(out, "preview.mp4"),
   ]);
   ffmpeg([
-    "-ss", "1.8", "-i", webm, "-t", "7.3",
+    "-ss", "1.9", "-i", webm, "-t", "7.3",
     "-vf", "scale=960:-2:flags=lanczos,fps=30",
     "-c:v", "libvpx-vp9", "-crf", "40", "-b:v", "0", "-row-mt", "1", "-deadline", "good",
     "-an", path.join(out, "preview.webm"),

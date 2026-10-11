@@ -4,6 +4,8 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
+// Адресната лента на телефона мени височината — без това ScrollTrigger прескача при скрол.
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 /** Плавен скрол за началната страница, вързан към тиктакането на GSAP. */
 export function useLenis() {

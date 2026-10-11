@@ -8,11 +8,8 @@ import { Intro } from "../components/intro";
 import { Marquee } from "../components/marquee";
 import { LogoMark } from "../components/logo";
 import { goTo } from "../components/transition";
-import { dishes, formatPrice } from "../data/menu";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const signature = ["wagyu", "ramen", "nigiri", "duck", "cod"].map((s) => dishes.find((d) => d.slug === s)!);
 
 const reduce = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -29,12 +26,13 @@ export default function Home() {
       <Intro onDone={() => setReady(true)} />
       <Hero ready={ready} />
       <Manifesto />
-      <Signature />
+      <Evening />
+      <Gallery />
       <Fire />
       <Omakase />
       <Bar />
       <div className="border-y border-line">
-        <Marquee items={["Луна", "Огън", "Бинчотан", "Рамен", "Омакасе", "Саке"]} />
+        <Marquee items={["Луна", "Огън", "Бинчотан", "Суши", "Омакасе", "Саке"]} />
       </div>
       <Visit />
       <Footer />
@@ -67,12 +65,16 @@ function Hero({ ready }: { ready: boolean }) {
       const tl = gsap.timeline({
         scrollTrigger: { trigger: root.current, start: "top top", end: "bottom bottom", scrub: 1 },
       });
-      tl.to("[data-hero-title]", { yPercent: -40, opacity: 0, ease: "none" }, 0)
-                .to("[data-hero-bg]", { scale: 1.3, filter: "brightness(0.35)", ease: "none" }, 0)
-        .to("[data-hero-plate-wrap]", { y: () => -window.innerHeight * 0.42, scale: 1.25, ease: "none" }, 0)
-        .to("[data-hero-plate]", { rotate: 200, ease: "none" }, 0)
-        .fromTo("[data-hero-ring]", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, ease: "none" }, 0.35)
-        .fromTo("[data-hero-after]", { opacity: 0, y: 40 }, { opacity: 1, y: 0, ease: "none" }, 0.55);
+      // Всичко в hero-то приключва преди залепеният кадър да се откачи — нищо не се реже.
+      tl.to("[data-hero-title]", { yPercent: -40, opacity: 0, ease: "none", duration: 0.4 }, 0)
+        .to("[data-hero-bg]", { scale: 1.3, filter: "brightness(0.35)", ease: "none", duration: 1 }, 0)
+        .to("[data-hero-plate-wrap]", { y: () => -window.innerHeight * 0.42, scale: 1.12, ease: "none", duration: 0.55 }, 0)
+        .to("[data-hero-plate]", { rotate: 200, ease: "none", duration: 1 }, 0)
+        .fromTo("[data-hero-ring]", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, ease: "none", duration: 0.25 }, 0.3)
+        .fromTo("[data-hero-after]", { opacity: 0, y: 40 }, { opacity: 1, y: 0, ease: "none", duration: 0.2 }, 0.4)
+        .to("[data-hero-plate-wrap]", { scale: 0.7, opacity: 0, ease: "none", duration: 0.25 }, 0.72)
+        .to("[data-hero-ring]", { opacity: 0, ease: "none", duration: 0.2 }, 0.72)
+        .to("[data-hero-after]", { opacity: 0, y: -30, ease: "none", duration: 0.2 }, 0.78);
     }, root);
     return () => ctx.revert();
   }, []);
@@ -81,7 +83,7 @@ function Hero({ ready }: { ready: boolean }) {
   const title2 = "и огън";
 
   return (
-    <section ref={root} className="relative h-[220vh]">
+    <section ref={root} className="relative h-[200vh]">
       <div className="sticky top-0 h-svh overflow-hidden">
         <div data-hero-bg className="absolute inset-0 opacity-0">
           <video className="h-full w-full object-cover" autoPlay muted loop playsInline poster="/img/scenes/grill.webp" aria-hidden="true">
@@ -91,7 +93,7 @@ function Hero({ ready }: { ready: boolean }) {
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-ink/80 via-ink/30 to-ink" />
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 45%, transparent 30%, rgb(11 10 9 / 0.85) 80%)" }} />
-        <Embers />
+        <Embers density={typeof window !== "undefined" && window.innerWidth < 768 ? 0.5 : 1} />
 
         {/* вертикален знак */}
         <p data-hero-fade className="absolute left-5 top-1/2 hidden -translate-y-1/2 font-jp text-sm tracking-[1em] text-bone/40 [writing-mode:vertical-rl] md:block md:left-10">
@@ -142,8 +144,8 @@ function Hero({ ready }: { ready: boolean }) {
         </div>
 
         <div data-hero-after className="absolute inset-x-0 top-[16vh] z-10 px-5 text-center opacity-0">
-          <p className="eyebrow">Подписът на кухнята</p>
-          <p className="mt-3 font-display text-title">Уагю татаки · 34 €</p>
+          <p className="eyebrow">Цукиби · 月火</p>
+          <p className="mt-3 font-display text-title">Една робата. Цяла Азия.</p>
         </div>
       </div>
     </section>
@@ -182,8 +184,8 @@ function Manifesto() {
       <div className="mt-16 grid gap-10 border-t border-line pt-10 sm:grid-cols-3">
         {[
           ["Робата", "Шишове, риба и зеленчуци над бял въглен — пред очите ти."],
-          ["Рамен и купи", "Бульони, които се варят от сутринта, и нудли с характер."],
-          ["Суров бар", "Нигири и чираши от риба, която пристига всяка сутрин."],
+          ["Суши и риба", "Нигири, сашими и риба на въглен — от улов, който пристига всяка сутрин."],
+          ["Салати и предястия", "Свежо, хрупкаво и лютиво — за началото на вечерта."],
         ].map(([t, d]) => (
           <div key={t}>
             <h3 className="font-display text-3xl">{t}</h3>
@@ -195,77 +197,91 @@ function Manifesto() {
   );
 }
 
-/* ───────────────────────── SIGNATURE (хоризонтален скрол) ───────────────────────── */
+/* ───────────────────────── EVENING ───────────────────────── */
 
-function Signature() {
+const steps = [
+  { n: "18:00", t: "Саке на бара", d: "Вратата се отваря, робатата вече е запалена. Започни с чаша студено саке и нещо хрупкаво." },
+  { n: "19:00", t: "Огънят", d: "Шефът готви пред теб — шишове, риба и зеленчуци минават през жарта един по един." },
+  { n: "20:30", t: "Омакасе или а ла карт", d: "Остави шефа да избира или подреди вечерта сам от петте части на менюто." },
+  { n: "22:00", t: "Чай и тишина", d: "Матча от Уджи, нещо сладко и последните въгленчета в робатата." },
+];
+
+function Evening() {
   const root = useRef<HTMLElement>(null);
-  const track = useRef<HTMLDivElement>(null);
-
   useLayoutEffect(() => {
-    const mm = gsap.matchMedia();
-    mm.add("(min-width: 768px) and (prefers-reduced-motion: no-preference)", () => {
-      const el = track.current!;
-      const distance = () => el.scrollWidth - window.innerWidth;
-      const tween = gsap.to(el, {
-        x: () => -distance(),
-        ease: "none",
-        scrollTrigger: { trigger: root.current, start: "top top", end: () => `+=${distance()}`, scrub: 1, pin: true, invalidateOnRefresh: true },
+    if (reduce()) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo("[data-step-line]", { scaleY: 0 }, { scaleY: 1, ease: "none", scrollTrigger: { trigger: "[data-steps]", start: "top 70%", end: "bottom 60%", scrub: true } });
+      gsap.utils.toArray<HTMLElement>("[data-step]").forEach((el) => {
+        gsap.fromTo(el, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 1, ease: "expo.out", scrollTrigger: { trigger: el, start: "top 80%" } });
       });
-      gsap.utils.toArray<HTMLElement>("[data-sig-plate]").forEach((p) => {
-        gsap.fromTo(p, { rotate: -90 }, {
-          rotate: 90, ease: "none",
-          scrollTrigger: { trigger: p, containerAnimation: tween, start: "left right", end: "right left", scrub: true },
-        });
-      });
-    });
-    return () => mm.revert();
+    }, root);
+    return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={root} className="relative overflow-hidden bg-coal">
-      <div ref={track} className="flex flex-col gap-20 py-24 md:h-svh md:w-max md:flex-row md:items-center md:gap-0 md:py-0">
-        <div className="shrink-0 px-5 md:w-[42vw] md:pl-10 md:pr-16">
-          <p className="eyebrow">02 — Подписите</p>
+    <section ref={root} className="relative bg-coal py-[16vh]">
+      <div className="mx-auto grid max-w-[1600px] gap-14 px-5 md:px-10 lg:grid-cols-[1fr_1.2fr]">
+        <div className="lg:sticky lg:top-[20vh] lg:self-start">
+          <p className="eyebrow">02 — Вечерта</p>
           <h2 className="mt-6 font-display text-heading font-normal">
-            Пет чинии,
+            Една вечер
             <br />
-            <em className="text-bone/80">заради които</em>
-            <br />
-            ще се върнеш
+            <em>в Цукиби</em>
           </h2>
-          <p className="mt-6 max-w-sm text-lead text-bone/65">Скролни — огънят ги върти. Всяка води към менюто, където можеш да я разгледаш отблизо.</p>
+          <p className="mt-6 max-w-md text-lead text-bone/65">Без бързане. Масите не се въртят — вечерта е твоя, от първата чаша до последната жар.</p>
         </div>
-        {signature.map((d, i) => (
-          <article key={d.slug} className="group relative shrink-0 px-5 md:flex md:h-full md:w-[56vw] md:items-center md:gap-10 md:px-10 lg:w-[48vw]">
-            <span className="pointer-events-none absolute left-5 top-0 font-display text-[9rem] leading-none text-bone/[0.05] md:left-10 md:top-[12%] md:text-[16rem]">
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <Link to={`/menu?dish=${d.slug}`} onClick={(e) => goTo(e, `/menu?dish=${d.slug}`)} className="relative block md:w-[55%] md:shrink-0">
-              <img data-sig-plate src={d.image} alt={`${d.name}, поглед отгоре`} loading="lazy" className="w-full transition-transform duration-700 ease-out-expo drop-shadow-[0_40px_50px_rgba(0,0,0,0.7)] group-hover:scale-105" />
-            </Link>
-            <div className="relative mt-6 md:mt-0">
-              <p className="font-jp text-sm tracking-[0.35em] text-muted">{d.native}</p>
-              <h3 className="mt-2 font-display text-title">{d.name}</h3>
-              <p className="mt-3 max-w-xs text-sm leading-relaxed text-bone/65">{d.description}</p>
-              <div className="mt-5 flex items-center gap-5">
-                <span className="font-display text-2xl">{formatPrice(d.price)}</span>
-                <Link to={`/menu?dish=${d.slug}`} onClick={(e) => goTo(e, `/menu?dish=${d.slug}`)} className="text-sm font-semibold text-ember underline-offset-4 hover:underline">
-                  Виж в менюто →
-                </Link>
-              </div>
-            </div>
-          </article>
+        <ol data-steps className="relative space-y-14 pl-10 md:pl-14">
+          <span data-step-line aria-hidden="true" className="absolute left-[7px] top-2 h-[calc(100%-1rem)] w-px origin-top bg-gradient-to-b from-ember via-ember/40 to-transparent md:left-[11px]" />
+          {steps.map((s) => (
+            <li key={s.n} data-step className="relative">
+              <span aria-hidden="true" className="absolute -left-10 top-2 h-4 w-4 rounded-full border border-ember bg-ink md:-left-14 md:h-6 md:w-6">
+                <span className="absolute inset-1 rounded-full bg-ember" />
+              </span>
+              <p className="font-display text-xl tabular-nums text-ember-soft">{s.n}</p>
+              <h3 className="mt-1 font-display text-title">{s.t}</h3>
+              <p className="mt-3 max-w-md text-bone/65">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────── GALLERY ───────────────────────── */
+
+const shots = [
+  { src: "/img/scenes/interior.webp", alt: "Барът с кръглата лампа", w: "w-[78vw] md:w-[46vw]", a: "aspect-[16/10]" },
+  { src: "/img/scenes/chef.webp", alt: "Готвач подрежда чиния", w: "w-[56vw] md:w-[24vw]", a: "aspect-[4/5]" },
+  { src: "/img/scenes/noren.webp", alt: "Входът с норен вечер", w: "w-[56vw] md:w-[24vw]", a: "aspect-[4/5]" },
+  { src: "/img/scenes/embers.webp", alt: "Въглени бинчотан", w: "w-[78vw] md:w-[40vw]", a: "aspect-[16/10]" },
+  { src: "/img/scenes/cocktail.webp", alt: "Коктейл на бара", w: "w-[56vw] md:w-[24vw]", a: "aspect-[4/5]" },
+];
+
+function Gallery() {
+  const root = useRef<HTMLElement>(null);
+  const row = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (reduce()) return;
+    const ctx = gsap.context(() => {
+      // Без закачане: редът просто се плъзга, докато минаваш покрай него.
+      gsap.fromTo(row.current, { xPercent: 0 }, { xPercent: -38, ease: "none", scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true } });
+    }, root);
+    return () => ctx.revert();
+  }, []);
+  return (
+    <section ref={root} className="overflow-hidden py-[12vh]" aria-label="Пространството">
+      <div className="mx-auto mb-10 flex max-w-[1600px] items-end justify-between gap-6 px-5 md:px-10">
+        <h2 className="font-display text-title">Пространството</h2>
+        <p className="max-w-xs text-right text-sm text-muted">Опушено дърво, една кръгла лампа като луна и десет места пред огъня.</p>
+      </div>
+      <div ref={row} className="flex w-max items-center gap-4 pl-5 md:gap-6 md:pl-10">
+        {shots.map((s) => (
+          <figure key={s.src} className={`${s.w} ${s.a} shrink-0 overflow-hidden rounded-[1.5rem]`}>
+            <img src={s.src} alt={s.alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.4s] ease-out-expo hover:scale-105" />
+          </figure>
         ))}
-        <div className="flex shrink-0 items-center px-5 md:w-[40vw] md:justify-center">
-          <Link to="/menu" onClick={(e) => goTo(e, "/menu")} className="group relative grid aspect-square w-56 place-items-center rounded-full border border-line transition-colors duration-500 hover:border-ember md:w-72">
-            <span className="absolute inset-3 scale-0 rounded-full bg-ember transition-transform duration-700 ease-out-expo group-hover:scale-100" />
-            <span className="relative text-center font-display text-3xl transition-colors group-hover:text-ink">
-              Цялото
-              <br />
-              меню →
-            </span>
-          </Link>
-        </div>
       </div>
     </section>
   );
@@ -411,10 +427,10 @@ function Omakase() {
 /* ───────────────────────── BAR ───────────────────────── */
 
 const drinks = [
-  { name: "Луна над Кобе", d: "Японско уиски, юзу, шисо, димна сфера лед", p: 16 },
-  { name: "Бинчотан негрони", d: "Джин, вермут и биттер, опушени на въглен", p: 15 },
-  { name: "Сакура хайбол", d: "Шочу, черешов цвят, газирана вода", p: 13 },
-  { name: "Дзунмай гинджо", d: "Саке по чаша, сервирано студено", p: 12 },
+  { name: "Луна над Кобе", d: "Японско уиски, юзу, шисо, димна сфера лед" },
+  { name: "Бинчотан негрони", d: "Джин, вермут и биттер, опушени на въглен" },
+  { name: "Сакура хайбол", d: "Шочу, черешов цвят, газирана вода" },
+  { name: "Дзунмай гинджо", d: "Саке по чаша, сервирано студено" },
 ];
 
 function Bar() {
@@ -445,7 +461,6 @@ function Bar() {
                 <p className="font-display text-2xl transition-colors group-hover:text-ember-soft">{d.name}</p>
                 <p className="mt-1 text-sm text-muted">{d.d}</p>
               </div>
-              <span className="font-display text-xl tabular-nums">{formatPrice(d.p)}</span>
             </li>
           ))}
         </ul>
