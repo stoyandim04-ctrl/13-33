@@ -3,7 +3,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export const env = {
-  supabaseUrl: process.env.SUPABASE_URL ?? "",
+  // Public project address (not a secret); the env var can override it.
+  supabaseUrl: process.env.SUPABASE_URL || "https://fuqixmjvsalzemxrbslp.supabase.co",
   supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   anthropicKey: process.env.ANTHROPIC_API_KEY ?? "",
   studioPassword: process.env.STUDIO_PASSWORD ?? "",
@@ -11,7 +12,7 @@ export const env = {
   studioName: process.env.STUDIO_NAME || "Основателят на 13:33",
   telegramToken: process.env.TELEGRAM_BOT_TOKEN ?? "",
   telegramChat: process.env.TELEGRAM_CHAT_ID ?? "",
-  siteUrl: (process.env.SITE_URL || "").replace(/\/$/, ""),
+  siteUrl: (process.env.SITE_URL || "https://13-33-1gsb.vercel.app").replace(/\/$/, ""),
 };
 
 export const BUCKET = "inquiry-files";
