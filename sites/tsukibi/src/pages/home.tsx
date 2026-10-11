@@ -40,50 +40,60 @@ export default function Home() {
   );
 }
 
-/* ───────────────────────── HERO ───────────────────────── */
+/* ───────────────────────── HERO ─────────────────────────
+   Подписът: „луната“. Огънят се вижда в пълен цвят само през кръг в центъра;
+   около него кадърът е потъмнен. При скрол луната се разширява, докато огънят
+   изпълни екрана — после секцията просто се изкачва нагоре. Нищо не се реже. */
+
+// Радиусът на луната в px — GSAP интерполира числа, не var() и смесени единици.
+const moonR0 = () => Math.min(window.innerWidth, window.innerHeight) * (window.innerWidth < 768 ? 0.34 : 0.26);
+const moonR1 = () => Math.hypot(window.innerWidth, window.innerHeight) / 2 + 40;
 
 function Hero({ ready }: { ready: boolean }) {
   const root = useRef<HTMLElement>(null);
+  const moon = useRef<HTMLDivElement>(null);
 
   // Влизане след интрото.
   useLayoutEffect(() => {
     if (!ready) return;
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.fromTo("[data-hero-bg]", { scale: 1.35, opacity: 0 }, { scale: 1.12, opacity: 1, duration: 2.4 }, 0)
-        .fromTo("[data-hero-char]", { yPercent: 115, rotate: 6 }, { yPercent: 0, rotate: 0, duration: 1.4, stagger: 0.04 }, 0.15)
-        .fromTo("[data-hero-fade]", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1.2, stagger: 0.08 }, 0.6)
-        .fromTo("[data-hero-plate]", { yPercent: 40, rotate: -120, opacity: 0 }, { yPercent: 0, rotate: 0, opacity: 1, duration: 2.2 }, 0.3);
+      tl.fromTo("[data-hero-bg]", { scale: 1.25, opacity: 0 }, { scale: 1.08, opacity: 1, duration: 2.6 }, 0)
+        .fromTo(moon.current, { "--r": "0px" }, { "--r": () => `${moonR0()}px`, duration: 2.2, ease: "expo.inOut" }, 0.1)
+        .fromTo("[data-hero-ring]", { opacity: 0, scale: 0.85, rotate: -40 }, { opacity: 1, scale: 1, rotate: 0, duration: 2.4 }, 0.6)
+        .fromTo("[data-hero-char]", { yPercent: 115 }, { yPercent: 0, duration: 1.5, stagger: 0.045 }, 0.7)
+        .fromTo("[data-hero-fade]", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 1.2, stagger: 0.08 }, 1.1);
     }, root);
     return () => ctx.revert();
   }, [ready]);
 
-  // Скрол: заглавието се вдига, чинията изплува и се завърта в центъра.
+  // Скрол: луната се разширява до цял екран, текстът се отдръпва.
   useLayoutEffect(() => {
     if (reduce()) return;
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: { trigger: root.current, start: "top top", end: "bottom bottom", scrub: 1 },
-      });
-      // Всичко в hero-то приключва преди залепеният кадър да се откачи — нищо не се реже.
-      tl.to("[data-hero-title]", { yPercent: -40, opacity: 0, ease: "none", duration: 0.4 }, 0)
-        .to("[data-hero-bg]", { scale: 1.3, filter: "brightness(0.35)", ease: "none", duration: 1 }, 0)
-        .to("[data-hero-plate-wrap]", { y: () => -window.innerHeight * 0.42, scale: 1.12, ease: "none", duration: 0.55 }, 0)
-        .to("[data-hero-plate]", { rotate: 200, ease: "none", duration: 1 }, 0)
-        .fromTo("[data-hero-ring]", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, ease: "none", duration: 0.25 }, 0.3)
-        .fromTo("[data-hero-after]", { opacity: 0, y: 40 }, { opacity: 1, y: 0, ease: "none", duration: 0.2 }, 0.4)
-        .to("[data-hero-plate-wrap]", { scale: 0.7, opacity: 0, ease: "none", duration: 0.25 }, 0.72)
-        .to("[data-hero-ring]", { opacity: 0, ease: "none", duration: 0.2 }, 0.72)
-        .to("[data-hero-after]", { opacity: 0, y: -30, ease: "none", duration: 0.2 }, 0.78);
+      const tl = gsap.timeline({ scrollTrigger: { trigger: root.current, start: "top top", end: "bottom bottom", scrub: 1 } });
+      tl.to("[data-hero-copy]", { yPercent: -18, opacity: 0, ease: "none", duration: 0.45 }, 0)
+        .to("[data-hero-ring]", { scale: 2.6, opacity: 0, ease: "none", duration: 0.6 }, 0)
+        .fromTo(moon.current, { "--r": () => `${moonR0()}px` }, { "--r": () => `${moonR1()}px`, ease: "power1.in", duration: 1, immediateRender: false }, 0)
+        .to("[data-hero-bg]", { scale: 1, ease: "none", duration: 1 }, 0)
+        .fromTo("[data-hero-after]", { opacity: 0, y: 30 }, { opacity: 1, y: 0, ease: "none", duration: 0.25 }, 0.6);
     }, root);
     return () => ctx.revert();
   }, []);
 
-  const title1 = "Луна";
-  const title2 = "и огън";
+  // Лек паралакс на заглавието към курсора.
+  const onMove = (e: React.MouseEvent) => {
+    if (reduce()) return;
+    const x = e.clientX / window.innerWidth - 0.5;
+    const y = e.clientY / window.innerHeight - 0.5;
+    gsap.to("[data-hero-par]", { x: x * -18, y: y * -12, duration: 1.4, ease: "power3.out" });
+    gsap.to("[data-hero-ring]", { x: x * 10, y: y * 8, duration: 1.6, ease: "power3.out" });
+  };
+
+  const lines = ["Луна", "и огън"];
 
   return (
-    <section ref={root} className="relative h-[200vh]">
+    <section ref={root} className="relative h-[190vh]" onMouseMove={onMove}>
       <div className="sticky top-0 h-svh overflow-hidden">
         <div data-hero-bg className="absolute inset-0 opacity-0">
           <video className="h-full w-full object-cover" autoPlay muted loop playsInline poster="/img/scenes/grill.webp" aria-hidden="true">
@@ -91,61 +101,75 @@ function Hero({ ready }: { ready: boolean }) {
             <source src="/img/scenes/grill.mp4" type="video/mp4" />
           </video>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/80 via-ink/30 to-ink" />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 45%, transparent 30%, rgb(11 10 9 / 0.85) 80%)" }} />
-        <Embers density={typeof window !== "undefined" && window.innerWidth < 768 ? 0.5 : 1} />
 
-        {/* вертикален знак */}
-        <p data-hero-fade className="absolute left-5 top-1/2 hidden -translate-y-1/2 font-jp text-sm tracking-[1em] text-bone/40 [writing-mode:vertical-rl] md:block md:left-10">
-          月火 · 炭火料理
-        </p>
-        <p data-hero-fade className="absolute right-5 top-1/2 hidden -translate-y-1/2 rotate-180 text-[0.6rem] uppercase tracking-[0.5em] text-bone/40 [writing-mode:vertical-rl] md:block md:right-10">
-          София · от 18:00
-        </p>
+        {/* тъмнината около луната — дупка с радиус --r */}
+        <div
+          ref={moon}
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            ["--r" as string]: "0px",
+            background: "rgb(11 10 9 / 0.86)",
+            WebkitMaskImage: "radial-gradient(circle at 50% 50%, transparent calc(var(--r) - 1px), #000 calc(var(--r) + 1px))",
+            maskImage: "radial-gradient(circle at 50% 50%, transparent calc(var(--r) - 1px), #000 calc(var(--r) + 1px))",
+          }}
+        />
+        <div aria-hidden="true" className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 50%, transparent 40%, rgb(11 10 9 / 0.55) 100%)" }} />
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink to-transparent" />
+        <Embers density={typeof window !== "undefined" && window.innerWidth < 768 ? 0.4 : 0.8} />
 
-        <div data-hero-title className="relative z-10 flex h-full flex-col items-center justify-center px-5 pb-[14vh] pt-16 text-center">
-          <p data-hero-fade className="eyebrow opacity-0">Азиатска кухня на живи въглища</p>
-          <h1 className="mt-6 font-display font-normal leading-[0.8] tracking-[-0.02em]">
-            <span className="block overflow-hidden text-display">
-              {title1.split("").map((c, i) => (
-                <span key={i} data-hero-char className="inline-block">{c}</span>
+        {/* пръстенът около луната */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center">
+          <div data-hero-ring className="relative aspect-square w-[88vmin] opacity-0 md:w-[68vmin]">
+            <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full animate-[spin-slow_60s_linear_infinite]">
+              <defs>
+                <path id="moon-ring" d="M100,100 m-94,0 a94,94 0 1,1 188,0 a94,94 0 1,1 -188,0" />
+              </defs>
+              <circle cx="100" cy="100" r="88" fill="none" stroke="rgb(241 233 219 / 0.18)" strokeWidth="0.25" />
+              <text className="fill-bone/45 font-sans text-[4.6px] uppercase tracking-[0.6em]">
+                <textPath href="#moon-ring">Бинчотан · 1000 °C · Луна и огън · 月火 · Робата · Суши · Омакасе · София · </textPath>
+              </text>
+            </svg>
+            <span className="absolute left-1/2 top-[6%] h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-ember shadow-[0_0_14px_rgba(255,91,36,0.9)]" />
+          </div>
+        </div>
+
+        {/* текст */}
+        <div data-hero-copy className="relative z-10 flex h-full flex-col items-center justify-center px-5 text-center">
+          <div data-hero-par className="flex flex-col items-center">
+            <h1 className="font-display font-normal leading-[0.82] tracking-[-0.02em] [text-shadow:0_10px_60px_rgba(0,0,0,0.55)]">
+              {lines.map((line, li) => (
+                <span key={line} className={`block overflow-hidden pb-[0.06em] text-display ${li ? "italic text-bone/90" : ""}`}>
+                  {line.split("").map((c, i) => (
+                    <span key={i} data-hero-char className="inline-block whitespace-pre">{c}</span>
+                  ))}
+                </span>
               ))}
-            </span>
-            <span className="block overflow-hidden pb-[0.1em] text-display italic text-bone/90">
-              {title2.split("").map((c, i) => (
-                <span key={i} data-hero-char className="inline-block whitespace-pre">{c}</span>
-              ))}
-            </span>
-          </h1>
-            <div data-hero-ui className="relative z-20 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            </h1>
+            <div className="mt-10 flex flex-col items-center gap-5 sm:flex-row sm:gap-8">
               <Link data-hero-fade to="/menu" onClick={(e) => goTo(e, "/menu")} className="btn-ember opacity-0">
                 <span>Разгледай менюто</span>
                 <span aria-hidden="true">→</span>
               </Link>
-              <a data-hero-fade href="#poseti" onClick={(e) => goTo(e, "/#poseti")} className="btn-ghost bg-ink/30 opacity-0 backdrop-blur">
+              <a data-hero-fade href="#poseti" onClick={(e) => goTo(e, "/#poseti")} className="text-sm font-semibold uppercase tracking-[0.2em] text-bone/80 underline-offset-8 opacity-0 transition-colors hover:text-bone hover:underline">
                 Резервирай маса
               </a>
             </div>
-        </div>
-
-        {/* чинията */}
-        <div data-hero-plate-wrap className="pointer-events-none absolute left-1/2 top-[100%] z-[5] w-[min(88vw,46rem)] -translate-x-1/2 -translate-y-[30%]">
-          <div data-hero-ring className="absolute -inset-[16%] opacity-0">
-            <svg viewBox="0 0 200 200" className="h-full w-full animate-[spin-slow_40s_linear_infinite]">
-              <defs>
-                <path id="ring" d="M100,100 m-92,0 a92,92 0 1,1 184,0 a92,92 0 1,1 -184,0" />
-              </defs>
-              <text className="fill-bone/50 font-sans text-[6.4px] uppercase tracking-[0.42em]">
-                <textPath href="#ring">Бинчотан · 1000 °C · Без пламък · Без дим · Луна и огън · 月火 · </textPath>
-              </text>
-            </svg>
           </div>
-          <img data-hero-plate src="/img/dishes/wagyu.webp" alt="Уагю татаки на черна чиния, поглед отгоре" className="relative w-full opacity-0 drop-shadow-[0_60px_80px_rgba(0,0,0,0.8)]" />
         </div>
 
-        <div data-hero-after className="absolute inset-x-0 top-[16vh] z-10 px-5 text-center opacity-0">
-          <p className="eyebrow">Цукиби · 月火</p>
-          <p className="mt-3 font-display text-title">Една робата. Цяла Азия.</p>
+        {/* долна лента */}
+        <div data-hero-copy className="absolute inset-x-0 bottom-0 z-10 hidden border-t border-line md:block">
+          <div data-hero-fade className="mx-auto grid max-w-[1600px] grid-cols-3 px-10 py-5 text-[0.68rem] uppercase tracking-[0.28em] text-bone/55 opacity-0">
+            <span>Вт–Нд · 18:00–24:00</span>
+            <span className="text-center text-ember">Азиатска кухня на живи въглища</span>
+            <span className="text-right">ул. „Луна“ 13 · София</span>
+          </div>
+        </div>
+
+        <div data-hero-after className="absolute inset-x-0 bottom-[14vh] z-10 px-5 text-center opacity-0">
+          <p className="font-jp text-sm tracking-[0.6em] text-bone/60">月火 · 炭火料理</p>
+          <p className="mt-4 font-display text-title">Една робата. Цяла Азия.</p>
         </div>
       </div>
     </section>
@@ -220,7 +244,7 @@ function Evening() {
   }, []);
 
   return (
-    <section ref={root} className="relative bg-coal py-[16vh]">
+    <section ref={root} className="relative overflow-x-clip bg-coal py-[16vh]">
       <div className="mx-auto grid max-w-[1600px] gap-14 px-5 md:px-10 lg:grid-cols-[1fr_1.2fr]">
         <div className="lg:sticky lg:top-[20vh] lg:self-start">
           <p className="eyebrow">02 — Вечерта</p>

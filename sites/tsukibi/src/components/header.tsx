@@ -43,7 +43,7 @@ export function Header() {
               ← Начало
             </Link>
           ) : (
-            <Link to="/menu" onClick={(e) => goTo(e, "/menu")} className="btn-ember !px-5 !py-2.5">
+            <Link to="/menu" onClick={(e) => goTo(e, "/menu")} className={`${scrolled ? "btn-ember" : "btn-ghost"} !px-5 !py-2.5`}>
               <span>Виж менюто</span>
             </Link>
           )}
