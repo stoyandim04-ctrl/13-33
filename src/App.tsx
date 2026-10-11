@@ -7,6 +7,9 @@ import Home from "@/pages/home";
 
 const ProjectPage = React.lazy(() => import("@/pages/project"));
 const NotFound = React.lazy(() => import("@/pages/not-found"));
+const StartPage = React.lazy(() => import("@/pages/start"));
+const RoomPage = React.lazy(() => import("@/pages/room"));
+const StudioPage = React.lazy(() => import("@/pages/studio"));
 
 export default function App() {
   const { pathname } = useLocation();
@@ -24,11 +27,14 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/proekti/:slug" element={<ProjectPage />} />
+            <Route path="/zapochni" element={<StartPage />} />
+            <Route path="/zapitvane/:token" element={<RoomPage />} />
+            <Route path="/studio" element={<StudioPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </React.Suspense>
       </main>
-      <SiteFooter />
+      {pathname.startsWith("/studio") || pathname.startsWith("/zapitvane/") ? null : <SiteFooter />}
     </>
   );
 }

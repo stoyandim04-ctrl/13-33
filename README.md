@@ -21,7 +21,13 @@ npm run media      # прерисува постерите/видеата на �
 | `src/components/sections/*` | Услуги, Процес, Защо 13:33, Въпроси, Започни проект |
 | `src/data/projects.ts` | **Проектите** — типизирани данни |
 | `src/data/content.ts` | Текстове, меню, услуги, процес, FAQ, опции във формата |
-| `src/lib/brief.ts` | Запитване, структуриран бриф, изпращане, интерфейс за бъдещия AI бриф |
+| `src/pages/start.tsx` | `/zapochni` — запитване: 4 избора → разговор с AI асистента (със снимки) → контакт |
+| `src/pages/room.tsx` | `/zapitvane/:token` — личният чат на клиента: оферта, капаро, онлайн среща |
+| `src/pages/studio.tsx` | `/studio` — панелът на основателя (парола): запитвания, чат, оферта, етап, срещи, свободни часове |
+| `src/components/inquiry/parts.tsx` | Общите части: избори, чат, файлове, оферта, календар |
+| `src/lib/inquiry-shared.ts` | Типове и правила, общи за сайта и сървъра (капаро, етапи, бриф) |
+| `api/*.ts` | Сървърните routes на Vercel: `ai` (Claude), `inquiry` (клиентът), `studio` (панелът) |
+| `supabase/migrations/` | Таблиците и хранилището за файлове (Supabase проект „13-33“) |
 | `src/pages/*` | Начало, страница на проект (`/proekti/:slug`), 404 |
 | `public/projects/<slug>/` | `poster.webp`, `preview.mp4`, `preview.webm` |
 | `scripts/` | Концептуалните мокъпи и скриптът, който рендерира медията им |
@@ -48,6 +54,9 @@ npm run media      # прерисува постерите/видеата на �
 
 Копирай `.env.example` в `.env.local`. Всичко с префикс `VITE_` отива в браузъра — **никога не слагай ключове там**.
 
-- **Изпращане на запитвания** — `VITE_INQUIRY_ENDPOINT`: POST, JSON (`Inquiry` от `src/lib/brief.ts`). Без него нищо не се изпраща и формата казва това честно, с възможност да копираш данните (и да ги пратиш по имейл, ако е зададен `VITE_CONTACT_EMAIL`). Успех се показва само при отговор 2xx.
-- **AI Project Brief** — `VITE_AI_BRIEF_ENDPOINT`: сървърен route, който пази ключа на AI доставчика и връща `AiBriefResponse` (договорът е в `src/lib/brief.ts`). Без него се показва само структурираният въпросник — без симулирани AI отговори.
-- **Хостинг** — SPA; `vercel.json` пренасочва маршрутите към `index.html`. Нищо не е публикувано.
+- **Запитвания, чат, оферти, срещи** — Supabase проект „13-33“ (`fuqixmjvsalzemxrbslp`, Франкфурт). Таблиците са в `supabase/migrations/`; RLS е включен без политики, така че само сървърът (с service-role ключа) стига до данните. Клиентът няма акаунт — влиза в чата си с таен линк `/zapitvane/<token>`.
+- **AI асистентът** — `api/ai.ts`, Claude (`claude-opus-5-5`, structured output). Пита по един въпрос с готови отговори, гледа снимките, казва само правилото за капарото (50 €, при по-голям проект 100 €) и никога цена или срок. Без `ANTHROPIC_API_KEY` потокът минава през кратък въпросник.
+- **Панелът** — `/studio`, вход с `STUDIO_PASSWORD`. Офертата (цена, срок, капаро, как се плаща) се появява в чата на клиента с бутон „Приемам офертата“.
+- **Известия на телефона** — по желание, Telegram бот (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`).
+- **Настройки във Vercel** (Settings → Environment Variables) — всички имена са в `.env.example`. Задължителни: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `STUDIO_PASSWORD`. Локално: `vercel dev` (обикновеният `npm run dev` не пуска `/api`).
+- **Хостинг** — SPA; `vercel.json` пренасочва маршрутите (без `/api`) към `index.html`.

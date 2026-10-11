@@ -140,7 +140,7 @@ export default function ProjectPage() {
               <ArrowRight aria-hidden="true" className="size-5 transition-transform duration-500 group-hover:translate-x-1" />
             </p>
           </Link>
-          <Link to="/#kontakt" className="group hairline block pt-8">
+          <Link to="/zapochni" className="group hairline block pt-8">
             <p className="eyebrow mb-4">Имаш подобна нужда?</p>
             <p className="font-display text-title flex items-center gap-3 font-[500] transition-colors group-hover:text-ice">
               Започни проект

@@ -96,6 +96,13 @@
   .hairline {
     @apply border-border border-t;
   }
+  /* Text inputs in the inquiry flow, the client's room and the studio panel. */
+  .field {
+    @apply border-border bg-surface placeholder:text-muted-foreground/60 block min-h-12 w-full rounded-2xl border px-4 py-3 text-base outline-none transition-colors;
+  }
+  .field:focus {
+    @apply border-ice;
+  }
 
   /* Horizon hero — the classes the provided component expected but shipped
      without. Kept small; the layout itself is Tailwind. */

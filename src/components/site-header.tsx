@@ -83,13 +83,13 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <a
-              href={toHome("#kontakt", onHome)}
+            <Link
+              to="/zapochni"
               className="text-foreground hover:text-ice hidden items-center gap-1.5 text-[0.9375rem] font-medium transition-colors md:inline-flex"
             >
               Започни проект
               <ArrowRight aria-hidden="true" className="size-4" />
-            </a>
+            </Link>
             <button
               ref={menuButton}
               type="button"
@@ -127,14 +127,14 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
-        <a
-          href={toHome("#kontakt", onHome)}
+        <Link
+          to="/zapochni"
           onClick={() => setOpen(false)}
           className="bg-primary text-foreground mt-auto inline-flex h-14 items-center justify-center gap-2 rounded-full text-base font-semibold"
         >
           Започни проект
           <ArrowRight aria-hidden="true" className="size-4" />
-        </a>
+        </Link>
       </div>
     </>
   );

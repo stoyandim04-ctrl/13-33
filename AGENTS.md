@@ -4,5 +4,5 @@
 - Never invent clients, results, testimonials, prices or deadlines. Concept projects stay labelled (`status: "concept"`).
 - Visual system lives in `src/index.css` (`@theme`): one accent (#5B7CFA) for primary action/current state only; fixed type scale (`text-label/body/lead/title/heading/display`); every section opens with `eyebrow → heading → lead`.
 - `components/ui/horizon-*` and `components/ui/works-wheel.tsx` are adapted from provided originals (see README). Keep their behaviour; the hero and the wheel own separate stretches of the page scroll. The wheel takes over wheel/touch gestures only while its stage is pinned (one gesture = one project) and hands them back above the ring and after the last project — don't capture gestures anywhere else.
-- No secrets in client code: only `VITE_*` public values. Inquiries/AI go through server endpoints.
+- No secrets in client code: only `VITE_*` public values. Inquiries/AI go through the server routes in `api/` (Supabase service key and Anthropic key live only there). The AI assistant never states a price or a deadline — only the deposit rule in `src/lib/inquiry-shared.ts`.
 - Before finishing: `npm run build` (runs `tsc -b`).
