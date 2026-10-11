@@ -5,9 +5,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export const env = {
   // Public project address (not a secret); the env var can override it.
   supabaseUrl: process.env.SUPABASE_URL || "https://fuqixmjvsalzemxrbslp.supabase.co",
-  supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
-  anthropicKey: process.env.ANTHROPIC_API_KEY ?? "",
-  studioPassword: process.env.STUDIO_PASSWORD ?? "",
+  supabaseKey: (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").trim(),
+  // Trimmed: keys pasted on a phone often carry a stray space or newline.
+  anthropicKey: (process.env.ANTHROPIC_API_KEY ?? "").trim(),
+  studioPassword: (process.env.STUDIO_PASSWORD ?? "").trim(),
   /** Shown to clients as who they are writing with. */
   studioName: process.env.STUDIO_NAME || "Основателят на 13:33",
   telegramToken: process.env.TELEGRAM_BOT_TOKEN ?? "",
