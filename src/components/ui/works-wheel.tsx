@@ -19,8 +19,13 @@
 //   touch scroll works natively, and the page simply carries on after the last
 //   project. WHEEL_UNITS / DRAG_UNITS keep their meaning: how much scroll or drag
 //   turns one item.
-// - Cards carry a poster and an optional muted, looping video that only the
-//   front card mounts and plays.
+// - While the stage is pinned, one wheel/trackpad gesture or one swipe turns
+//   exactly one item: the gesture is taken over and the page is scrolled to the
+//   next item, so momentum never skips a project. Above the ring and past the
+//   last item the gesture is left to the page, so the hero and the sections
+//   after it scroll as usual.
+// - Cards carry a poster and an optional muted, looping video. Every card that
+//   is drawn plays its video while the section is on screen.
 // - Clicking the front card opens the project; a side card or an index entry
 //   turns it to the front; a drag never opens a link.
 import * as React from "react";
@@ -108,6 +113,12 @@ const TAIL = 0.45;
 const COMMIT = 0.12;
 /** Movement that turns a press into a drag (and cancels its click). */
 const DRAG_SLOP = 6;
+/** Wheel distance (px) that counts as a gesture, and the quiet time that ends
+    one - trackpad momentum keeps sending events, all part of the same gesture. */
+const GESTURE_MIN = 24;
+const GESTURE_GAP = 260;
+/** Finger travel (px) that counts as a swipe to the next item. */
+const SWIPE_MIN = 36;
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const rad = (deg: number) => (deg * Math.PI) / 180;
@@ -166,6 +177,8 @@ export function WorksWheel({
   const target = React.useRef(0);
   const [active, setActive] = React.useState(0);
   const [open, setOpen] = React.useState(false);
+  /** Cards drawn this frame ("0,1,2,"), whose videos play. Empty off screen. */
+  const [live, setLive] = React.useState("");
   const [stage, setStage] = React.useState<Stage>({ w: 0, h: 0 });
 
   const reduced = useReducedMotion();
@@ -297,12 +310,80 @@ export function WorksWheel({
     const onInput = () => {
       seek.current = null;
     };
-    const onTouchStart = () => {
+
+    // ---- one gesture, one item ----
+    /** True while the stage is pinned - the stretch of page the wheel owns. */
+    const engaged = () => {
+      const el = sectionRef.current;
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      return r.top <= 1 && r.bottom >= window.innerHeight - 1;
+    };
+    /** The item one step from where the wheel is (or is heading), or null when
+        the gesture belongs to the page: up from the ring, down past the last. */
+    const stepFrom = (dir: number) => {
+      const el = sectionRef.current;
+      // Unclamped, so coming back up from below lands on the last item first.
+      const travelled = el ? -el.getBoundingClientRect().top / unit : target.current;
+      const t = seek.current ? seek.current.turn : Math.max(0, travelled);
+      if (dir > 0 && t >= count - 0.001) return null;
+      if (dir < 0 && t <= 0.001) return null;
+      if (dir < 0 && t > count + 0.01) return count;
+      return dir > 0 ? Math.floor(t + 0.001) + 1 : Math.ceil(t - 0.001) - 1;
+    };
+    const gesture = { acc: 0, locked: false, idle: 0 };
+    const onWheel = (event: WheelEvent) => {
+      const dy = event.deltaY * (event.deltaMode === 1 ? 40 : 1);
+      if (event.ctrlKey || !dy || !engaged()) return onInput();
+      // A fresh gesture that leaves the wheel goes to the page; the rest of a
+      // gesture that already turned it is held, so its momentum stops here.
+      if (!gesture.locked && stepFrom(Math.sign(dy)) === null) return onInput();
+      event.preventDefault();
+      window.clearTimeout(gesture.idle);
+      gesture.idle = window.setTimeout(() => {
+        gesture.locked = false;
+        gesture.acc = 0;
+      }, GESTURE_GAP);
+      if (gesture.locked) return;
+      gesture.acc += dy;
+      if (Math.abs(gesture.acc) < GESTURE_MIN) return;
+      const next = stepFrom(Math.sign(gesture.acc));
+      gesture.locked = true;
+      gesture.acc = 0;
+      if (next !== null) scrollToTurn(next);
+    };
+
+    // Touch: a swipe inside the pinned stretch turns one item. Whether the
+    // wheel or the page owns a touch is decided on its first move - after that
+    // the browser no longer lets the move be cancelled.
+    let touchY = 0;
+    let own: boolean | null = null;
+    const onTouchStart = (event: TouchEvent) => {
       touching = true;
       onInput();
+      touchY = event.touches[0]?.clientY ?? 0;
+      own = null;
     };
-    const onTouchEnd = () => {
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.touches.length > 1) return;
+      const dy = touchY - (event.touches[0]?.clientY ?? touchY);
+      if (own === null) own = engaged() && stepFrom(dy < 0 ? -1 : 1) !== null;
+      if (own && event.cancelable) event.preventDefault();
+    };
+    const onTouchEnd = (event: TouchEvent) => {
       touching = false;
+      const dy = touchY - (event.changedTouches[0]?.clientY ?? touchY);
+      // No move reached us (some browsers coalesce a fast flick): decide now.
+      if (own === null) own = engaged() && stepFrom(dy < 0 ? -1 : 1) !== null;
+      if (own) {
+        if (Math.abs(dy) >= SWIPE_MIN) {
+          const next = stepFrom(Math.sign(dy));
+          if (next !== null) scrollToTurn(next);
+          // Turned out to leave the wheel after all: hand the swipe to the page.
+          else window.scrollBy({ top: dy * 2, behavior: reduced ? "auto" : "smooth" });
+        }
+      }
+      own = null;
       schedule();
     };
 
@@ -312,21 +393,24 @@ export function WorksWheel({
     window.addEventListener("scroll", onScroll, { passive: true });
     if (hasScrollEnd) window.addEventListener("scrollend", schedule);
     window.addEventListener("resize", read);
-    window.addEventListener("wheel", onInput, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     return () => {
       window.clearTimeout(settleTimer);
+      window.clearTimeout(gesture.idle);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("scrollend", schedule);
       window.removeEventListener("resize", read);
-      window.removeEventListener("wheel", onInput);
+      window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [count, unit, scrollToTurn]);
+  }, [count, unit, reduced, scrollToTurn]);
 
   /** Turn to a position by scrolling the page there. */
   const to = scrollToTurn;
@@ -349,6 +433,8 @@ export function WorksWheel({
       if (visible) {
         cancelAnimationFrame(frame);
         frame = requestAnimationFrame(draw);
+      } else {
+        setLive("");
       }
     });
     if (sectionRef.current) io.observe(sectionRef.current);
@@ -387,6 +473,7 @@ export function WorksWheel({
           ` rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
       }
 
+      let drawn = "";
       for (let i = 0; i < count; i++) {
         const d = i - pos;
         const card = cardRefs.current[i];
@@ -399,6 +486,7 @@ export function WorksWheel({
         const below = narrow && d > 0.35 ? clamp(1 - (d - 0.35) * 2.2 * m, 0, 1) : 1;
         card.style.opacity = hidden ? "0" : String(below);
         card.style.visibility = hidden ? "hidden" : "visible";
+        if (!hidden) drawn += `${i},`;
         card.style.zIndex = String(Math.round(100 - far * 10));
         const face = card.firstElementChild as HTMLElement | null;
         if (face) {
@@ -426,6 +514,7 @@ export function WorksWheel({
       if (glowRef.current) {
         glowRef.current.style.opacity = String(m * (0.75 + 0.25 * Math.sin(time * 1.2)));
       }
+      setLive((prev) => (prev === drawn ? prev : drawn));
       const near = clamp(Math.round(pos), 0, last);
       setActive((prev) => (prev === near ? prev : near));
       const isOpen = m > 0.85;
@@ -510,6 +599,7 @@ export function WorksWheel({
   if (!count) return null;
 
   const current = items[active];
+  const playing = new Set(live.split(",").filter(Boolean).map(Number));
   const sectionHeight = `calc(100svh + ${(count + TAIL) * unit}px)`;
 
   return (
@@ -626,7 +716,7 @@ export function WorksWheel({
                       className="absolute inset-0 size-full object-cover transition-transform duration-[1200ms] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
                     />
                     {item.video ? (
-                      <CardVideo src={item.video} poster={item.image} playing={isFront} />
+                      <CardVideo src={item.video} poster={item.image} playing={playing.has(i)} />
                     ) : null}
                     {item.badge ? (
                       <span className="bg-background/75 text-foreground/90 absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.625rem] font-semibold tracking-[0.16em] uppercase backdrop-blur-sm">
@@ -767,8 +857,8 @@ export function WorksWheel({
   );
 }
 
-/** The front card's recording. Mounted only while it is the front card, so the
-    other videos are neither playing nor downloading. The poster stays below and
+/** A card's recording. Mounted only while the card is drawn and the section is
+    on screen, so hidden cards are neither playing nor downloading. The poster stays below and
     shows through until the first frame is ready - or for good, on an error. */
 function CardVideo({
   src,
