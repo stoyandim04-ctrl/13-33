@@ -1,32 +1,23 @@
 import { process } from "@/data/content";
 import { SectionHeader } from "@/components/sections/section-header";
 
-/** A real sequence, so it is numbered. */
+/** A real sequence, so it is numbered: four words on one line. */
 export function Process() {
   return (
     <section id="proces" aria-labelledby="proces-title" className="section bg-surface">
       <div className="container-wide">
-        <SectionHeader
-          id="proces-title"
-          label="Процес"
-          title="От идея до реализация."
-          lead="Пет етапа с ясен обхват и работеща версия за преглед. Винаги знаеш къде сме."
-        />
+        <SectionHeader id="proces-title" label="Процес" title="От идея до реализация." />
 
-        <ol className="mt-16 grid gap-0 md:mt-24 lg:grid-cols-5 lg:gap-8">
+        <ol className="hairline mt-14 grid grid-cols-2 gap-x-6 gap-y-10 pt-10 md:mt-20 lg:grid-cols-4">
           {process.map((step, i) => (
-            <li key={step.name} className="relative grid grid-cols-[4rem_1fr] gap-x-4 pb-12 lg:block lg:pb-0">
-              {/* Rail: vertical on phones, horizontal on desktop. */}
-              {i < process.length - 1 ? (
-                <span aria-hidden="true" className="bg-border absolute top-16 bottom-3 left-[0.85rem] w-px lg:top-[1.75rem] lg:right-[-1.5rem] lg:bottom-auto lg:left-16 lg:h-px lg:w-auto" />
-              ) : null}
-              <span className="font-display text-ice block text-[3.5rem] leading-none font-[500] tabular-nums">
+            <li key={step.name}>
+              <span className="text-ice font-display block text-sm font-[500] tabular-nums">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <div className="lg:mt-8">
-                <h3 className="font-display text-title font-[500] tracking-[-0.025em]">{step.name}</h3>
-                <p className="text-muted-foreground mt-3 max-w-[38ch] text-pretty">{step.body}</p>
-              </div>
+              <h3 className="font-display mt-3 text-[clamp(1.5rem,1.1rem+1.6vw,2.5rem)] leading-none font-[300] tracking-[-0.03em]">
+                {step.name}
+              </h3>
+              <p className="text-muted-foreground mt-3 max-w-[24ch] text-[0.9375rem] text-pretty">{step.body}</p>
             </li>
           ))}
         </ol>

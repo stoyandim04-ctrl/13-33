@@ -5,12 +5,12 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { site } from "@/data/content";
 import { store } from "@/lib/inquiry-api";
 import { DEPOSIT } from "@/lib/inquiry-shared";
+import { RainbowLink } from "@/components/ui/rainbow-button";
 
 const STEPS = [
-  { title: "Избираш", body: "Четири бързи избора: какво искаш, имаш ли сайт, кога ти трябва, бюджет." },
-  { title: "Разказваш", body: "Асистентът ти задава няколко кратки въпроса. Можеш да добавиш лого, снимки и примери." },
-  { title: "Получаваш оферта", body: "Основателят ти пише в личния чат: крайна цена, срок и капаро. Можеш да запазиш и онлайн среща." },
-  { title: "Започваме", body: `Приемаш офертата, плащаш капарото (${DEPOSIT.standard} €, при по-голям проект ${DEPOSIT.large} €) и започваме работа.` },
+  { title: "Разказваш", body: "В чат, със свои думи. Асистентът пита каквото му трябва; снимки и примери са добре дошли." },
+  { title: "Получаваш оферта", body: "Основателят ти пише лично в същия чат: крайна цена, срок и капаро. Можеш да запазиш и онлайн среща." },
+  { title: "Започваме", body: `Приемаш офертата, плащаш капарото (${DEPOSIT.standard} €, при по-голям проект ${DEPOSIT.large} €) и започваме.` },
 ];
 
 export function Contact() {
@@ -25,26 +25,23 @@ export function Contact() {
       <div className="container-wide grid gap-16 lg:grid-cols-12 lg:gap-10">
         <header className="lg:col-span-5">
           <p className="eyebrow mb-5">Започни проект</p>
-          <h2 id="kontakt-title" className="font-display text-heading font-[500] tracking-[-0.045em] text-balance">
+          <h2 id="kontakt-title" className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">
             Какво искаш да създадем?
           </h2>
           <p className="text-lead text-muted-foreground mt-6 max-w-[32ch] text-pretty">
-            Около 3 минути. Без регистрация и без ангажимент.
+            Разкажи го в чата. Без регистрация и без ангажимент.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4">
-            <Link
-              to="/zapochni"
-              className="bg-primary text-foreground hover:bg-primary/90 group inline-flex h-12 items-center gap-2.5 rounded-full px-6 text-[0.9375rem] font-semibold transition-colors"
-            >
+            <RainbowLink to="/zapochni">
               Започни проект
-              <ArrowRight aria-hidden="true" className="size-4 transition-transform duration-500 group-hover:translate-x-0.5" />
-            </Link>
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </RainbowLink>
             {room ? (
-              <Link to={`/zapitvane/${room}`} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-[0.9375rem]">
+              <Link to={`/zapitvane/${room}`} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-[0.9375rem] transition-colors">
                 <MessageCircle aria-hidden="true" className="size-4" /> Към моя чат
               </Link>
             ) : site.contactEmail ? (
-              <a href={`mailto:${site.contactEmail}`} className="text-muted-foreground hover:text-foreground text-[0.9375rem]">
+              <a href={`mailto:${site.contactEmail}`} className="text-muted-foreground hover:text-foreground text-[0.9375rem] transition-colors">
                 {site.contactEmail}
               </a>
             ) : null}

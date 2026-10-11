@@ -3,15 +3,18 @@
 
   1. Subject & audience — business owners in Bulgaria. In three seconds:
      "a serious studio; they build sites, shops and systems; I can start here."
-  2. Reference — editorial studio sites: one dark field, big quiet type, the work
-     carries the colour.
-  3. Palette — graphite #080A0F (+2 close shades), bone #F4F1EB, mist #A7ABB5,
-     one accent #5B7CFA (primary action + current state only). Ice #A8D8FF is
-     light inside the scene, never UI chrome.
-  4. Type — Manrope for everything: medium-weight, tightly tracked headings,
-     regular body. It carries Bulgarian Cyrillic forms (lang="bg" switches on
-     the locl glyphs). Fixed scale below.
-  5. Signature — the flight into the Horizon that lands on the WorksWheel.
+  2. Reference — the founder's reference: a dark hero, thin geometric type, two
+     or three words in a lilac→peach gradient, one glowing button, a quiet
+     perspective grid drifting underneath.
+  3. Palette — deep violet-black #07060F (+2 close shades), pure white text,
+     mist #B8B3CC. The accent is lilac: #8F7BFF for actions and current state,
+     #C8B6FF (`ice`) for highlights, and the lilac→peach gradient only on the
+     hero's key words. Nothing else is coloured.
+  4. Type — Manrope for everything (it carries the Bulgarian Cyrillic forms;
+     lang="bg" switches them on). Light (300) for the big statements, regular
+     body. Fixed scale below.
+  5. Signature — the hero: the sentence, the gradient words, the grid floor
+     that leans away and the glowing "Започни проект".
 */
 @import "tailwindcss";
 @import "@fontsource-variable/manrope";
@@ -19,18 +22,19 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-background: #080a0f;
-  --color-surface: #0d1017;
-  --color-surface-2: #131722;
-  --color-foreground: #f4f1eb;
-  --color-muted: #131722;
-  --color-muted-foreground: #a7abb5;
-  --color-primary: #5b7cfa;
-  --color-primary-foreground: #080a0f;
-  --color-accent: #5b7cfa;
-  --color-ice: #a8d8ff;
-  --color-border: rgb(244 241 235 / 0.1);
-  --color-ring: #a8d8ff;
+  --color-background: #07060f;
+  --color-surface: #0d0b17;
+  --color-surface-2: #151224;
+  --color-foreground: #ffffff;
+  --color-muted: #151224;
+  --color-muted-foreground: #b8b3cc;
+  --color-primary: #8f7bff;
+  --color-primary-foreground: #07060f;
+  --color-accent: #8f7bff;
+  --color-ice: #c8b6ff;
+  --color-peach: #f3c38b;
+  --color-border: rgb(255 255 255 / 0.1);
+  --color-ring: #c8b6ff;
   --color-destructive: #f07a6a;
 
   --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
@@ -48,8 +52,8 @@
   --text-title--line-height: 1.2;
   --text-heading: clamp(2.25rem, 1.35rem + 3.4vw, 4.25rem);
   --text-heading--line-height: 1.04;
-  --text-display: clamp(5.5rem, 1.4rem + 17vw, 16rem);
-  --text-display--line-height: 0.86;
+  --text-display: clamp(2.6rem, 1.2rem + 5.2vw, 6.25rem);
+  --text-display--line-height: 1.02;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -68,7 +72,7 @@
     overflow-x: clip;
   }
   ::selection {
-    background: rgb(91 124 250 / 0.45);
+    background: rgb(143 123 255 / 0.45);
     color: var(--color-foreground);
   }
   :focus-visible {
@@ -104,8 +108,46 @@
     @apply border-ice;
   }
 
-  /* Horizon hero — the classes the provided component expected but shipped
-     without. Kept small; the layout itself is Tailwind. */
+  /* The two gradients. Only the hero's key words and nothing else. */
+  .grad-lilac {
+    background: linear-gradient(90deg, #d9c8ff, #e7b6f0 55%, #f3b8d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .grad-peach {
+    background: linear-gradient(90deg, #f3c38b, #e6a872);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Menu links: a hairline grows in from the left. */
+  .nav-link {
+    @apply text-muted-foreground relative inline-block transition-colors duration-500;
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.2em;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.5s var(--ease-out-expo);
+  }
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
+    @apply text-foreground;
+  }
+  .nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Horizon hero — kept for the retired component (components/ui/horizon-*). */
   .horizon-title .title-char {
     display: inline-block;
     will-change: transform, opacity;
@@ -116,27 +158,122 @@
   }
   .horizon-fallback {
     background:
-      radial-gradient(120% 60% at 50% 72%, rgb(168 216 255 / 0.18), transparent 60%),
-      radial-gradient(70% 45% at 50% 64%, rgb(91 124 250 / 0.28), transparent 70%),
-      linear-gradient(180deg, #05070b 0%, #080a0f 45%, #0b1020 70%, #080a0f 100%);
+      radial-gradient(120% 60% at 50% 72%, rgb(200 182 255 / 0.18), transparent 60%),
+      radial-gradient(70% 45% at 50% 64%, rgb(143 123 255 / 0.28), transparent 70%),
+      linear-gradient(180deg, #05040b 0%, #07060f 45%, #0d0a1c 70%, #07060f 100%);
   }
-  .horizon-fallback::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-      radial-gradient(1px 1px at 12% 18%, #f4f1eb 50%, transparent 51%),
-      radial-gradient(1px 1px at 28% 8%, #a8d8ff 50%, transparent 51%),
-      radial-gradient(1px 1px at 44% 26%, #f4f1eb 50%, transparent 51%),
-      radial-gradient(1.5px 1.5px at 63% 12%, #f4f1eb 50%, transparent 51%),
-      radial-gradient(1px 1px at 78% 30%, #a8d8ff 50%, transparent 51%),
-      radial-gradient(1px 1px at 88% 6%, #f4f1eb 50%, transparent 51%),
-      radial-gradient(1px 1px at 6% 40%, #f4f1eb 50%, transparent 51%),
-      radial-gradient(1px 1px at 52% 44%, #a8d8ff 50%, transparent 51%),
-      radial-gradient(1px 1px at 94% 46%, #f4f1eb 50%, transparent 51%),
-      radial-gradient(1px 1px at 36% 50%, #f4f1eb 50%, transparent 51%);
-    opacity: 0.7;
+}
+
+/* ---------- Rainbow button (the founder's component) ----------
+   A rotating white streak behind a translucent pill. Scales up on hover,
+   presses on click. One per view: the primary action. */
+.rainbow {
+  position: relative;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.15);
+  transition: transform 0.3s;
+}
+.rainbow::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  background-position: 100% 50%;
+  background-repeat: no-repeat;
+  background-size: 50% 30%;
+  filter: blur(6px);
+  background-image: linear-gradient(#fff);
+  animation: rainbow-rotate 4s linear infinite;
+}
+.rainbow:hover {
+  transform: scale(1.05);
+}
+.rainbow:active {
+  transform: scale(1);
+}
+.rainbow > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  border-radius: 999px;
+  background: rgb(7 6 15 / 0.82);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-weight: 500;
+  white-space: nowrap;
+}
+@keyframes rainbow-rotate {
+  100% {
+    transform: rotate(1turn);
   }
+}
+
+/* ---------- Hero ---------- */
+.hero-glow {
+  background:
+    radial-gradient(60% 45% at 50% -5%, rgb(120 90 220 / 0.5), transparent 70%),
+    radial-gradient(40% 30% at 50% 0%, rgb(200 182 255 / 0.28), transparent 70%),
+    linear-gradient(180deg, #0a0812, #07060f 60%);
+}
+.hero-beam {
+  left: 50%;
+  top: 0;
+  width: min(34rem, 60vw);
+  height: 62%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgb(170 150 255 / 0.22), transparent);
+  filter: blur(28px);
+  mix-blend-mode: screen;
+}
+.hero-floor {
+  --cell: clamp(3rem, 7vw, 7rem);
+  left: -20%;
+  right: -20%;
+  bottom: -8%;
+  height: 56%;
+  transform: perspective(60rem) rotateX(62deg);
+  transform-origin: 50% 100%;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 0.14) 1px, transparent 1px) 0 0 / var(--cell) 100%,
+    linear-gradient(0deg, rgb(255 255 255 / 0.14) 1px, transparent 1px) 0 0 / 100% var(--cell);
+  mask-image: linear-gradient(180deg, transparent, #000 35%, #000);
+  animation: hero-floor 9s linear infinite;
+}
+@keyframes hero-floor {
+  to {
+    background-position:
+      0 0,
+      0 var(--cell);
+  }
+}
+.hero-in {
+  animation: hero-in 1.1s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 110ms + 60ms);
+}
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.4rem);
+    filter: blur(8px);
+  }
+}
+
+/* ---------- Manifest: three sentences, lit word by word by the scroll ---------- */
+.manifest-word {
+  color: rgb(255 255 255 / 0.22);
+  transition: color 0.6s;
+}
+.manifest-word.is-on {
+  color: var(--color-foreground);
 }
 
 /* Portfolio: the caption and the big number arrive with each new project. */

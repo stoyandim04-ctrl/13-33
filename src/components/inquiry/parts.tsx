@@ -179,7 +179,7 @@ export function Bubble({
       <div
         className={cn(
           "max-w-[85%] rounded-2xl px-4 py-2.5 text-[0.9375rem] leading-relaxed whitespace-pre-wrap",
-          mine ? "bg-primary/90 rounded-br-md" : "bg-surface-2 rounded-bl-md",
+          mine ? "bg-foreground/10 rounded-br-md" : "bg-surface-2 rounded-bl-md",
         )}
       >
         <Linkified text={message.body} />

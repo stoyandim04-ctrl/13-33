@@ -690,6 +690,8 @@ export function WorksWheel({
                   key={item.id}
                   id={`works-wheel-${item.id}`}
                   href={item.href ?? "#"}
+                  target={item.href?.startsWith("http") ? "_blank" : undefined}
+                  rel={item.href?.startsWith("http") ? "noreferrer" : undefined}
                   draggable={false}
                   tabIndex={isFront ? 0 : -1}
                   aria-label={isFront ? `${action}: ${item.title}` : `${item.title} — избери`}
@@ -787,6 +789,8 @@ export function WorksWheel({
           {current?.href ? (
             <a
               href={current.href}
+              target={current.href.startsWith("http") ? "_blank" : undefined}
+              rel={current.href.startsWith("http") ? "noreferrer" : undefined}
               tabIndex={open ? 0 : -1}
               onClick={(event) => {
                 if (onOpen && current && !event.metaKey && !event.ctrlKey) {

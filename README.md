@@ -1,6 +1,6 @@
 # 13:33 — Digital Studio
 
-Сайтът на 13:33: React + TypeScript + Tailwind CSS v4 (shadcn-съвместима структура), Three.js и GSAP.
+Сайтът на 13:33: React + TypeScript + Tailwind CSS v4 (shadcn-съвместима структура).
 
 ```bash
 npm install
@@ -15,20 +15,21 @@ npm run media      # прерисува постерите/видеата на �
 
 | Път | Какво е |
 | --- | --- |
-| `src/components/ui/horizon-hero-section.tsx` | Hero — адаптираният Horizon (текстове, интро, скрол преход, fallback) |
-| `src/components/ui/horizon-scene.ts` | Three.js сцената на Horizon (зарежда се след първото рисуване) |
+| `src/components/ui/grid-hero.tsx` | Hero — изречението с градиентните думи, лилавото сияние, перспективната мрежа, светещият бутон и екран от проект |
+| `src/components/ui/rainbow-button.tsx` | Основният бутон навсякъде (въртящ се светлинен ръб) — `RainbowLink` / `RainbowButton` |
+| `src/components/ui/horizon-hero-section.tsx`, `horizon-scene.ts` | Старият 3D hero (Horizon). Не се ползва; пазим го, ако поискаме да го върнем |
 | `src/components/ui/works-wheel.tsx` | Портфолиото — адаптираният WorksWheel (пръстен → спирала, видео) |
-| `src/components/sections/*` | Услуги, Процес, Защо 13:33, Въпроси, Започни проект |
+| `src/components/sections/*` | Манифест (три изречения, светват при скрол), Услуги, Процес, Започни проект |
 | `src/data/projects.ts` | **Проектите** — типизирани данни |
-| `src/data/content.ts` | Текстове, меню, услуги, процес, FAQ, опции във формата |
-| `src/pages/start.tsx` | `/zapochni` — запитване: 4 избора → разговор с AI асистента (със снимки) → контакт |
+| `src/data/content.ts` | Текстове: hero, меню, манифест, услуги, процес |
+| `src/pages/start.tsx` | `/zapochni` — запитването е един чат: асистентът пита, клиентът пише (или натиска отговор), снимки, име и имейл в същия чат |
 | `src/pages/room.tsx` | `/zapitvane/:token` — личният чат на клиента: оферта, капаро, онлайн среща |
 | `src/pages/studio.tsx` | `/studio` — панелът на основателя (парола): запитвания, чат, оферта, етап, срещи, свободни часове |
 | `src/components/inquiry/parts.tsx` | Общите части: избори, чат, файлове, оферта, календар |
 | `src/lib/inquiry-shared.ts` | Типове и правила, общи за сайта и сървъра (капаро, етапи, бриф) |
 | `api/*.ts` | Сървърните routes на Vercel: `ai` (Claude), `inquiry` (клиентът), `studio` (панелът) |
 | `supabase/migrations/` | Таблиците и хранилището за файлове (Supabase проект „13-33“) |
-| `src/pages/*` | Начало, страница на проект (`/proekti/:slug`), 404 |
+| `src/pages/*` | Начало, 404. Старите `/proekti/:slug` водят към колелото; клик върху проект отваря самия сайт |
 | `public/projects/<slug>/` | `poster.webp`, `preview.mp4`, `preview.webm` |
 | `scripts/` | Концептуалните мокъпи и скриптът, който рендерира медията им |
 | `sites/tsukibi/` | Отделен сайт: концепцията за ресторант Цукиби (Vite + React, собствени зависимости) |

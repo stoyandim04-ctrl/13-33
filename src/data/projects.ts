@@ -129,7 +129,7 @@ export const projects: Project[] = [
     year: 2026,
   },
   {
-    // Real site of ours (branch `varovik`). Building, homes and areas are
+    // Real site of ours (branch `varovik`, varovik.vercel.app). Building, homes and areas are
     // invented; frames and photos generated for the concept.
     name: "Варовик",
     slug: "varovik",
@@ -140,6 +140,7 @@ export const projects: Project[] = [
     role: ["Визуална концепция", "Генерирани кадри и филм", "Филм, рисуван според скрола", "Работещ прототип"],
     status: "concept",
     ...media("varovik"),
+    liveUrl: "https://varovik.vercel.app",
     need:
       "Жилище в строеж се продава с усещане за място, което още не съществува. Посетителят трябва да „пристигне“ там, преди да види планове и площи.",
     approach: [

@@ -4,6 +4,7 @@ import { ArrowRight, Menu, X } from "lucide-react";
 
 import { nav } from "@/data/content";
 import { cn } from "@/lib/utils";
+import { RainbowLink } from "@/components/ui/rainbow-button";
 
 /** On the home page anchors stay anchors; elsewhere they lead home first. */
 const toHome = (hash: string, onHome: boolean) => (onHome ? hash : `/${hash}`);
@@ -11,6 +12,7 @@ const toHome = (hash: string, onHome: boolean) => (onHome ? hash : `/${hash}`);
 export function SiteHeader() {
   const { pathname } = useLocation();
   const onHome = pathname === "/";
+  const onStart = pathname === "/zapochni";
   const [open, setOpen] = React.useState(false);
   const [solid, setSolid] = React.useState(false);
   const menuButton = React.useRef<HTMLButtonElement>(null);
@@ -71,10 +73,7 @@ export function SiteHeader() {
             <ul className="flex items-center gap-9">
               {nav.map((item) => (
                 <li key={item.href}>
-                  <a
-                    href={toHome(item.href, onHome)}
-                    className="text-muted-foreground hover:text-foreground text-[0.9375rem] transition-colors"
-                  >
+                  <a href={toHome(item.href, onHome)} className="nav-link text-[0.9375rem]">
                     {item.label}
                   </a>
                 </li>
@@ -83,13 +82,12 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link
-              to="/zapochni"
-              className="text-foreground hover:text-ice hidden items-center gap-1.5 text-[0.9375rem] font-medium transition-colors md:inline-flex"
-            >
-              Започни проект
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
+            {onStart ? null : (
+              <RainbowLink to="/zapochni" size="sm" className="hidden md:inline-flex">
+                Започни проект
+                <ArrowRight aria-hidden="true" className="size-3.5" />
+              </RainbowLink>
+            )}
             <button
               ref={menuButton}
               type="button"
@@ -119,7 +117,7 @@ export function SiteHeader() {
                   ref={i === 0 ? firstLink : undefined}
                   href={toHome(item.href, onHome)}
                   onClick={() => setOpen(false)}
-                  className="font-display block py-5 text-[2.5rem] leading-none font-[500] tracking-[-0.03em]"
+                  className="font-display block py-5 text-[2.5rem] leading-none font-[300] tracking-[-0.03em]"
                 >
                   {item.label}
                 </a>
@@ -127,14 +125,10 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
-        <Link
-          to="/zapochni"
-          onClick={() => setOpen(false)}
-          className="bg-primary text-foreground mt-auto inline-flex h-14 items-center justify-center gap-2 rounded-full text-base font-semibold"
-        >
+        <RainbowLink to="/zapochni" size="lg" className="mt-auto w-full [&>span]:w-full [&>span]:justify-center" onClick={() => setOpen(false)}>
           Започни проект
           <ArrowRight aria-hidden="true" className="size-4" />
-        </Link>
+        </RainbowLink>
       </div>
     </>
   );

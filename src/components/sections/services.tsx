@@ -52,11 +52,10 @@ export function Services() {
             id="uslugi-title"
             className="font-display text-heading mt-6 font-[500] tracking-[-0.045em] text-balance"
           >
-            Решения според това, от което бизнесът ти има нужда.
+            Какво създаваме.
           </h2>
           <p className="text-lead text-muted-foreground mx-auto mt-6 max-w-[44ch] text-pretty">
-            Не продаваме инструменти, а работещ резултат — по-силно представяне,
-            повече запитвания, по-лесни продажби или по-подредени процеси.
+            Сайтове, магазини, брандове, платформи. Според нуждата на бизнеса ти.
           </p>
         </header>
 

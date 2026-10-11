@@ -1,11 +1,10 @@
 import * as React from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import Home from "@/pages/home";
 
-const ProjectPage = React.lazy(() => import("@/pages/project"));
 const NotFound = React.lazy(() => import("@/pages/not-found"));
 const StartPage = React.lazy(() => import("@/pages/start"));
 const RoomPage = React.lazy(() => import("@/pages/room"));
@@ -19,6 +18,8 @@ export default function App() {
     if (!window.location.hash) window.scrollTo(0, 0);
   }, [pathname]);
 
+  const chrome = !(pathname.startsWith("/studio") || pathname.startsWith("/zapitvane/") || pathname === "/zapochni");
+
   return (
     <>
       <SiteHeader />
@@ -26,7 +27,8 @@ export default function App() {
         <React.Suspense fallback={<div className="h-svh" />}>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/proekti/:slug" element={<ProjectPage />} />
+            {/* Old project pages: the wheel now opens the project's own site. */}
+            <Route path="/proekti/*" element={<Navigate to="/#proekti" replace />} />
             <Route path="/zapochni" element={<StartPage />} />
             <Route path="/zapitvane/:token" element={<RoomPage />} />
             <Route path="/studio" element={<StudioPage />} />
@@ -34,7 +36,7 @@ export default function App() {
           </Routes>
         </React.Suspense>
       </main>
-      {pathname.startsWith("/studio") || pathname.startsWith("/zapitvane/") ? null : <SiteFooter />}
+      {chrome ? <SiteFooter /> : null}
     </>
   );
 }
