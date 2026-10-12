@@ -7,14 +7,13 @@ import { RainbowLink } from "@/components/ui/rainbow-button";
 
 // The first screen, after the founder's reference: a lilac glow from above,
 // a perspective grid that drifts underneath, one sentence with two gradient
-// phrases, the glowing primary button and a real project peeking in below.
-// The grid, the glow and the screen move a little with the scroll (parallax)
-// and nothing else does. Reduced motion stills everything.
+// phrases and the glowing primary button. The grid and the glow move a little
+// with the scroll (parallax) and nothing else does. Reduced motion stills
+// everything.
 export function GridHero({ id }: { id?: string }) {
   const section = React.useRef<HTMLElement>(null);
   const floor = React.useRef<HTMLDivElement>(null);
   const beam = React.useRef<HTMLDivElement>(null);
-  const shot = React.useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
   React.useEffect(() => {
@@ -28,7 +27,6 @@ export function GridHero({ id }: { id?: string }) {
       if (y > el.offsetHeight) return;
       if (floor.current) floor.current.style.translate = `0 ${(y * 0.08).toFixed(1)}px`;
       if (beam.current) beam.current.style.translate = `-50% ${(y * 0.18).toFixed(1)}px`;
-      if (shot.current) shot.current.style.translate = `0 ${(y * -0.1).toFixed(1)}px`;
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(draw);
@@ -46,7 +44,7 @@ export function GridHero({ id }: { id?: string }) {
       ref={section}
       id={id}
       aria-label="Начало"
-      className="relative isolate flex min-h-svh flex-col items-center overflow-hidden px-5 pt-32 text-center sm:px-8 md:pt-40"
+      className="relative isolate flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 pt-28 pb-32 text-center sm:px-8 md:pb-40"
     >
       <div aria-hidden="true" className="hero-glow absolute inset-0 -z-20" />
       <div ref={beam} aria-hidden="true" className="hero-beam absolute -z-10" />
@@ -89,25 +87,6 @@ export function GridHero({ id }: { id?: string }) {
         </a>
       </div>
 
-      {/* A real project, peeking in from below. */}
-      <div
-        ref={shot}
-        className="hero-in relative mt-16 w-[min(64rem,94%)] md:mt-20"
-        style={{ "--i": 4 } as React.CSSProperties}
-      >
-        <div className="border-border aspect-[1450/560] overflow-hidden rounded-t-2xl border border-b-0 bg-black shadow-[0_-30px_90px_-20px_rgb(120_90_220/0.35)]">
-          <img
-            src={hero.shot.src}
-            alt={hero.shot.alt}
-            width={1450}
-            height={1000}
-            decoding="async"
-            fetchPriority="high"
-            className="size-full object-cover object-top"
-          />
-        </div>
-        <div aria-hidden="true" className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t to-transparent" />
-      </div>
     </section>
   );
 }

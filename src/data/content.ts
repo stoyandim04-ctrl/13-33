@@ -23,8 +23,6 @@ export const hero = {
   description: "Сайтове, онлайн магазини, брандове и платформи. От първата идея до работещия продукт.",
   primary: { label: "Започни проект", href: "/zapochni" },
   secondary: { label: "Виж проектите", href: "#proekti" },
-  /** The screen peeking in under the sentence: a real project of ours. */
-  shot: { src: "/projects/obsidian/poster.webp", alt: "Началната страница на проекта Obsidian" },
 };
 
 export const works = {

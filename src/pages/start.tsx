@@ -1,26 +1,48 @@
-// /zapochni - starting a project is one chat, like a messaging app:
-// the assistant asks, the client writes in their own words (or taps an
-// answer), adds pictures if they help, leaves a name and an e-mail in the same
-// chat and lands in their private room, where the founder answers with the
-// price, the deadline and the deposit.
+// /zapochni - starting a project. The client picks how to tell us:
+//   • the questionnaire - four taps (what, current site, when, budget), then
+//     on to the assistant or straight to contact;
+//   • the assistant - a full chat, like a messaging app: write freely, send
+//     pictures and files, tap a ready answer; the assistant asks only what it
+//     still needs and keeps a brief.
+// Both end with name and e-mail inside the chat and the client's private room,
+// where the founder answers with the price, the deadline and the deposit.
 import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Check, Loader2, RotateCcw, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Check,
+  FileText,
+  ImagePlus,
+  ListChecks,
+  Loader2,
+  Paperclip,
+  RotateCcw,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 import { site } from "@/data/content";
+import { cn } from "@/lib/utils";
 import { RainbowButton } from "@/components/ui/rainbow-button";
-import { BriefCard, Bubble, Chip, Composer, DepositNote } from "@/components/inquiry/parts";
-import { askAi, createInquiry, errorText, getReady, newDraftId, store, uploadFile } from "@/lib/inquiry-api";
+import { Button } from "@/components/ui/button";
+import { BriefCard, Choice, DepositNote } from "@/components/inquiry/parts";
+import { ACCEPT, askAi, createInquiry, errorText, getReady, MAX_FILE, newDraftId, store, uploadFile } from "@/lib/inquiry-api";
 import {
+  BUDGET,
   emptyBrief,
+  HAS_SITE,
   PROJECT_TYPES,
+  projectTypeLabel,
+  WHEN,
   type AiTurn,
   type Answers,
   type Brief,
   type ChatFile,
 } from "@/lib/inquiry-shared";
 
-const DRAFT_KEY = "1333-chat";
+const DRAFT_KEY = "1333-start";
 export const ROOMS_KEY = "1333-rooms";
 
 /** Without the assistant the chat still works: these are asked one by one. */
@@ -32,10 +54,14 @@ const FALLBACK: { key: keyof Brief; text: string }[] = [
 ];
 
 const OPENER =
-  "Здравей! Разкажи ми с няколко думи какво искаш да направим. Може да е сайт, магазин, бранд, приложение или нещо, за което още нямаш дума.";
+  "Здравей! Разкажи ми с няколко думи какво искаш да направим. Може да е сайт, магазин, бранд, приложение или нещо, за което още нямаш дума. Ако имаш лого, снимки или сайтове, които харесваш — прати ги направо тук.";
+
+type Mode = "choose" | "steps" | "chat";
 
 interface Draft {
   draftId: string;
+  mode: Mode;
+  step: number;
   answers: Answers;
   conversation: AiTurn[];
   quick: string[];
@@ -55,6 +81,8 @@ interface Draft {
 
 const fresh = (): Draft => ({
   draftId: newDraftId(),
+  mode: "choose",
+  step: 0,
   answers: { projectType: "", hasSite: "", siteUrl: "", when: "", budget: "" },
   conversation: [],
   quick: [],
@@ -69,6 +97,8 @@ const fresh = (): Draft => ({
   phone: "",
 });
 
+const STEPS = ["Проект", "Сайт", "Срок", "Бюджет"];
+
 export default function StartPage() {
   const navigate = useNavigate();
   const [draft, setDraft] = React.useState<Draft>(() => {
@@ -78,10 +108,6 @@ export default function StartPage() {
       : fresh();
   });
   const [ready, setReady] = React.useState<{ ready: boolean; ai: boolean } | null>(null);
-  const [thinking, setThinking] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const end = React.useRef<HTMLDivElement>(null);
-  const urls = React.useMemo(() => new Map(draft.files.map((f) => [f.path, f])), [draft.files]);
 
   React.useEffect(() => {
     document.title = "Започни проект — 13:33";
@@ -94,10 +120,282 @@ export default function StartPage() {
     store(DRAFT_KEY, draft);
   }, [draft]);
 
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [draft.mode, draft.step]);
+
   const update = React.useCallback((patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch })), []);
+
+  const restart = () => {
+    if (window.confirm("Да започнем отначало? Отговорите и разговорът ще се изтрият.")) setDraft(fresh());
+  };
+
+  const onSent = (token: string) => {
+    const rooms = store<string[]>(ROOMS_KEY) ?? [];
+    store(ROOMS_KEY, [token, ...rooms.filter((t) => t !== token)].slice(0, 10));
+    store(DRAFT_KEY, null);
+    navigate(`/zapitvane/${token}`);
+  };
+
+  if (draft.mode === "choose") return <Choose onPick={(mode) => update({ mode, step: 0 })} />;
+  if (draft.mode === "steps") return <Steps draft={draft} update={update} onRestart={restart} />;
+  return <Chat draft={draft} update={update} ready={ready} onRestart={restart} onSent={onSent} />;
+}
+
+// ---- 1. how do you want to tell us? -----------------------------------------
+
+function Choose({ onPick }: { onPick: (mode: Mode) => void }) {
+  return (
+    <div className="px-5 pt-32 pb-24 sm:px-8 md:pt-40">
+      <div className="mx-auto max-w-5xl">
+        <header className="max-w-[40rem]">
+          <p className="eyebrow mb-5">Започни проект</p>
+          <h1 className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">Как искаш да ни разкажеш?</h1>
+          <p className="text-lead text-muted-foreground mt-6 max-w-[42ch] text-pretty">
+            И по двата пътя накрая получаваш личен чат с основателя: цена, срок и капаро. Без регистрация.
+          </p>
+        </header>
+
+        <div className="mt-14 grid gap-5 md:grid-cols-2">
+          <PathCard
+            icon={<ListChecks aria-hidden="true" className="size-6" />}
+            title="Въпросник"
+            lead="Четири бързи избора с по едно докосване. Около минута."
+            points={["Какво искаш, имаш ли сайт, кога, бюджет", "После: асистентът или направо контакт", "Без писане, само натискаш"]}
+            action="Попълни въпросника"
+            onClick={() => onPick("steps")}
+          />
+          <PathCard
+            icon={<Sparkles aria-hidden="true" className="size-6" />}
+            title="AI асистент"
+            lead="Пишеш свободно, както на приятел. Асистентът пита само каквото му трябва."
+            points={["Снимки, лого, PDF — пращаш ги в чата", "Готови отговори с едно докосване", "Накрая виждаш брифа, подреден"]}
+            action="Говори с асистента"
+            featured
+            onClick={() => onPick("chat")}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PathCard({
+  icon,
+  title,
+  lead,
+  points,
+  action,
+  featured,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  lead: string;
+  points: string[];
+  action: string;
+  featured?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group border-border bg-surface relative isolate flex flex-col rounded-[1.75rem] border p-7 text-left transition-[transform,box-shadow,border-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-primary/60 hover:shadow-[0_30px_80px_-30px_var(--color-primary)] md:p-9",
+        featured && "border-primary/40 shadow-[0_30px_80px_-40px_var(--color-primary)]",
+      )}
+    >
+      {featured ? (
+        <span className="bg-primary/15 text-ice absolute top-6 right-6 rounded-full px-3 py-1 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase">
+          Препоръчано
+        </span>
+      ) : null}
+      <span className="bg-surface-2 text-ice grid size-12 place-items-center rounded-2xl">{icon}</span>
+      <span className="font-display mt-7 block text-[1.75rem] leading-none font-[400] tracking-[-0.03em]">{title}</span>
+      <span className="text-muted-foreground mt-3 block max-w-[34ch] text-pretty">{lead}</span>
+      <ul className="mt-6 space-y-2.5">
+        {points.map((p) => (
+          <li key={p} className="flex gap-2.5 text-[0.9375rem]">
+            <Check aria-hidden="true" className="text-ice mt-1 size-4 shrink-0" />
+            <span>{p}</span>
+          </li>
+        ))}
+      </ul>
+      <span className="group-hover:text-ice mt-8 inline-flex items-center gap-2 font-medium transition-colors">
+        {action}
+        <ArrowRight aria-hidden="true" className="size-4 transition-transform duration-500 group-hover:translate-x-1" />
+      </span>
+    </button>
+  );
+}
+
+// ---- 2. the questionnaire ----------------------------------------------------
+
+function Steps({ draft, update, onRestart }: { draft: Draft; update: (p: Partial<Draft>) => void; onRestart: () => void }) {
+  const { step, answers } = draft;
+  const answer = <K extends keyof Answers>(key: K, value: Answers[K], next?: number) =>
+    update({ answers: { ...answers, [key]: value }, step: next ?? step });
+  const back = () => (step > 0 ? update({ step: step - 1 }) : update({ mode: "choose" }));
+  const finished = step >= STEPS.length;
+
+  return (
+    <div className="px-5 pt-28 pb-24 sm:px-8 md:pt-36">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-10 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={back}
+            aria-label={step > 0 ? "Назад" : "Към избора"}
+            className="border-border hover:border-foreground/40 grid size-10 shrink-0 place-items-center rounded-full border transition-colors"
+          >
+            <ArrowLeft aria-hidden="true" className="size-4" />
+          </button>
+          <div className="flex-1">
+            <div className="bg-border h-1 overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full rounded-full transition-[width] duration-500 ease-[var(--ease-out-expo)]"
+                style={{ width: `${(Math.min(step + 1, STEPS.length) / STEPS.length) * 100}%` }}
+              />
+            </div>
+            <p className="text-muted-foreground mt-2 text-xs">
+              {finished ? "Готово" : `${step + 1} от ${STEPS.length} · ${STEPS[step]}`}
+            </p>
+          </div>
+        </div>
+
+        {step === 0 ? (
+          <Step eyebrow="Въпросник" title="Какво искаш да направим?">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PROJECT_TYPES.map((p) => (
+                <Choice key={p.id} label={p.label} hint={p.hint} selected={answers.projectType === p.id} onClick={() => answer("projectType", p.id, 1)} />
+              ))}
+            </div>
+          </Step>
+        ) : null}
+
+        {step === 1 ? (
+          <Step title="Имаш ли сайт сега?">
+            <div className="grid gap-3">
+              {HAS_SITE.map((o) => (
+                <Choice key={o} label={o} selected={answers.hasSite === o} onClick={() => answer("hasSite", o, o === HAS_SITE[0] ? 2 : 1)} />
+              ))}
+            </div>
+            {answers.hasSite && answers.hasSite !== HAS_SITE[0] ? (
+              <div className="mt-6">
+                <label className="block">
+                  <span className="text-sm font-medium">Линк към сайта</span>
+                  <span className="text-muted-foreground"> · по желание</span>
+                  <input type="url" inputMode="url" value={answers.siteUrl} onChange={(e) => answer("siteUrl", e.target.value)} placeholder="www.example.bg" className="field mt-2" />
+                </label>
+                <Button className="mt-5" onClick={() => update({ step: 2 })}>
+                  Напред <ArrowRight aria-hidden="true" />
+                </Button>
+              </div>
+            ) : null}
+          </Step>
+        ) : null}
+
+        {step === 2 ? (
+          <Step title="Кога ти трябва?">
+            <div className="grid gap-3">
+              {WHEN.map((o) => (
+                <Choice key={o} label={o} selected={answers.when === o} onClick={() => answer("when", o, 3)} />
+              ))}
+            </div>
+          </Step>
+        ) : null}
+
+        {step === 3 ? (
+          <Step title="Имаш ли бюджет наум?" lead="Не е задължително. Помага ни да предложим подходящото решение.">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {BUDGET.map((o) => (
+                <Choice key={o} label={o} selected={answers.budget === o} onClick={() => answer("budget", o, 4)} />
+              ))}
+            </div>
+          </Step>
+        ) : null}
+
+        {finished ? (
+          <Step eyebrow="Готово" title="Сега разкажи идеята си." lead="Асистентът вече знае отговорите ти и ще пита само за останалото. Или мини направо към контакт.">
+            <AnswersStrip answers={answers} onEdit={() => update({ step: 0 })} />
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <RainbowButton onClick={() => update({ mode: "chat" })}>
+                Продължи с асистента <ArrowRight aria-hidden="true" className="size-4" />
+              </RainbowButton>
+              <button
+                type="button"
+                onClick={() => update({ mode: "chat", contact: true })}
+                className="text-muted-foreground hover:text-foreground text-[0.9375rem] transition-colors"
+              >
+                Направо към контакт
+              </button>
+            </div>
+          </Step>
+        ) : null}
+
+        {step > 0 ? (
+          <button type="button" onClick={onRestart} className="text-muted-foreground hover:text-foreground mt-16 inline-flex items-center gap-2 text-sm transition-colors">
+            <RotateCcw aria-hidden="true" className="size-3.5" /> Започни отначало
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Step({ eyebrow, title, lead, children }: { eyebrow?: string; title: string; lead?: string; children: React.ReactNode }) {
+  return (
+    <section className="ww-rise">
+      {eyebrow ? <p className="eyebrow mb-4">{eyebrow}</p> : null}
+      <h1 className="font-display text-[clamp(2rem,1.4rem+2.4vw,3rem)] leading-[1.08] font-[300] tracking-[-0.04em] text-balance">{title}</h1>
+      {lead ? <p className="text-muted-foreground mt-4 max-w-[46ch] text-lg text-pretty">{lead}</p> : null}
+      <div className="mt-9">{children}</div>
+    </section>
+  );
+}
+
+function AnswersStrip({ answers, onEdit }: { answers: Answers; onEdit: () => void }) {
+  const items = [projectTypeLabel(answers.projectType), answers.hasSite, answers.when, answers.budget].filter(Boolean);
+  if (!items.length) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {items.map((t) => (
+        <span key={t} className="border-border rounded-full border px-3.5 py-1.5 text-sm">
+          {t}
+        </span>
+      ))}
+      <button type="button" onClick={onEdit} className="text-muted-foreground hover:text-foreground px-2 text-sm transition-colors">
+        Промени
+      </button>
+    </div>
+  );
+}
+
+// ---- 3. the chat -------------------------------------------------------------
+
+function Chat({
+  draft,
+  update,
+  ready,
+  onRestart,
+  onSent,
+}: {
+  draft: Draft;
+  update: (p: Partial<Draft>) => void;
+  ready: { ready: boolean; ai: boolean } | null;
+  onRestart: () => void;
+  onSent: (token: string) => void;
+}) {
+  const [thinking, setThinking] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const [dragging, setDragging] = React.useState(false);
+  const end = React.useRef<HTMLDivElement>(null);
+  const urls = React.useMemo(() => new Map(draft.files.map((f) => [f.path, f])), [draft.files]);
 
   // The assistant is on unless the server says otherwise.
   const ai = ready === null ? true : ready.ai;
+  const hasAnswers = Boolean(draft.answers.projectType || draft.answers.hasSite || draft.answers.when || draft.answers.budget);
 
   const ask = React.useCallback(
     async (conversation: AiTurn[], answers: Answers) => {
@@ -122,25 +420,31 @@ export default function StartPage() {
     [draft.draftId, update],
   );
 
+  // After the questionnaire the assistant opens with a question that already
+  // knows the answers. Without the assistant, the scripted questions start.
+  const opened = React.useRef(false);
+  React.useEffect(() => {
+    if (opened.current || draft.conversation.length || ready === null) return;
+    opened.current = true;
+    if (!ready.ai) update({ conversation: [{ role: "ai", text: FALLBACK[0].text }], fallbackStep: 0 });
+    else if (hasAnswers) void ask([], draft.answers);
+  }, [ready, draft.conversation.length, hasAnswers, draft.answers, ask, update]);
+
   /** One client message, from the box or a tapped chip. */
   const send = async (text: string, files: ChatFile[] = []) => {
     const turn: AiTurn = { role: "client", text, files: files.map((f) => f.path) };
     const conversation = [...draft.conversation, turn];
     // A tapped project type is also kept as a step answer for the brief.
     const typed = PROJECT_TYPES.find((p) => p.label === text);
-    const answers: Answers =
-      typed && !draft.answers.projectType ? { ...draft.answers, projectType: typed.id } : draft.answers;
+    const answers: Answers = typed && !draft.answers.projectType ? { ...draft.answers, projectType: typed.id } : draft.answers;
 
     if (!ai) {
-      // Scripted questions, one at a time.
       const q = FALLBACK[draft.fallbackStep];
       const brief = q ? { ...draft.brief, [q.key]: text } : draft.brief;
       const next = Math.min(draft.fallbackStep + 1, FALLBACK.length);
       const finished = next >= FALLBACK.length;
       update({
-        conversation: finished
-          ? conversation
-          : [...conversation, { role: "ai", text: FALLBACK[next].text }],
+        conversation: finished ? conversation : [...conversation, { role: "ai", text: FALLBACK[next].text }],
         answers,
         brief: { ...brief, summary: brief.summary || brief.goal || brief.business },
         files: [...draft.files, ...files],
@@ -155,128 +459,152 @@ export default function StartPage() {
     await ask(conversation, answers);
   };
 
-  // Scroll to the newest message.
   React.useEffect(() => {
     end.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [draft.conversation.length, thinking, draft.done, draft.contact]);
 
-  // Fallback mode opens with its own first question.
-  React.useEffect(() => {
-    if (ready && !ready.ai && !draft.conversation.length) {
-      update({ conversation: [{ role: "ai", text: FALLBACK[0].text }], fallbackStep: 0 });
-    }
-  }, [ready, draft.conversation.length, update]);
-
   const clientTurns = draft.conversation.filter((t) => t.role === "client").length;
   const lastIsClient = draft.conversation[draft.conversation.length - 1]?.role === "client";
   const showContact = draft.done || draft.contact;
-  const chips = draft.conversation.length ? draft.quick : PROJECT_TYPES.map((p) => p.label);
-
-  const restart = () => {
-    if (window.confirm("Да започнем отначало? Разговорът ще се изтрие.")) {
-      setDraft(fresh());
-      setError("");
-    }
-  };
+  const chips = draft.conversation.length || hasAnswers ? draft.quick : PROJECT_TYPES.map((p) => p.label);
+  const showOpener = ai && !hasAnswers;
+  const upload = ready?.ready ? (file: File) => uploadFile(file, { draftId: draft.draftId }) : undefined;
 
   return (
-    <div className="flex min-h-svh flex-col px-5 pt-24 sm:px-8 md:pt-28">
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
-        <header className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow flex items-center gap-2">
-              <Sparkles aria-hidden="true" className="size-3.5" /> Започни проект
-            </p>
-            <h1 className="font-display mt-3 text-[clamp(1.75rem,1.3rem+1.8vw,2.5rem)] leading-[1.08] font-[300] tracking-[-0.035em] text-balance">
-              Разкажи ни идеята си
-            </h1>
+    <div
+      className="relative flex min-h-svh flex-col pt-16 md:pt-[4.5rem]"
+      onDragOver={(e) => {
+        if (!upload) return;
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setDragging(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragging(false);
+        if (upload) window.dispatchEvent(new CustomEvent<FileList>("1333-drop", { detail: e.dataTransfer.files }));
+      }}
+    >
+      {dragging ? (
+        <div className="bg-background/80 pointer-events-none fixed inset-0 z-[150] grid place-items-center backdrop-blur-sm">
+          <div className="border-ice text-ice rounded-3xl border-2 border-dashed px-10 py-8 text-center">
+            <ImagePlus aria-hidden="true" className="mx-auto size-8" />
+            <p className="mt-3 text-lg font-medium">Пусни файловете тук</p>
+            <p className="text-muted-foreground mt-1 text-sm">Снимки и PDF до 10 MB</p>
           </div>
-          {draft.conversation.length ? (
-            <button type="button" onClick={restart} className="text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1.5 text-sm transition-colors">
+        </div>
+      ) : null}
+
+      {/* Top strip */}
+      <div className="border-border bg-background/85 sticky top-16 z-20 border-b backdrop-blur-md md:top-[4.5rem]">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar />
+            <div className="min-w-0">
+              <p className="truncate font-medium">Асистентът на 13:33</p>
+              <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                <span className="bg-ice relative inline-flex size-1.5 rounded-full" />
+                {ai ? "Отговаря веднага · не казва цени и срокове" : "Кратък въпросник · асистентът почива"}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-3 text-sm">
+            {hasAnswers ? (
+              <button type="button" onClick={() => update({ mode: "steps", step: 0 })} className="text-muted-foreground hover:text-foreground hidden transition-colors sm:inline">
+                Отговорите
+              </button>
+            ) : null}
+            <button type="button" onClick={onRestart} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors">
               <RotateCcw aria-hidden="true" className="size-3.5" /> Отначало
             </button>
-          ) : null}
-        </header>
+          </div>
+        </div>
+      </div>
 
-        <div className="flex-1" aria-live="polite">
-          {/* The opener is static: no request until the client writes. */}
-          {ai ? <Bubble mine={false} who="Асистентът на 13:33" message={{ sender: "studio", body: OPENER, files: [], created_at: "" }} /> : null}
+      {/* Messages */}
+      <div className="mx-auto w-full max-w-3xl flex-1 px-5 pt-8 pb-6 sm:px-8" aria-live="polite">
+        {hasAnswers ? (
+          <div className="mb-8">
+            <AnswersStrip answers={draft.answers} onEdit={() => update({ mode: "steps", step: 0 })} />
+          </div>
+        ) : null}
 
-          {draft.conversation.map((t, i) => (
-            <Bubble
-              key={i}
-              mine={t.role === "client"}
-              who={t.role === "ai" && draft.conversation[i - 1]?.role !== "ai" ? "Асистентът на 13:33" : undefined}
-              message={{
-                sender: t.role === "client" ? "client" : "studio",
-                body: t.text,
-                files: (t.files ?? []).map((p) => urls.get(p) ?? { path: p, name: p.split("/").pop() ?? p }),
-                created_at: "",
-              }}
-            />
-          ))}
+        {showOpener ? <Line role="ai" text={OPENER} /> : null}
 
-          {thinking ? (
-            <div className="bg-surface-2 my-2 inline-flex items-center gap-1.5 rounded-2xl rounded-bl-md px-4 py-3" aria-label="Асистентът пише">
+        {draft.conversation.map((t, i) => (
+          <Line
+            key={i}
+            role={t.role}
+            text={t.text}
+            files={(t.files ?? []).map((p) => urls.get(p) ?? { path: p, name: p.split("/").pop() ?? p })}
+          />
+        ))}
+
+        {thinking ? (
+          <div className="my-5 flex items-start gap-4">
+            <Avatar />
+            <div className="bg-surface-2 inline-flex items-center gap-1.5 rounded-2xl rounded-tl-md px-4 py-3.5" aria-label="Асистентът пише">
               {[0, 1, 2].map((i) => (
                 <span key={i} className="bg-muted-foreground size-1.5 animate-pulse rounded-full" style={{ animationDelay: `${i * 160}ms` }} />
               ))}
             </div>
-          ) : null}
+          </div>
+        ) : null}
 
-          {error ? (
-            <div className="border-destructive/40 my-4 rounded-2xl border p-4 text-sm">
-              <p>{error}</p>
-              {lastIsClient ? (
-                <div className="mt-3">
-                  <Chip onClick={() => void ask(draft.conversation, draft.answers)}>Опитай пак</Chip>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+        {error ? (
+          <div className="border-destructive/40 my-5 rounded-2xl border p-4 text-sm">
+            <p>{error}</p>
+            {lastIsClient || (hasAnswers && !draft.conversation.length) ? (
+              <button type="button" onClick={() => void ask(draft.conversation, draft.answers)} className="border-foreground/20 hover:border-foreground/60 mt-3 rounded-full border px-4 py-2 text-sm transition-colors">
+                Опитай пак
+              </button>
+            ) : null}
+          </div>
+        ) : null}
 
-          {!thinking && chips.length && !showContact ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {chips.map((q) => (
-                <Chip key={q} onClick={() => void send(q)}>
-                  {q}
-                </Chip>
-              ))}
-            </div>
-          ) : null}
+        {!thinking && chips.length && !showContact ? (
+          <div className="mt-2 flex flex-wrap gap-2 md:pl-14">
+            {chips.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => void send(q)}
+                className="border-foreground/20 hover:border-ice hover:text-ice rounded-full border px-4 py-2.5 text-[0.9375rem] transition-colors"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
-          {draft.done ? <BriefCard brief={draft.brief} className="mt-6" /> : null}
+        {draft.done ? <BriefCard brief={draft.brief} className="mt-8" /> : null}
 
-          {showContact ? (
-            <ContactCard
-              draft={draft}
-              update={update}
-              disabled={ready !== null && !ready.ready}
-              onSent={(token) => {
-                const rooms = store<string[]>(ROOMS_KEY) ?? [];
-                store(ROOMS_KEY, [token, ...rooms.filter((t) => t !== token)].slice(0, 10));
-                store(DRAFT_KEY, null);
-                navigate(`/zapitvane/${token}`);
-              }}
-            />
-          ) : null}
+        {showContact ? <ContactCard draft={draft} update={update} disabled={ready !== null && !ready.ready} onSent={onSent} /> : null}
 
-          <div ref={end} className="h-4" />
-        </div>
+        <div ref={end} className="h-2" />
+      </div>
 
-        {/* The box stays within reach at the bottom, like in a chat app. */}
-        <div className="bg-background/85 sticky bottom-0 z-10 -mx-5 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:-mx-8 sm:px-8">
-          <Composer
+      {/* The box: big, with pictures and files, always within reach. */}
+      <div className="bg-background/85 sticky bottom-0 z-20 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md">
+        <div className="mx-auto max-w-3xl px-5 pt-3 sm:px-8">
+          <BigComposer
             placeholder={showContact ? "Искаш да добавиш нещо?" : "Напиши съобщение…"}
             disabled={thinking}
             highlightAttach={draft.askFiles}
-            upload={ready?.ready ? (file) => uploadFile(file, { draftId: draft.draftId }) : undefined}
+            upload={upload}
             onSend={(text, files) => send(text, files)}
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1">
-            <p className="text-muted-foreground text-xs">Асистентът не казва цени и срокове. Тях ти ги пише основателят, лично.</p>
+            <p className="text-muted-foreground text-xs">Цената и срокът ти ги пише основателят, лично.</p>
             {!showContact && clientTurns >= 2 ? (
-              <button type="button" onClick={() => update({ contact: true, brief: { ...draft.brief, summary: draft.brief.summary || lastClientText(draft) } })} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors">
+              <button
+                type="button"
+                onClick={() => update({ contact: true, brief: { ...draft.brief, summary: draft.brief.summary || lastClientText(draft) } })}
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
+              >
                 Достатъчно, към контакт <ArrowRight aria-hidden="true" className="size-3" />
               </button>
             ) : null}
@@ -288,6 +616,200 @@ export default function StartPage() {
 }
 
 const lastClientText = (d: Draft) => [...d.conversation].reverse().find((t) => t.role === "client")?.text ?? "";
+
+function Avatar() {
+  return (
+    <span className="from-ice to-peach text-background grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br font-display text-[0.8rem] font-[700] tracking-[-0.04em]">
+      13
+    </span>
+  );
+}
+
+/** One line of the chat: the assistant with its mark on the left, the client on the right. */
+function Line({ role, text, files = [] }: { role: "ai" | "client"; text: string; files?: ChatFile[] }) {
+  const mine = role === "client";
+  return (
+    <div className={cn("my-5 flex items-start gap-4", mine && "flex-row-reverse")}>
+      {mine ? null : <Avatar />}
+      <div className={cn("flex max-w-[88%] flex-col gap-2 md:max-w-[80%]", mine ? "items-end" : "items-start")}>
+        {text ? (
+          <div
+            className={cn(
+              "rounded-3xl px-5 py-3.5 text-[1.0625rem] leading-relaxed whitespace-pre-wrap",
+              mine ? "bg-foreground/10 rounded-tr-md" : "bg-surface-2 rounded-tl-md",
+            )}
+          >
+            {text}
+          </div>
+        ) : null}
+        {files.length ? <Files files={files} /> : null}
+      </div>
+    </div>
+  );
+}
+
+function Files({ files, onRemove }: { files: ChatFile[]; onRemove?: (path: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {files.map((f) => {
+        const image = /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.path);
+        return (
+          <span key={f.path} className="relative">
+            {image && f.url ? (
+              <img src={f.url} alt={f.name} className="border-border size-32 rounded-2xl border object-cover md:size-40" loading="lazy" />
+            ) : (
+              <span className="bg-surface-2 border-border flex h-24 w-40 flex-col items-center justify-center gap-1 rounded-2xl border px-3 text-center text-xs">
+                <FileText aria-hidden="true" className="size-5" />
+                <span className="line-clamp-2 break-all">{f.name}</span>
+              </span>
+            )}
+            {onRemove ? (
+              <button
+                type="button"
+                aria-label={`Махни ${f.name}`}
+                onClick={() => onRemove(f.path)}
+                className="bg-background border-border absolute -top-2 -right-2 grid size-7 place-items-center rounded-full border"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            ) : null}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The message box: text, pictures and files (pick, drop or paste), one send. */
+function BigComposer({
+  onSend,
+  upload,
+  placeholder,
+  highlightAttach,
+  disabled,
+}: {
+  onSend: (text: string, files: ChatFile[]) => Promise<void> | void;
+  upload?: (file: File) => Promise<string>;
+  placeholder: string;
+  highlightAttach?: boolean;
+  disabled?: boolean;
+}) {
+  const [text, setText] = React.useState("");
+  const [files, setFiles] = React.useState<ChatFile[]>([]);
+  const [busy, setBusy] = React.useState(0);
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const area = React.useRef<HTMLTextAreaElement>(null);
+  const input = React.useRef<HTMLInputElement>(null);
+
+  const add = React.useCallback(
+    async (list: FileList | File[] | null) => {
+      if (!upload) return;
+      setError("");
+      for (const file of Array.from(list ?? []).slice(0, 8)) {
+        if (!ACCEPT.split(",").includes(file.type)) {
+          setError("Този файл не се поддържа. Пробвай снимка (JPG, PNG) или PDF.");
+          continue;
+        }
+        if (file.size > MAX_FILE) {
+          setError("Файлът е над 10 MB.");
+          continue;
+        }
+        setBusy((n) => n + 1);
+        try {
+          const path = await upload(file);
+          setFiles((cur) => [...cur, { path, name: file.name, url: URL.createObjectURL(file) }]);
+        } catch (e) {
+          setError(errorText(e));
+        } finally {
+          setBusy((n) => n - 1);
+        }
+      }
+      if (input.current) input.current.value = "";
+    },
+    [upload],
+  );
+
+  // Files dropped anywhere on the page land here.
+  React.useEffect(() => {
+    const onDrop = (e: Event) => void add((e as CustomEvent<FileList>).detail);
+    window.addEventListener("1333-drop", onDrop);
+    return () => window.removeEventListener("1333-drop", onDrop);
+  }, [add]);
+
+  const send = async () => {
+    if (sending || disabled || busy || (!text.trim() && !files.length)) return;
+    setSending(true);
+    try {
+      await onSend(text.trim(), files);
+      setText("");
+      setFiles([]);
+      if (area.current) area.current.style.height = "auto";
+    } finally {
+      setSending(false);
+      area.current?.focus();
+    }
+  };
+
+  return (
+    <div className="border-border bg-surface rounded-[1.75rem] border p-3 shadow-[0_24px_60px_-30px_var(--color-primary)] focus-within:border-foreground/30">
+      {files.length ? (
+        <div className="px-2 pt-2 pb-3">
+          <Files files={files} onRemove={(p) => setFiles((f) => f.filter((x) => x.path !== p))} />
+        </div>
+      ) : null}
+      <textarea
+        ref={area}
+        value={text}
+        rows={2}
+        placeholder={placeholder}
+        onChange={(e) => {
+          setText(e.target.value);
+          e.target.style.height = "auto";
+          e.target.style.height = `${Math.min(e.target.scrollHeight, 220)}px`;
+        }}
+        onPaste={(e) => {
+          const pasted = Array.from(e.clipboardData.files ?? []);
+          if (pasted.length) {
+            e.preventDefault();
+            void add(pasted);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            void send();
+          }
+        }}
+        aria-label={placeholder}
+        className="placeholder:text-muted-foreground/70 block min-h-16 w-full resize-none bg-transparent px-3 py-2.5 text-[1.0625rem] leading-relaxed outline-none"
+      />
+      <div className="flex items-end justify-between gap-3 px-1">
+        <div className="flex min-w-0 flex-col">
+          <button
+            type="button"
+            onClick={() => input.current?.click()}
+            disabled={!upload}
+            title={upload ? undefined : "Качването още не е включено"}
+            className={cn(
+              "inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm transition-colors disabled:opacity-40",
+              highlightAttach ? "border-ice text-ice" : "border-foreground/20 text-muted-foreground hover:text-foreground hover:border-foreground/50",
+            )}
+          >
+            {busy ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <Paperclip aria-hidden="true" className="size-4" />}
+            {busy ? "Качване…" : <><span className="hidden sm:inline">Снимки и файлове</span><span className="sm:hidden">Снимки</span></>}
+          </button>
+          <input ref={input} type="file" accept={ACCEPT} multiple hidden onChange={(e) => void add(e.target.files)} />
+          {error ? <span className="text-destructive mt-1 px-1 text-xs">{error}</span> : null}
+        </div>
+        <RainbowButton onClick={() => void send()} disabled={sending || disabled || busy > 0 || (!text.trim() && !files.length)} aria-label="Изпрати">
+          Изпрати
+          {sending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ArrowUp aria-hidden="true" className="size-4" />}
+        </RainbowButton>
+      </div>
+    </div>
+  );
+}
 
 // ---- contact, inside the chat -----------------------------------------------
 
@@ -333,7 +855,7 @@ function ContactCard({
   };
 
   return (
-    <section aria-label="Контакт" className="border-border bg-surface ww-rise mt-6 rounded-3xl border p-6">
+    <section aria-label="Контакт" className="border-border bg-surface ww-rise mt-8 rounded-3xl border p-6 md:p-8">
       <p className="eyebrow mb-3">Последно</p>
       <h2 className="font-display text-title font-[500] tracking-[-0.025em]">Как да ти пишем?</h2>
       <p className="text-muted-foreground mt-2 text-[0.9375rem] text-pretty">
@@ -367,11 +889,7 @@ function ContactCard({
         </label>
 
         <ul className="text-muted-foreground space-y-2 text-[0.9375rem]">
-          {[
-            "Основателят преглежда разговора.",
-            "Пише ти в личния чат: крайна цена, срок и капаро.",
-            "Приемаш офертата, плащаш капарото и започваме.",
-          ].map((t) => (
+          {["Основателят преглежда разговора.", "Пише ти в личния чат: крайна цена, срок и капаро.", "Приемаш офертата, плащаш капарото и започваме."].map((t) => (
             <li key={t} className="flex gap-2.5">
               <Check aria-hidden="true" className="text-ice mt-1 size-4 shrink-0" />
               <span>{t}</span>
