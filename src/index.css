@@ -703,3 +703,21 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* The consultant's words arriving: a soft cursor at the end of the last line. */
+.rich-live > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 0.15em;
+  vertical-align: -0.15em;
+  border-radius: 2px;
+  background: var(--color-ice);
+  animation: rich-cursor 0.9s steps(2, start) infinite;
+}
+@keyframes rich-cursor {
+  to {
+    opacity: 0;
+  }
+}

@@ -48,8 +48,49 @@ export function errorText(error: unknown): string {
 
 export const getReady = () => call<{ ready: boolean; ai: boolean }>("/api/inquiry?ready");
 
-export const askAi = (draftId: string, answers: Answers, conversation: AiTurn[]) =>
-  call<AiReply>("/api/ai", { method: "POST", json: { draftId, answers, conversation } });
+/** The consultant's reply, streamed as plain text. `onDelta` gets each piece. */
+export async function streamAi(
+  draftId: string,
+  answers: Answers,
+  conversation: AiTurn[],
+  onDelta: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "text/plain" },
+      body: JSON.stringify({ draftId, mode: "chat", answers, conversation }),
+      signal,
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
+    throw new ApiError(0, "offline");
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new ApiError(res.status, data.error ?? "error");
+  }
+  if (!res.body) throw new ApiError(502, "ai-error");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const piece = decoder.decode(value, { stream: true });
+    if (!piece) continue;
+    full += piece;
+    onDelta(piece);
+  }
+  if (full.endsWith("[грешка]")) throw new ApiError(502, "ai-error");
+  return full.trim();
+}
+
+/** The structured brief, read from the whole conversation. */
+export const briefAi = (draftId: string, answers: Answers, conversation: AiTurn[]) =>
+  call<AiReply>("/api/ai", { method: "POST", json: { draftId, mode: "brief", answers, conversation } });
 
 export const createInquiry = (payload: {
   draftId: string;

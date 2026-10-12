@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { Button } from "@/components/ui/button";
 import { BriefCard, Choice, DepositNote } from "@/components/inquiry/parts";
-import { ACCEPT, askAi, createInquiry, errorText, getReady, MAX_FILE, newDraftId, store, uploadFile } from "@/lib/inquiry-api";
+import { ACCEPT, briefAi, createInquiry, errorText, getReady, MAX_FILE, newDraftId, store, streamAi, uploadFile } from "@/lib/inquiry-api";
 import {
   BUDGET,
   emptyBrief,
@@ -57,7 +57,14 @@ const FALLBACK: { key: keyof Brief; text: string }[] = [
 ];
 
 const OPENER =
-  "Здравей! Разкажи ми с няколко думи какво искаш да направим. Може да е сайт, магазин, бранд, приложение или нещо, за което още нямаш дума. Ако имаш лого, снимки или сайтове, които харесваш — прати ги направо тук.";
+  "Здравей! Аз съм консултантът на 13:33 и мисля само за сайтове и дигитални проекти. Разкажи ми за своя — или ме питай каквото те вълнува: какво да включва, как да изглежда, какво ще ти трябва. Снимки, лого и PDF можеш да пращаш направо тук.";
+
+/** Something to start from when the page is empty. */
+const STARTERS = [
+  "Искам сайт за бизнеса си, но не знам откъде да започна.",
+  "Имам сайт, но не ми носи клиенти. Какво да променя?",
+  "Какво трябва да има един онлайн магазин, за да продава?",
+];
 
 type Mode = "choose" | "steps" | "describe" | "chat";
 
@@ -107,10 +114,18 @@ const STEPS = ["Проект", "Сайт", "Срок", "Бюджет"];
 
 export default function StartPage() {
   const navigate = useNavigate();
+  // A saved draft is restored, but the page always opens on the choice; the
+  // visitor can pick up where they left off from there.
+  const [resume] = React.useState<Mode | null>(() => {
+    const saved = store<Draft>(DRAFT_KEY);
+    if (!saved?.draftId || saved.mode === "choose") return null;
+    const started = saved.conversation?.length || saved.answers?.projectType || saved.description;
+    return started ? saved.mode : null;
+  });
   const [draft, setDraft] = React.useState<Draft>(() => {
     const saved = store<Draft>(DRAFT_KEY);
     return saved?.draftId
-      ? { ...fresh(), ...saved, files: (saved.files ?? []).map((f) => ({ ...f, url: undefined })) }
+      ? { ...fresh(), ...saved, mode: "choose", files: (saved.files ?? []).map((f) => ({ ...f, url: undefined })) }
       : fresh();
   });
   const [ready, setReady] = React.useState<{ ready: boolean; ai: boolean } | null>(null);
@@ -143,7 +158,17 @@ export default function StartPage() {
     navigate(`/zapitvane/${token}`);
   };
 
-  if (draft.mode === "choose") return <Choose onPick={(mode) => update({ mode, step: 0 })} />;
+  if (draft.mode === "choose")
+    return (
+      <Choose
+        resume={resume && draft.mode === "choose" ? resume : null}
+        onResume={() => update({ mode: resume ?? "chat" })}
+        onFresh={() => setDraft(fresh())}
+        onPick={(mode) => {
+          setDraft({ ...fresh(), mode, step: 0 });
+        }}
+      />
+    );
   if (draft.mode === "steps") return <Steps draft={draft} update={update} onRestart={restart} />;
   if (draft.mode === "describe") return <Describe draft={draft} update={update} ready={ready} onSent={onSent} />;
   return <Chat draft={draft} update={update} ready={ready} onRestart={restart} onSent={onSent} />;
@@ -151,10 +176,33 @@ export default function StartPage() {
 
 // ---- 1. how do you want to tell us? -----------------------------------------
 
-function Choose({ onPick }: { onPick: (mode: Mode) => void }) {
+function Choose({
+  onPick,
+  resume,
+  onResume,
+  onFresh,
+}: {
+  onPick: (mode: Mode) => void;
+  resume: Mode | null;
+  onResume: () => void;
+  onFresh: () => void;
+}) {
   return (
     <div className="px-5 pt-32 pb-24 sm:px-8 md:pt-40">
       <div className="mx-auto max-w-5xl">
+        {resume ? (
+          <div className="border-primary/40 bg-primary/[0.06] mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-5 py-4">
+            <p className="text-[0.9375rem]">Имаш започнато запитване.</p>
+            <div className="flex items-center gap-4 text-sm">
+              <button type="button" onClick={onResume} className="text-ice inline-flex items-center gap-1.5 font-medium">
+                Продължи <ArrowRight aria-hidden="true" className="size-3.5" />
+              </button>
+              <button type="button" onClick={onFresh} className="text-muted-foreground hover:text-foreground transition-colors">
+                Започни ново
+              </button>
+            </div>
+          </div>
+        ) : null}
         <header className="max-w-[40rem]">
           <p className="eyebrow mb-5">Започни проект</p>
           <h1 className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">Как искаш да ни разкажеш?</h1>
@@ -174,10 +222,10 @@ function Choose({ onPick }: { onPick: (mode: Mode) => void }) {
           />
           <PathCard
             icon={<Sparkles aria-hidden="true" className="size-6" />}
-            title="AI асистент"
-            lead="Пишеш свободно, както на приятел. Асистентът пита само каквото му трябва."
-            points={["Снимки, лого, PDF — пращаш ги в чата", "Готови отговори с едно докосване", "Накрая виждаш брифа, подреден"]}
-            action="Говори с асистента"
+            title="AI консултант"
+            lead="Истински разговор, не въпросник. Мисли само за сайтове и дигитални проекти."
+            points={["Питай каквото искаш — отговаря и дава идеи", "Снимки, лого, PDF — пращаш ги в чата", "Накрая подрежда всичко в бриф"]}
+            action="Говори с консултанта"
             featured
             onClick={() => onPick("chat")}
           />
@@ -620,56 +668,64 @@ function Chat({
   onRestart: () => void;
   onSent: (token: string) => void;
 }) {
-  const [thinking, setThinking] = React.useState(false);
+  const [streaming, setStreaming] = React.useState<string | null>(null);
+  const [briefing, setBriefing] = React.useState(false);
   const [error, setError] = React.useState("");
   const [dragging, setDragging] = React.useState(false);
   const end = React.useRef<HTMLDivElement>(null);
+  const abort = React.useRef<AbortController | null>(null);
   const urls = React.useMemo(() => new Map(draft.files.map((f) => [f.path, f])), [draft.files]);
 
-  // The assistant is on unless the server says otherwise.
+  // The consultant is on unless the server says otherwise.
   const ai = ready === null ? true : ready.ai;
   const hasAnswers = Boolean(draft.answers.projectType || draft.answers.hasSite || draft.answers.when || draft.answers.budget);
+  const busy = streaming !== null;
 
-  const ask = React.useCallback(
+  /** Asks the consultant to answer `conversation`, streaming the words in. */
+  const reply = React.useCallback(
     async (conversation: AiTurn[], answers: Answers) => {
-      setThinking(true);
+      abort.current?.abort();
+      const controller = new AbortController();
+      abort.current = controller;
+      setStreaming("");
       setError("");
+      let text = "";
       try {
-        const r = await askAi(draft.draftId, answers, conversation);
-        update({
-          conversation: [...conversation, { role: "ai", text: r.reply }],
-          quick: r.quickReplies,
-          askFiles: r.askFiles,
-          done: r.done,
-          brief: r.brief,
-        });
+        text = await streamAi(draft.draftId, answers, conversation, (piece) => {
+          text += piece;
+          setStreaming(text);
+        }, controller.signal);
+        update({ conversation: [...conversation, { role: "ai", text }] });
       } catch (e) {
-        update({ conversation });
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        // Keep whatever arrived; the client can retry.
+        if (text.trim()) update({ conversation: [...conversation, { role: "ai", text: text.replace(/\n\n\[грешка\]$/, "").trim() }] });
+        else update({ conversation });
         setError(errorText(e));
       } finally {
-        setThinking(false);
+        if (abort.current === controller) setStreaming(null);
       }
     },
     [draft.draftId, update],
   );
 
-  // After the questionnaire the assistant opens with a question that already
-  // knows the answers. Without the assistant, the scripted questions start.
+  React.useEffect(() => () => abort.current?.abort(), []);
+
+  // After the questionnaire the consultant opens with a line that already
+  // knows the answers. Without the consultant, the scripted questions start.
   const opened = React.useRef(false);
   React.useEffect(() => {
     if (opened.current || draft.conversation.length || ready === null) return;
     opened.current = true;
     if (!ready.ai) update({ conversation: [{ role: "ai", text: FALLBACK[0].text }], fallbackStep: 0 });
-    else if (hasAnswers) void ask([], draft.answers);
-  }, [ready, draft.conversation.length, hasAnswers, draft.answers, ask, update]);
+    else if (hasAnswers) void reply([], draft.answers);
+  }, [ready, draft.conversation.length, hasAnswers, draft.answers, reply, update]);
 
-  /** One client message, from the box or a tapped chip. */
+  /** One client message, from the box or a starter. */
   const send = async (text: string, files: ChatFile[] = []) => {
+    if (busy) return;
     const turn: AiTurn = { role: "client", text, files: files.map((f) => f.path) };
     const conversation = [...draft.conversation, turn];
-    // A tapped project type is also kept as a step answer for the brief.
-    const typed = PROJECT_TYPES.find((p) => p.label === text);
-    const answers: Answers = typed && !draft.answers.projectType ? { ...draft.answers, projectType: typed.id } : draft.answers;
 
     if (!ai) {
       const q = FALLBACK[draft.fallbackStep];
@@ -678,29 +734,52 @@ function Chat({
       const finished = next >= FALLBACK.length;
       update({
         conversation: finished ? conversation : [...conversation, { role: "ai", text: FALLBACK[next].text }],
-        answers,
         brief: { ...brief, summary: brief.summary || brief.goal || brief.business },
         files: [...draft.files, ...files],
         fallbackStep: next,
-        quick: [],
         done: finished,
       });
       return;
     }
 
-    update({ conversation, answers, quick: [], files: [...draft.files, ...files] });
-    await ask(conversation, answers);
+    update({ conversation, files: [...draft.files, ...files] });
+    await reply(conversation, draft.answers);
+  };
+
+  /** Done talking: the consultant writes the brief, then name and e-mail. */
+  const finish = async () => {
+    if (busy || briefing) return;
+    if (!ai) {
+      update({ contact: true, brief: { ...draft.brief, summary: draft.brief.summary || lastClientText(draft) } });
+      return;
+    }
+    setBriefing(true);
+    setError("");
+    try {
+      const r = await briefAi(draft.draftId, draft.answers, draft.conversation);
+      update({
+        conversation: r.reply ? [...draft.conversation, { role: "ai", text: r.reply }] : draft.conversation,
+        brief: r.brief,
+        done: true,
+        contact: true,
+      });
+    } catch (e) {
+      // The brief can be written by the founder too; let the client continue.
+      update({ contact: true, brief: { ...draft.brief, summary: draft.brief.summary || lastClientText(draft) } });
+      setError(errorText(e));
+    } finally {
+      setBriefing(false);
+    }
   };
 
   React.useEffect(() => {
     end.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [draft.conversation.length, thinking, draft.done, draft.contact]);
+  }, [draft.conversation.length, streaming, draft.done, draft.contact, briefing]);
 
-  const clientTurns = draft.conversation.filter((t) => t.role === "client").length;
+  const aiTurns = draft.conversation.filter((t) => t.role === "ai").length;
   const lastIsClient = draft.conversation[draft.conversation.length - 1]?.role === "client";
   const showContact = draft.done || draft.contact;
-  const chips = draft.conversation.length || hasAnswers ? draft.quick : PROJECT_TYPES.map((p) => p.label);
-  const showOpener = ai && !hasAnswers;
+  const empty = !draft.conversation.length && !busy;
   const upload = ready?.ready ? (file: File) => uploadFile(file, { draftId: draft.draftId }) : undefined;
 
   return (
@@ -736,16 +815,16 @@ function Chat({
           <div className="flex min-w-0 items-center gap-3">
             <Avatar />
             <div className="min-w-0">
-              <p className="truncate font-medium">Асистентът на 13:33</p>
+              <p className="truncate font-medium">Консултантът на 13:33</p>
               <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
                 <span className="bg-ice relative inline-flex size-1.5 rounded-full" />
-                {ai ? "Отговаря веднага · не казва цени и срокове" : "Кратък въпросник · асистентът почива"}
+                {ai ? "AI · само за сайтове и дигитални проекти" : "Кратък въпросник · консултантът почива"}
               </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3 text-sm">
             {hasAnswers ? (
-              <button type="button" onClick={() => update({ mode: "steps", step: 0 })} className="text-muted-foreground hover:text-foreground hidden transition-colors sm:inline">
+              <button type="button" onClick={() => update({ mode: "steps", step: STEPS.length })} className="text-muted-foreground hover:text-foreground hidden transition-colors sm:inline">
                 Отговорите
               </button>
             ) : null}
@@ -764,7 +843,7 @@ function Chat({
           </div>
         ) : null}
 
-        {showOpener ? <Line role="ai" text={OPENER} /> : null}
+        {ai && !hasAnswers ? <Line role="ai" text={OPENER} /> : null}
 
         {draft.conversation.map((t, i) => (
           <Line
@@ -775,14 +854,14 @@ function Chat({
           />
         ))}
 
-        {thinking ? (
+        {streaming !== null ? <Line role="ai" text={streaming} live /> : null}
+
+        {briefing ? (
           <div className="my-5 flex items-start gap-4">
             <Avatar />
-            <div className="bg-surface-2 inline-flex items-center gap-1.5 rounded-2xl rounded-tl-md px-4 py-3.5" aria-label="Асистентът пише">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className="bg-muted-foreground size-1.5 animate-pulse rounded-full" style={{ animationDelay: `${i * 160}ms` }} />
-              ))}
-            </div>
+            <p className="text-muted-foreground flex items-center gap-2 py-2 text-[0.9375rem]">
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" /> Подреждам брифа…
+            </p>
           </div>
         ) : null}
 
@@ -790,21 +869,21 @@ function Chat({
           <div className="border-destructive/40 my-5 rounded-2xl border p-4 text-sm">
             <p>{error}</p>
             {lastIsClient || (hasAnswers && !draft.conversation.length) ? (
-              <button type="button" onClick={() => void ask(draft.conversation, draft.answers)} className="border-foreground/20 hover:border-foreground/60 mt-3 rounded-full border px-4 py-2 text-sm transition-colors">
+              <button type="button" onClick={() => void reply(draft.conversation, draft.answers)} className="border-foreground/20 hover:border-foreground/60 mt-3 rounded-full border px-4 py-2 text-sm transition-colors">
                 Опитай пак
               </button>
             ) : null}
           </div>
         ) : null}
 
-        {!thinking && chips.length && !showContact ? (
-          <div className="mt-2 flex flex-wrap gap-2 md:pl-14">
-            {chips.map((q) => (
+        {empty && ai && !hasAnswers ? (
+          <div className="mt-2 grid gap-2 sm:grid-cols-3 md:pl-14">
+            {STARTERS.map((q) => (
               <button
                 key={q}
                 type="button"
                 onClick={() => void send(q)}
-                className="border-foreground/20 hover:border-ice hover:text-ice rounded-full border px-4 py-2.5 text-[0.9375rem] transition-colors"
+                className="border-border bg-surface hover:border-primary/60 rounded-2xl border px-4 py-3.5 text-left text-[0.9375rem] leading-snug transition-[border-color,transform] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5"
               >
                 {q}
               </button>
@@ -824,20 +903,20 @@ function Chat({
         <div className="mx-auto max-w-3xl px-5 pt-3 sm:px-8">
           <BigComposer
             placeholder={showContact ? "Искаш да добавиш нещо?" : "Напиши съобщение…"}
-            disabled={thinking}
-            highlightAttach={draft.askFiles}
+            disabled={busy || briefing}
             upload={upload}
             onSend={(text, files) => send(text, files)}
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1">
             <p className="text-muted-foreground text-xs">Цената и срокът ти ги пише основателят, лично.</p>
-            {!showContact && clientTurns >= 2 ? (
+            {!showContact && (aiTurns >= 1 || !ai) && draft.conversation.some((t) => t.role === "client") ? (
               <button
                 type="button"
-                onClick={() => update({ contact: true, brief: { ...draft.brief, summary: draft.brief.summary || lastClientText(draft) } })}
-                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
+                onClick={() => void finish()}
+                disabled={busy || briefing}
+                className="text-ice hover:text-foreground inline-flex items-center gap-1 text-xs font-medium transition-colors disabled:opacity-40"
               >
-                Достатъчно, към контакт <ArrowRight aria-hidden="true" className="size-3" />
+                Готово, изпрати запитването <ArrowRight aria-hidden="true" className="size-3" />
               </button>
             ) : null}
           </div>
@@ -857,26 +936,87 @@ function Avatar() {
   );
 }
 
-/** One line of the chat: the assistant with its mark on the left, the client on the right. */
-function Line({ role, text, files = [] }: { role: "ai" | "client"; text: string; files?: ChatFile[] }) {
+/** One line of the chat: the consultant as plain text beside its mark, the client in a bubble on the right. */
+function Line({ role, text, files = [], live }: { role: "ai" | "client"; text: string; files?: ChatFile[]; live?: boolean }) {
   const mine = role === "client";
+  if (!mine) {
+    return (
+      <div className="my-6 flex items-start gap-4">
+        <Avatar />
+        <div className="min-w-0 flex-1 pt-1.5">
+          {text ? (
+            <Rich text={text} live={live} />
+          ) : live ? (
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[0.9375rem]">
+              {[0, 1, 2].map((i) => (
+                <span key={i} className="bg-muted-foreground size-1.5 animate-pulse rounded-full" style={{ animationDelay: `${i * 160}ms` }} />
+              ))}
+              <span className="ml-1">мисли…</span>
+            </span>
+          ) : null}
+          {files.length ? <div className="mt-3"><Files files={files} /></div> : null}
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className={cn("my-5 flex items-start gap-4", mine && "flex-row-reverse")}>
-      {mine ? null : <Avatar />}
-      <div className={cn("flex max-w-[88%] flex-col gap-2 md:max-w-[80%]", mine ? "items-end" : "items-start")}>
+    <div className="my-5 flex flex-row-reverse items-start gap-4">
+      <div className="flex max-w-[88%] flex-col items-end gap-2 md:max-w-[80%]">
         {text ? (
-          <div
-            className={cn(
-              "rounded-3xl px-5 py-3.5 text-[1.0625rem] leading-relaxed whitespace-pre-wrap",
-              mine ? "bg-foreground/10 rounded-tr-md" : "bg-surface-2 rounded-tl-md",
-            )}
-          >
-            {text}
-          </div>
+          <div className="bg-foreground/10 rounded-3xl rounded-tr-md px-5 py-3.5 text-[1.0625rem] leading-relaxed whitespace-pre-wrap">{text}</div>
         ) : null}
         {files.length ? <Files files={files} /> : null}
       </div>
     </div>
+  );
+}
+
+/** Light formatting for the consultant's words: paragraphs, lists, **bold**. */
+function Rich({ text, live }: { text: string; live?: boolean }) {
+  const blocks = text.replace(/\r/g, "").split(/\n{2,}/);
+  return (
+    <div className={cn("space-y-3 text-[1.0625rem] leading-relaxed", live && "rich-live")}>
+      {blocks.map((block, i) => {
+        const lines = block.split("\n").filter((l) => l.trim());
+        if (!lines.length) return null;
+        const bullet = lines.every((l) => /^\s*([-*•]|\d+[.)])\s+/.test(l));
+        if (bullet) {
+          const ordered = /^\s*\d+[.)]\s+/.test(lines[0]);
+          const Tag = ordered ? "ol" : "ul";
+          return (
+            <Tag key={i} className={cn("space-y-1.5 pl-5", ordered ? "list-decimal" : "list-disc", "marker:text-ice")}>
+              {lines.map((l, j) => (
+                <li key={j}>
+                  <Inline text={l.replace(/^\s*([-*•]|\d+[.)])\s+/, "")} />
+                </li>
+              ))}
+            </Tag>
+          );
+        }
+        return (
+          <p key={i} className="whitespace-pre-wrap">
+            <Inline text={block.replace(/^#{1,3}\s+/, "")} />
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function Inline({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith("**") && p.endsWith("**") ? (
+          <strong key={i} className="font-semibold">
+            {p.slice(2, -2)}
+          </strong>
+        ) : (
+          <React.Fragment key={i}>{p}</React.Fragment>
+        ),
+      )}
+    </>
   );
 }
 
