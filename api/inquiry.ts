@@ -1,7 +1,7 @@
 // /api/inquiry - everything the client does. The client is identified only by
 // the secret token in their private link; there are no accounts.
 //
-//   GET  ?ready              -> which parts are configured
+//   GET  ?ready              -> which parts are configured (database, AI, Telegram)
 //   GET  ?token=…            -> the room (chat, offer, meetings)
 //   GET  ?token=…&slots      -> free meeting times
 //   POST {action:"upload"}   -> signed URL to upload one file
@@ -56,7 +56,7 @@ export function GET(request: Request) {
   return handle(async () => {
     const q = new URL(request.url).searchParams;
     if (q.has("ready")) {
-      return json({ ready: Boolean(env.supabaseUrl && env.supabaseKey), ai: Boolean(env.anthropicKey) });
+      return json({ ready: Boolean(env.supabaseUrl && env.supabaseKey), ai: Boolean(env.anthropicKey), telegram: Boolean(env.telegramToken && env.telegramChat) });
     }
     const row = await byToken(q.get("token"));
     if (q.has("slots")) {
