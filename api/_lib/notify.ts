@@ -7,7 +7,8 @@ export async function notify(text: string) {
     await fetch(`https://api.telegram.org/bot${env.telegramToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: env.telegramChat, text, disable_web_page_preview: true }),
+      // Telegram refuses messages over 4096 characters.
+      body: JSON.stringify({ chat_id: env.telegramChat, text: text.length > 4000 ? `${text.slice(0, 3990)}…` : text, disable_web_page_preview: true }),
       signal: AbortSignal.timeout(4000),
     });
   } catch {

@@ -146,7 +146,15 @@ export function POST(request: Request) {
         );
         const lines = BRIEF_LABELS.map(([k, l]) => (brief[k] ? `${l}: ${brief[k]}` : "")).filter(Boolean);
         await notify(
-          [`Ново запитване №${data.number} — ${name}`, projectTypeLabel(projectType), brief.summary, ...lines.slice(0, 4), studioLink(data.number)]
+          [
+            `Ново запитване №${data.number} — ${name}`,
+            [email, phone].filter(Boolean).join(" · "),
+            projectTypeLabel(projectType),
+            brief.summary,
+            ...lines,
+            files.length ? `Файлове: ${files.length}` : "",
+            studioLink(data.number),
+          ]
             .filter(Boolean)
             .join("\n"),
         );
