@@ -222,6 +222,7 @@ function Choose({
             points={[tr("Какво искаш, имаш ли сайт, кога, бюджет"), tr("После разказваш с думи или с асистента"), tr("Снимки и файлове и по двата пътя")]}
             action={tr("Попълни въпросника")}
             onClick={() => onPick("steps")}
+            ping="path-steps"
           />
           <PathCard
             icon={<Sparkles aria-hidden="true" className="size-6" />}
@@ -231,6 +232,7 @@ function Choose({
             action={tr("Говори с консултанта")}
             featured
             onClick={() => onPick("chat")}
+            ping="path-chat"
           />
         </div>
       </div>
@@ -246,6 +248,7 @@ function PathCard({
   action,
   featured,
   onClick,
+  ping,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -254,12 +257,15 @@ function PathCard({
   action: string;
   featured?: boolean;
   onClick: () => void;
+  /** Button name for the founder's click notifications (lib/ping). */
+  ping: string;
 }) {
   const { tr } = useLang();
   return (
     <button
       type="button"
       onClick={onClick}
+      data-ping={ping}
       className={cn(
         "group border-border bg-surface relative isolate flex flex-col rounded-[1.75rem] border p-7 text-left transition-[transform,box-shadow,border-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-primary/60 hover:shadow-[0_30px_80px_-30px_var(--color-primary)] md:p-9",
         featured && "border-primary/40 shadow-[0_30px_80px_-40px_var(--color-primary)]",

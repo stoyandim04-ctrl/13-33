@@ -106,7 +106,7 @@ export function SiteHeader() {
           <div className="flex items-center gap-3">
             {switcher("hidden md:flex")}
             {onStart ? null : (
-              <RainbowLink to="/zapochni" size="sm" className="hidden md:inline-flex">
+              <RainbowLink to="/zapochni" size="sm" className="hidden md:inline-flex" data-ping="start-header">
                 {tr("Започни проект")}
                 <ArrowRight aria-hidden="true" className="size-3.5" />
               </RainbowLink>
@@ -150,7 +150,7 @@ export function SiteHeader() {
         </nav>
         <div className="mt-auto flex flex-col gap-5">
           {switcher("justify-center")}
-          <RainbowLink to="/zapochni" size="lg" className="w-full [&>span]:w-full [&>span]:justify-center" onClick={() => setOpen(false)}>
+          <RainbowLink to="/zapochni" size="lg" className="w-full [&>span]:w-full [&>span]:justify-center" onClick={() => setOpen(false)} data-ping="start-menu">
             {tr("Започни проект")}
             <ArrowRight aria-hidden="true" className="size-4" />
           </RainbowLink>

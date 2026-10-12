@@ -76,7 +76,7 @@ export function GridHero({ id }: { id?: string }) {
       </p>
 
       <div className="hero-in mt-9 flex flex-wrap items-center justify-center gap-3" style={{ "--i": 3 } as React.CSSProperties}>
-        <RainbowLink to={hero.primary.href}>
+        <RainbowLink to={hero.primary.href} data-ping="start-hero">
           {hero.primary.label}
           <ArrowRight aria-hidden="true" className="size-4" />
         </RainbowLink>

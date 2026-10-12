@@ -29,7 +29,7 @@ export function Contact() {
             {contact.lead}
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4">
-            <RainbowLink to="/zapochni">
+            <RainbowLink to="/zapochni" data-ping="start-contact">
               {contact.cta}
               <ArrowRight aria-hidden="true" className="size-4" />
             </RainbowLink>

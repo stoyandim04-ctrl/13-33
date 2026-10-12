@@ -4,6 +4,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import Home from "@/pages/home";
+import { listenForPings } from "@/lib/ping";
 
 const NotFound = React.lazy(() => import("@/pages/not-found"));
 const StartPage = React.lazy(() => import("@/pages/start"));
@@ -17,6 +18,9 @@ export default function App() {
   React.useEffect(() => {
     if (!window.location.hash) window.scrollTo(0, 0);
   }, [pathname]);
+
+  // Clicks on the main buttons reach the founder's phone (see lib/ping).
+  React.useEffect(() => listenForPings(), []);
 
   // Anything marked data-reveal fades up once it enters the screen.
   React.useEffect(() => {
