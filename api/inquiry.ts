@@ -13,7 +13,7 @@ import { db, env, HttpError } from "./_lib/env.js";
 import { adopt, uploadUrl } from "./_lib/files.js";
 import { availability, bookingsOf, messagesOf, postMessage, when } from "./_lib/rooms.js";
 import { body, cleanPaths, DRAFT_RE, handle, isEmail, json, str } from "./_lib/http.js";
-import { notify, studioLink } from "./_lib/notify.js";
+import { notify, notifyFiles, studioLink } from "./_lib/notify.js";
 import { freeSlots } from "./_lib/slots.js";
 import {
   BRIEF_LABELS,
@@ -158,6 +158,7 @@ export function POST(request: Request) {
             .filter(Boolean)
             .join("\n"),
         );
+        notifyFiles(files, `№${data.number} ${name}`);
         return json({ token: data.token, number: data.number });
       }
 
@@ -168,6 +169,7 @@ export function POST(request: Request) {
         if (!text && !files.length) throw new HttpError(400, "empty");
         await postMessage(row.id, "client", text, files);
         await notify(`№${row.number} ${row.name}: ${text || "(файлове)"}\n${studioLink(row.number)}`);
+        notifyFiles(files, `№${row.number} ${row.name}`);
         return json({ ok: true });
       }
 
