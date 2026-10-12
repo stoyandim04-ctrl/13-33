@@ -1,6 +1,7 @@
 // /zapochni - starting a project. The client picks how to tell us:
 //   • the questionnaire - four taps (what, current site, when, budget), then
-//     on to the assistant or straight to contact;
+//     the client's own words (a description with pictures and files) or the
+//     assistant;
 //   • the assistant - a full chat, like a messaging app: write freely, send
 //     pictures and files, tap a ready answer; the assistant asks only what it
 //     still needs and keeps a brief.
@@ -12,12 +13,14 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Camera,
   Check,
   FileText,
   ImagePlus,
   ListChecks,
   Loader2,
   Paperclip,
+  PenLine,
   RotateCcw,
   Sparkles,
   X,
@@ -56,7 +59,7 @@ const FALLBACK: { key: keyof Brief; text: string }[] = [
 const OPENER =
   "Здравей! Разкажи ми с няколко думи какво искаш да направим. Може да е сайт, магазин, бранд, приложение или нещо, за което още нямаш дума. Ако имаш лого, снимки или сайтове, които харесваш — прати ги направо тук.";
 
-type Mode = "choose" | "steps" | "chat";
+type Mode = "choose" | "steps" | "describe" | "chat";
 
 interface Draft {
   draftId: string;
@@ -74,6 +77,8 @@ interface Draft {
   fallbackStep: number;
   /** The client asked to finish early - show the contact card. */
   contact: boolean;
+  /** The idea in the client's own words (the "describe" path). */
+  description: string;
   name: string;
   email: string;
   phone: string;
@@ -92,6 +97,7 @@ const fresh = (): Draft => ({
   files: [],
   fallbackStep: 0,
   contact: false,
+  description: "",
   name: "",
   email: "",
   phone: "",
@@ -139,6 +145,7 @@ export default function StartPage() {
 
   if (draft.mode === "choose") return <Choose onPick={(mode) => update({ mode, step: 0 })} />;
   if (draft.mode === "steps") return <Steps draft={draft} update={update} onRestart={restart} />;
+  if (draft.mode === "describe") return <Describe draft={draft} update={update} ready={ready} onSent={onSent} />;
   return <Chat draft={draft} update={update} ready={ready} onRestart={restart} onSent={onSent} />;
 }
 
@@ -161,7 +168,7 @@ function Choose({ onPick }: { onPick: (mode: Mode) => void }) {
             icon={<ListChecks aria-hidden="true" className="size-6" />}
             title="Въпросник"
             lead="Четири бързи избора с по едно докосване. Около минута."
-            points={["Какво искаш, имаш ли сайт, кога, бюджет", "После: асистентът или направо контакт", "Без писане, само натискаш"]}
+            points={["Какво искаш, имаш ли сайт, кога, бюджет", "После разказваш с думи или с асистента", "Снимки и файлове и по двата пътя"]}
             action="Попълни въпросника"
             onClick={() => onPick("steps")}
           />
@@ -317,19 +324,23 @@ function Steps({ draft, update, onRestart }: { draft: Draft; update: (p: Partial
         ) : null}
 
         {finished ? (
-          <Step eyebrow="Готово" title="Сега разкажи идеята си." lead="Асистентът вече знае отговорите ти и ще пита само за останалото. Или мини направо към контакт.">
+          <Step eyebrow="Готово" title="Как да разкажеш идеята си?" lead="Със свои думи, снимки и файлове. Или в разговор с асистента, който вече знае отговорите ти.">
             <AnswersStrip answers={answers} onEdit={() => update({ step: 0 })} />
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <RainbowButton onClick={() => update({ mode: "chat" })}>
-                Продължи с асистента <ArrowRight aria-hidden="true" className="size-4" />
-              </RainbowButton>
-              <button
-                type="button"
-                onClick={() => update({ mode: "chat", contact: true })}
-                className="text-muted-foreground hover:text-foreground text-[0.9375rem] transition-colors"
-              >
-                Направо към контакт
-              </button>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <SmallPath
+                icon={<PenLine aria-hidden="true" className="size-5" />}
+                title="Опиши с думи"
+                lead="Пишеш каквото искаш, прикачаш снимки, лого, PDF. Без въпроси."
+                action="Опиши идеята"
+                onClick={() => update({ mode: "describe" })}
+              />
+              <SmallPath
+                icon={<Sparkles aria-hidden="true" className="size-5" />}
+                title="С асистента"
+                lead="Разговор с готови отговори. Пита само за това, което още не знае."
+                action="Говори с асистента"
+                onClick={() => update({ mode: "chat" })}
+              />
             </div>
           </Step>
         ) : null}
@@ -372,7 +383,229 @@ function AnswersStrip({ answers, onEdit }: { answers: Answers; onEdit: () => voi
   );
 }
 
-// ---- 3. the chat -------------------------------------------------------------
+function SmallPath({
+  icon,
+  title,
+  lead,
+  action,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  lead: string;
+  action: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group border-border bg-surface hover:border-primary/60 flex flex-col rounded-3xl border p-6 text-left transition-[transform,box-shadow,border-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_30px_80px_-30px_var(--color-primary)]"
+    >
+      <span className="bg-surface-2 text-ice grid size-10 place-items-center rounded-xl">{icon}</span>
+      <span className="font-display mt-5 block text-[1.375rem] leading-none font-[400] tracking-[-0.02em]">{title}</span>
+      <span className="text-muted-foreground mt-2 block text-[0.9375rem] text-pretty">{lead}</span>
+      <span className="group-hover:text-ice mt-5 inline-flex items-center gap-2 text-[0.9375rem] font-medium transition-colors">
+        {action}
+        <ArrowRight aria-hidden="true" className="size-4 transition-transform duration-500 group-hover:translate-x-1" />
+      </span>
+    </button>
+  );
+}
+
+// ---- files: pick, drop, paste, upload ----------------------------------------
+
+/** Picks files, uploads them one by one and keeps the list. Without `upload`
+    (the server not configured) it explains instead of silently doing nothing. */
+function useFiles(upload: ((file: File) => Promise<string>) | undefined, initial: ChatFile[] = []) {
+  const [files, setFiles] = React.useState<ChatFile[]>(initial);
+  const [busy, setBusy] = React.useState(0);
+  const [error, setError] = React.useState("");
+
+  const add = React.useCallback(
+    async (list: FileList | File[] | null) => {
+      setError("");
+      if (!upload) {
+        setError("Качването на файлове не е включено на този адрес. Ще работи на сайта.");
+        return;
+      }
+      for (const file of Array.from(list ?? []).slice(0, 8)) {
+        if (!ACCEPT.split(",").includes(file.type)) {
+          setError("Този файл не се поддържа. Пробвай снимка (JPG, PNG) или PDF.");
+          continue;
+        }
+        if (file.size > MAX_FILE) {
+          setError("Файлът е над 10 MB.");
+          continue;
+        }
+        setBusy((n) => n + 1);
+        try {
+          const path = await upload(file);
+          setFiles((cur) => [...cur, { path, name: file.name, url: URL.createObjectURL(file) }]);
+        } catch (e) {
+          setError(errorText(e));
+        } finally {
+          setBusy((n) => n - 1);
+        }
+      }
+    },
+    [upload],
+  );
+  const remove = React.useCallback((path: string) => setFiles((cur) => cur.filter((f) => f.path !== path)), []);
+  const clear = React.useCallback(() => setFiles([]), []);
+  return { files, add, remove, clear, busy, error };
+}
+
+/** The attach button: a gallery/file picker, plus the camera on phones. */
+function AttachControls({ add, busy, highlight }: { add: (list: FileList | null) => void; busy: number; highlight?: boolean }) {
+  const input = React.useRef<HTMLInputElement>(null);
+  const camera = React.useRef<HTMLInputElement>(null);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => input.current?.click()}
+        className={cn(
+          "inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm transition-colors",
+          highlight ? "border-ice text-ice" : "border-foreground/20 text-muted-foreground hover:text-foreground hover:border-foreground/50",
+        )}
+      >
+        {busy ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <Paperclip aria-hidden="true" className="size-4" />}
+        {busy ? "Качване…" : "Снимки и файлове"}
+      </button>
+      <button
+        type="button"
+        onClick={() => camera.current?.click()}
+        aria-label="Снимай с камерата"
+        className="border-foreground/20 text-muted-foreground hover:text-foreground hover:border-foreground/50 grid size-11 place-items-center rounded-full border transition-colors md:hidden"
+      >
+        <Camera aria-hidden="true" className="size-4" />
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept={ACCEPT}
+        multiple
+        hidden
+        onChange={(e) => {
+          add(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={camera}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          add(e.target.files);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+// ---- 3a. in your own words ---------------------------------------------------
+
+function Describe({
+  draft,
+  update,
+  ready,
+  onSent,
+}: {
+  draft: Draft;
+  update: (p: Partial<Draft>) => void;
+  ready: { ready: boolean; ai: boolean } | null;
+  onSent: (token: string) => void;
+}) {
+  const upload = ready?.ready ? (file: File) => uploadFile(file, { draftId: draft.draftId }) : undefined;
+  const picker = useFiles(upload, draft.files);
+  const [dragging, setDragging] = React.useState(false);
+
+  // The picked files travel with the draft (the contact card sends them).
+  React.useEffect(() => {
+    update({ files: picker.files });
+  }, [picker.files, update]);
+
+  const setText = (description: string) =>
+    update({ description, brief: { ...draft.brief, extra: description, summary: description.slice(0, 300) }, contact: true });
+
+  return (
+    <div className="px-5 pt-28 pb-24 sm:px-8 md:pt-36">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => update({ mode: "steps", step: STEPS.length })}
+            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
+          >
+            <ArrowLeft aria-hidden="true" className="size-4" /> Назад
+          </button>
+          <button
+            type="button"
+            onClick={() => update({ mode: "chat", contact: false })}
+            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
+          >
+            <Sparkles aria-hidden="true" className="size-3.5" /> По-добре с асистента
+          </button>
+        </div>
+
+        <Step eyebrow="Със свои думи" title="Разкажи ни идеята си." lead="Какъв е бизнесът, какво трябва да постигне проектът, какво харесваш. Пиши както би го казал на приятел.">
+          <AnswersStrip answers={draft.answers} onEdit={() => update({ mode: "steps", step: 0 })} />
+
+          <div
+            className={cn(
+              "border-border bg-surface mt-6 rounded-[1.75rem] border p-3 transition-colors focus-within:border-foreground/30",
+              dragging && "border-ice",
+            )}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              void picker.add(e.dataTransfer.files);
+            }}
+          >
+            <textarea
+              value={draft.description}
+              onChange={(e) => setText(e.target.value)}
+              onPaste={(e) => {
+                const pasted = Array.from(e.clipboardData.files ?? []);
+                if (pasted.length) {
+                  e.preventDefault();
+                  void picker.add(pasted);
+                }
+              }}
+              rows={7}
+              placeholder="Напр. „Имам козметично студио в Пловдив. Искам хората да виждат цените и да си записват час онлайн. Харесвам как изглежда…“"
+              aria-label="Идеята ти"
+              className="placeholder:text-muted-foreground/60 block w-full resize-y bg-transparent px-3 py-2.5 text-[1.0625rem] leading-relaxed outline-none"
+            />
+            {picker.files.length ? (
+              <div className="px-2 pt-1 pb-3">
+                <Files files={picker.files} onRemove={picker.remove} />
+              </div>
+            ) : null}
+            <div className="flex flex-wrap items-center justify-between gap-3 px-1 pt-1">
+              <AttachControls add={(l) => void picker.add(l)} busy={picker.busy} />
+              <span className="text-muted-foreground text-xs">Снимки, лого, PDF · до 10 MB · може и с влачене</span>
+            </div>
+            {picker.error ? <p className="text-destructive px-2 pt-2 text-xs">{picker.error}</p> : null}
+          </div>
+        </Step>
+
+        <ContactCard draft={draft} update={update} disabled={ready !== null && !ready.ready} onSent={onSent} requireText />
+      </div>
+    </div>
+  );
+}
+
+// ---- 3b. the chat ------------------------------------------------------------
 
 function Chat({
   draft,
@@ -474,7 +707,6 @@ function Chat({
     <div
       className="relative flex min-h-svh flex-col pt-16 md:pt-[4.5rem]"
       onDragOver={(e) => {
-        if (!upload) return;
         e.preventDefault();
         setDragging(true);
       }}
@@ -485,7 +717,7 @@ function Chat({
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        if (upload) window.dispatchEvent(new CustomEvent<FileList>("1333-drop", { detail: e.dataTransfer.files }));
+        window.dispatchEvent(new CustomEvent<FileList>("1333-drop", { detail: e.dataTransfer.files }));
       }}
     >
       {dragging ? (
@@ -695,40 +927,9 @@ function BigComposer({
   disabled?: boolean;
 }) {
   const [text, setText] = React.useState("");
-  const [files, setFiles] = React.useState<ChatFile[]>([]);
-  const [busy, setBusy] = React.useState(0);
   const [sending, setSending] = React.useState(false);
-  const [error, setError] = React.useState("");
   const area = React.useRef<HTMLTextAreaElement>(null);
-  const input = React.useRef<HTMLInputElement>(null);
-
-  const add = React.useCallback(
-    async (list: FileList | File[] | null) => {
-      if (!upload) return;
-      setError("");
-      for (const file of Array.from(list ?? []).slice(0, 8)) {
-        if (!ACCEPT.split(",").includes(file.type)) {
-          setError("Този файл не се поддържа. Пробвай снимка (JPG, PNG) или PDF.");
-          continue;
-        }
-        if (file.size > MAX_FILE) {
-          setError("Файлът е над 10 MB.");
-          continue;
-        }
-        setBusy((n) => n + 1);
-        try {
-          const path = await upload(file);
-          setFiles((cur) => [...cur, { path, name: file.name, url: URL.createObjectURL(file) }]);
-        } catch (e) {
-          setError(errorText(e));
-        } finally {
-          setBusy((n) => n - 1);
-        }
-      }
-      if (input.current) input.current.value = "";
-    },
-    [upload],
-  );
+  const { files, add, remove, clear, busy, error } = useFiles(upload);
 
   // Files dropped anywhere on the page land here.
   React.useEffect(() => {
@@ -743,7 +944,7 @@ function BigComposer({
     try {
       await onSend(text.trim(), files);
       setText("");
-      setFiles([]);
+      clear();
       if (area.current) area.current.style.height = "auto";
     } finally {
       setSending(false);
@@ -755,7 +956,7 @@ function BigComposer({
     <div className="border-border bg-surface rounded-[1.75rem] border p-3 shadow-[0_24px_60px_-30px_var(--color-primary)] focus-within:border-foreground/30">
       {files.length ? (
         <div className="px-2 pt-2 pb-3">
-          <Files files={files} onRemove={(p) => setFiles((f) => f.filter((x) => x.path !== p))} />
+          <Files files={files} onRemove={remove} />
         </div>
       ) : null}
       <textarea
@@ -786,20 +987,7 @@ function BigComposer({
       />
       <div className="flex items-end justify-between gap-3 px-1">
         <div className="flex min-w-0 flex-col">
-          <button
-            type="button"
-            onClick={() => input.current?.click()}
-            disabled={!upload}
-            title={upload ? undefined : "Качването още не е включено"}
-            className={cn(
-              "inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm transition-colors disabled:opacity-40",
-              highlightAttach ? "border-ice text-ice" : "border-foreground/20 text-muted-foreground hover:text-foreground hover:border-foreground/50",
-            )}
-          >
-            {busy ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <Paperclip aria-hidden="true" className="size-4" />}
-            {busy ? "Качване…" : <><span className="hidden sm:inline">Снимки и файлове</span><span className="sm:hidden">Снимки</span></>}
-          </button>
-          <input ref={input} type="file" accept={ACCEPT} multiple hidden onChange={(e) => void add(e.target.files)} />
+          <AttachControls add={(l) => void add(l)} busy={busy} highlight={highlightAttach} />
           {error ? <span className="text-destructive mt-1 px-1 text-xs">{error}</span> : null}
         </div>
         <RainbowButton onClick={() => void send()} disabled={sending || disabled || busy > 0 || (!text.trim() && !files.length)} aria-label="Изпрати">
@@ -818,17 +1006,20 @@ function ContactCard({
   update,
   disabled,
   onSent,
+  requireText,
 }: {
   draft: Draft;
   update: (p: Partial<Draft>) => void;
   disabled: boolean;
   onSent: (token: string) => void;
+  /** The describe path: the idea itself has to be written. */
+  requireText?: boolean;
 }) {
   const [consent, setConsent] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState("");
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(draft.email.trim());
-  const ok = draft.name.trim().length > 1 && emailOk && consent;
+  const ok = draft.name.trim().length > 1 && emailOk && consent && (!requireText || draft.description.trim().length > 10);
 
   const send = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -889,7 +1080,7 @@ function ContactCard({
         </label>
 
         <ul className="text-muted-foreground space-y-2 text-[0.9375rem]">
-          {["Основателят преглежда разговора.", "Пише ти в личния чат: крайна цена, срок и капаро.", "Приемаш офертата, плащаш капарото и започваме."].map((t) => (
+          {[requireText ? "Основателят чете описанието ти." : "Основателят преглежда разговора.", "Пише ти в личния чат: крайна цена, срок и капаро.", "Приемаш офертата, плащаш капарото и започваме."].map((t) => (
             <li key={t} className="flex gap-2.5">
               <Check aria-hidden="true" className="text-ice mt-1 size-4 shrink-0" />
               <span>{t}</span>
