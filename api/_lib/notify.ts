@@ -6,13 +6,15 @@ import { fileName } from "./files.js";
 export async function notify(text: string) {
   if (!env.telegramToken || !env.telegramChat) return;
   try {
-    await fetch(`https://api.telegram.org/bot${env.telegramToken}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${env.telegramToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // Telegram refuses messages over 4096 characters.
       body: JSON.stringify({ chat_id: env.telegramChat, text: text.length > 4000 ? `${text.slice(0, 3990)}…` : text, disable_web_page_preview: true }),
       signal: AbortSignal.timeout(4000),
     });
+    // Shows up in Vercel's logs: a wrong token (401) or chat id (400) is the usual cause.
+    if (!res.ok) console.error("telegram", res.status, await res.text());
   } catch {
     // A missed notification is not worth failing the request for.
   }
