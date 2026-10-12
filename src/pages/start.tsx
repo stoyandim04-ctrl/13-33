@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { site } from "@/data/content";
+import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { Button } from "@/components/ui/button";
@@ -114,6 +115,7 @@ const STEPS = ["Проект", "Сайт", "Срок", "Бюджет"];
 
 export default function StartPage() {
   const navigate = useNavigate();
+  const { tr, lang } = useLang();
   // A saved draft is restored, but the page always opens on the choice; the
   // visitor can pick up where they left off from there.
   const [resume] = React.useState<Mode | null>(() => {
@@ -131,11 +133,11 @@ export default function StartPage() {
   const [ready, setReady] = React.useState<{ ready: boolean; ai: boolean } | null>(null);
 
   React.useEffect(() => {
-    document.title = "Започни проект — 13:33";
+    document.title = tr("Започни проект — 13:33");
     getReady()
       .then(setReady)
       .catch(() => setReady({ ready: false, ai: false }));
-  }, []);
+  }, [lang, tr]);
 
   React.useEffect(() => {
     store(DRAFT_KEY, draft);
@@ -148,7 +150,7 @@ export default function StartPage() {
   const update = React.useCallback((patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch })), []);
 
   const restart = () => {
-    if (window.confirm("Да започнем отначало? Отговорите и разговорът ще се изтрият.")) setDraft(fresh());
+    if (window.confirm(tr("Да започнем отначало? Отговорите и разговорът ще се изтрият."))) setDraft(fresh());
   };
 
   const onSent = (token: string) => {
@@ -187,45 +189,46 @@ function Choose({
   onResume: () => void;
   onFresh: () => void;
 }) {
+  const { tr } = useLang();
   return (
     <div className="px-5 pt-32 pb-24 sm:px-8 md:pt-40">
       <div className="mx-auto max-w-5xl">
         {resume ? (
           <div className="border-primary/40 bg-primary/[0.06] mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-5 py-4">
-            <p className="text-[0.9375rem]">Имаш започнато запитване.</p>
+            <p className="text-[0.9375rem]">{tr("Имаш започнато запитване.")}</p>
             <div className="flex items-center gap-4 text-sm">
               <button type="button" onClick={onResume} className="text-ice inline-flex items-center gap-1.5 font-medium">
-                Продължи <ArrowRight aria-hidden="true" className="size-3.5" />
+                {tr("Продължи")} <ArrowRight aria-hidden="true" className="size-3.5" />
               </button>
               <button type="button" onClick={onFresh} className="text-muted-foreground hover:text-foreground transition-colors">
-                Започни ново
+                {tr("Започни ново")}
               </button>
             </div>
           </div>
         ) : null}
         <header className="max-w-[40rem]">
-          <p className="eyebrow mb-5">Започни проект</p>
-          <h1 className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">Как искаш да ни разкажеш?</h1>
+          <p className="eyebrow mb-5">{tr("Започни проект")}</p>
+          <h1 className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">{tr("Как искаш да ни разкажеш?")}</h1>
           <p className="text-lead text-muted-foreground mt-6 max-w-[42ch] text-pretty">
-            И по двата пътя накрая получаваш личен чат с основателя: цена, срок и капаро. Без регистрация.
+            {tr("И по двата пътя накрая получаваш личен чат с основателя: цена, срок и капаро. Без регистрация.")}
           </p>
         </header>
 
         <div className="mt-14 grid gap-5 md:grid-cols-2">
           <PathCard
             icon={<ListChecks aria-hidden="true" className="size-6" />}
-            title="Въпросник"
-            lead="Четири бързи избора с по едно докосване. Около минута."
-            points={["Какво искаш, имаш ли сайт, кога, бюджет", "После разказваш с думи или с асистента", "Снимки и файлове и по двата пътя"]}
-            action="Попълни въпросника"
+            title={tr("Въпросник")}
+            lead={tr("Четири бързи избора с по едно докосване. Около минута.")}
+            points={[tr("Какво искаш, имаш ли сайт, кога, бюджет"), tr("После разказваш с думи или с асистента"), tr("Снимки и файлове и по двата пътя")]}
+            action={tr("Попълни въпросника")}
             onClick={() => onPick("steps")}
           />
           <PathCard
             icon={<Sparkles aria-hidden="true" className="size-6" />}
-            title="AI консултант"
-            lead="Истински разговор, не въпросник. Мисли само за сайтове и дигитални проекти."
-            points={["Питай каквото искаш — отговаря и дава идеи", "Снимки, лого, PDF — пращаш ги в чата", "Накрая подрежда всичко в бриф"]}
-            action="Говори с консултанта"
+            title={tr("AI консултант")}
+            lead={tr("Истински разговор, не въпросник. Мисли само за сайтове и дигитални проекти.")}
+            points={[tr("Питай каквото искаш — отговаря и дава идеи"), tr("Снимки, лого, PDF — пращаш ги в чата"), tr("Накрая подрежда всичко в бриф")]}
+            action={tr("Говори с консултанта")}
             featured
             onClick={() => onPick("chat")}
           />
@@ -252,6 +255,7 @@ function PathCard({
   featured?: boolean;
   onClick: () => void;
 }) {
+  const { tr } = useLang();
   return (
     <button
       type="button"
@@ -263,7 +267,7 @@ function PathCard({
     >
       {featured ? (
         <span className="bg-primary/15 text-ice absolute top-6 right-6 rounded-full px-3 py-1 text-[0.6875rem] font-semibold tracking-[0.16em] uppercase">
-          Препоръчано
+          {tr("Препоръчано")}
         </span>
       ) : null}
       <span className="bg-surface-2 text-ice grid size-12 place-items-center rounded-2xl">{icon}</span>
@@ -288,6 +292,7 @@ function PathCard({
 // ---- 2. the questionnaire ----------------------------------------------------
 
 function Steps({ draft, update, onRestart }: { draft: Draft; update: (p: Partial<Draft>) => void; onRestart: () => void }) {
+  const { tr } = useLang();
   const { step, answers } = draft;
   const answer = <K extends keyof Answers>(key: K, value: Answers[K], next?: number) =>
     update({ answers: { ...answers, [key]: value }, step: next ?? step });
@@ -301,7 +306,7 @@ function Steps({ draft, update, onRestart }: { draft: Draft; update: (p: Partial
           <button
             type="button"
             onClick={back}
-            aria-label={step > 0 ? "Назад" : "Към избора"}
+            aria-label={step > 0 ? tr("Назад") : tr("Към избора")}
             className="border-border hover:border-foreground/40 grid size-10 shrink-0 place-items-center rounded-full border transition-colors"
           >
             <ArrowLeft aria-hidden="true" className="size-4" />
@@ -314,37 +319,37 @@ function Steps({ draft, update, onRestart }: { draft: Draft; update: (p: Partial
               />
             </div>
             <p className="text-muted-foreground mt-2 text-xs">
-              {finished ? "Готово" : `${step + 1} от ${STEPS.length} · ${STEPS[step]}`}
+              {finished ? tr("Готово") : `${tr("{n} от {m}", { n: step + 1, m: STEPS.length })} · ${tr(STEPS[step])}`}
             </p>
           </div>
         </div>
 
         {step === 0 ? (
-          <Step eyebrow="Въпросник" title="Какво искаш да направим?">
+          <Step eyebrow={tr("Въпросник")} title={tr("Какво искаш да направим?")}>
             <div className="grid gap-3 sm:grid-cols-2">
               {PROJECT_TYPES.map((p) => (
-                <Choice key={p.id} label={p.label} hint={p.hint} selected={answers.projectType === p.id} onClick={() => answer("projectType", p.id, 1)} />
+                <Choice key={p.id} label={tr(p.label)} hint={tr(p.hint)} selected={answers.projectType === p.id} onClick={() => answer("projectType", p.id, 1)} />
               ))}
             </div>
           </Step>
         ) : null}
 
         {step === 1 ? (
-          <Step title="Имаш ли сайт сега?">
+          <Step title={tr("Имаш ли сайт сега?")}>
             <div className="grid gap-3">
               {HAS_SITE.map((o) => (
-                <Choice key={o} label={o} selected={answers.hasSite === o} onClick={() => answer("hasSite", o, o === HAS_SITE[0] ? 2 : 1)} />
+                <Choice key={o} label={tr(o)} selected={answers.hasSite === o} onClick={() => answer("hasSite", o, o === HAS_SITE[0] ? 2 : 1)} />
               ))}
             </div>
             {answers.hasSite && answers.hasSite !== HAS_SITE[0] ? (
               <div className="mt-6">
                 <label className="block">
-                  <span className="text-sm font-medium">Линк към сайта</span>
-                  <span className="text-muted-foreground"> · по желание</span>
+                  <span className="text-sm font-medium">{tr("Линк към сайта")}</span>
+                  <span className="text-muted-foreground">{tr(" · по желание")}</span>
                   <input type="url" inputMode="url" value={answers.siteUrl} onChange={(e) => answer("siteUrl", e.target.value)} placeholder="www.example.bg" className="field mt-2" />
                 </label>
                 <Button className="mt-5" onClick={() => update({ step: 2 })}>
-                  Напред <ArrowRight aria-hidden="true" />
+                  {tr("Напред")} <ArrowRight aria-hidden="true" />
                 </Button>
               </div>
             ) : null}
@@ -352,41 +357,41 @@ function Steps({ draft, update, onRestart }: { draft: Draft; update: (p: Partial
         ) : null}
 
         {step === 2 ? (
-          <Step title="Кога ти трябва?">
+          <Step title={tr("Кога ти трябва?")}>
             <div className="grid gap-3">
               {WHEN.map((o) => (
-                <Choice key={o} label={o} selected={answers.when === o} onClick={() => answer("when", o, 3)} />
+                <Choice key={o} label={tr(o)} selected={answers.when === o} onClick={() => answer("when", o, 3)} />
               ))}
             </div>
           </Step>
         ) : null}
 
         {step === 3 ? (
-          <Step title="Имаш ли бюджет наум?" lead="Не е задължително. Помага ни да предложим подходящото решение.">
+          <Step title={tr("Имаш ли бюджет наум?")} lead={tr("Не е задължително. Помага ни да предложим подходящото решение.")}>
             <div className="grid gap-3 sm:grid-cols-2">
               {BUDGET.map((o) => (
-                <Choice key={o} label={o} selected={answers.budget === o} onClick={() => answer("budget", o, 4)} />
+                <Choice key={o} label={tr(o)} selected={answers.budget === o} onClick={() => answer("budget", o, 4)} />
               ))}
             </div>
           </Step>
         ) : null}
 
         {finished ? (
-          <Step eyebrow="Готово" title="Как да разкажеш идеята си?" lead="Със свои думи, снимки и файлове. Или в разговор с асистента, който вече знае отговорите ти.">
+          <Step eyebrow={tr("Готово")} title={tr("Как да разкажеш идеята си?")} lead={tr("Със свои думи, снимки и файлове. Или в разговор с асистента, който вече знае отговорите ти.")}>
             <AnswersStrip answers={answers} onEdit={() => update({ step: 0 })} />
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <SmallPath
                 icon={<PenLine aria-hidden="true" className="size-5" />}
-                title="Опиши с думи"
-                lead="Пишеш каквото искаш, прикачаш снимки, лого, PDF. Без въпроси."
-                action="Опиши идеята"
+                title={tr("Опиши с думи")}
+                lead={tr("Пишеш каквото искаш, прикачаш снимки, лого, PDF. Без въпроси.")}
+                action={tr("Опиши идеята")}
                 onClick={() => update({ mode: "describe" })}
               />
               <SmallPath
                 icon={<Sparkles aria-hidden="true" className="size-5" />}
-                title="С асистента"
-                lead="Разговор с готови отговори. Пита само за това, което още не знае."
-                action="Говори с асистента"
+                title={tr("С асистента")}
+                lead={tr("Разговор с готови отговори. Пита само за това, което още не знае.")}
+                action={tr("Говори с асистента")}
                 onClick={() => update({ mode: "chat" })}
               />
             </div>
@@ -395,7 +400,7 @@ function Steps({ draft, update, onRestart }: { draft: Draft; update: (p: Partial
 
         {step > 0 ? (
           <button type="button" onClick={onRestart} className="text-muted-foreground hover:text-foreground mt-16 inline-flex items-center gap-2 text-sm transition-colors">
-            <RotateCcw aria-hidden="true" className="size-3.5" /> Започни отначало
+            <RotateCcw aria-hidden="true" className="size-3.5" /> {tr("Започни отначало")}
           </button>
         ) : null}
       </div>
@@ -415,7 +420,8 @@ function Step({ eyebrow, title, lead, children }: { eyebrow?: string; title: str
 }
 
 function AnswersStrip({ answers, onEdit }: { answers: Answers; onEdit: () => void }) {
-  const items = [projectTypeLabel(answers.projectType), answers.hasSite, answers.when, answers.budget].filter(Boolean);
+  const { tr } = useLang();
+  const items = [projectTypeLabel(answers.projectType), answers.hasSite, answers.when, answers.budget].filter(Boolean).map((t) => tr(t));
   if (!items.length) return null;
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -425,7 +431,7 @@ function AnswersStrip({ answers, onEdit }: { answers: Answers; onEdit: () => voi
         </span>
       ))}
       <button type="button" onClick={onEdit} className="text-muted-foreground hover:text-foreground px-2 text-sm transition-colors">
-        Промени
+        {tr("Промени")}
       </button>
     </div>
   );
@@ -466,6 +472,7 @@ function SmallPath({
 /** Picks files, uploads them one by one and keeps the list. Without `upload`
     (the server not configured) it explains instead of silently doing nothing. */
 function useFiles(upload: ((file: File) => Promise<string>) | undefined, initial: ChatFile[] = []) {
+  const { tr } = useLang();
   const [files, setFiles] = React.useState<ChatFile[]>(initial);
   const [busy, setBusy] = React.useState(0);
   const [error, setError] = React.useState("");
@@ -474,16 +481,16 @@ function useFiles(upload: ((file: File) => Promise<string>) | undefined, initial
     async (list: FileList | File[] | null) => {
       setError("");
       if (!upload) {
-        setError("Качването на файлове не е включено на този адрес. Ще работи на сайта.");
+        setError(tr("Качването на файлове не е включено на този адрес. Ще работи на сайта."));
         return;
       }
       for (const file of Array.from(list ?? []).slice(0, 8)) {
         if (!ACCEPT.split(",").includes(file.type)) {
-          setError("Този файл не се поддържа. Пробвай снимка (JPG, PNG) или PDF.");
+          setError(tr("Този файл не се поддържа. Пробвай снимка (JPG, PNG) или PDF."));
           continue;
         }
         if (file.size > MAX_FILE) {
-          setError("Файлът е над 10 MB.");
+          setError(tr("Файлът е над 10 MB."));
           continue;
         }
         setBusy((n) => n + 1);
@@ -497,7 +504,7 @@ function useFiles(upload: ((file: File) => Promise<string>) | undefined, initial
         }
       }
     },
-    [upload],
+    [upload, tr],
   );
   const remove = React.useCallback((path: string) => setFiles((cur) => cur.filter((f) => f.path !== path)), []);
   const clear = React.useCallback(() => setFiles([]), []);
@@ -508,6 +515,7 @@ function useFiles(upload: ((file: File) => Promise<string>) | undefined, initial
 function AttachControls({ add, busy, highlight }: { add: (list: FileList | null) => void; busy: number; highlight?: boolean }) {
   const input = React.useRef<HTMLInputElement>(null);
   const camera = React.useRef<HTMLInputElement>(null);
+  const { tr } = useLang();
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
@@ -519,12 +527,12 @@ function AttachControls({ add, busy, highlight }: { add: (list: FileList | null)
         )}
       >
         {busy ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <Paperclip aria-hidden="true" className="size-4" />}
-        {busy ? "Качване…" : "Снимки и файлове"}
+        {busy ? tr("Качване…") : <><span className="hidden sm:inline">{tr("Снимки и файлове")}</span><span className="sm:hidden">{tr("Снимки")}</span></>}
       </button>
       <button
         type="button"
         onClick={() => camera.current?.click()}
-        aria-label="Снимай с камерата"
+        aria-label={tr("Снимай с камерата")}
         className="border-foreground/20 text-muted-foreground hover:text-foreground hover:border-foreground/50 grid size-11 place-items-center rounded-full border transition-colors md:hidden"
       >
         <Camera aria-hidden="true" className="size-4" />
@@ -568,6 +576,7 @@ function Describe({
   ready: { ready: boolean; ai: boolean } | null;
   onSent: (token: string) => void;
 }) {
+  const { tr } = useLang();
   const upload = ready?.ready ? (file: File) => uploadFile(file, { draftId: draft.draftId }) : undefined;
   const picker = useFiles(upload, draft.files);
   const [dragging, setDragging] = React.useState(false);
@@ -589,18 +598,18 @@ function Describe({
             onClick={() => update({ mode: "steps", step: STEPS.length })}
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
           >
-            <ArrowLeft aria-hidden="true" className="size-4" /> Назад
+            <ArrowLeft aria-hidden="true" className="size-4" /> {tr("Назад")}
           </button>
           <button
             type="button"
             onClick={() => update({ mode: "chat", contact: false })}
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
           >
-            <Sparkles aria-hidden="true" className="size-3.5" /> По-добре с асистента
+            <Sparkles aria-hidden="true" className="size-3.5" /> {tr("По-добре с асистента")}
           </button>
         </div>
 
-        <Step eyebrow="Със свои думи" title="Разкажи ни идеята си." lead="Какъв е бизнесът, какво трябва да постигне проектът, какво харесваш. Пиши както би го казал на приятел.">
+        <Step eyebrow={tr("Със свои думи")} title={tr("Разкажи ни идеята си.")} lead={tr("Какъв е бизнесът, какво трябва да постигне проектът, какво харесваш. Пиши както би го казал на приятел.")}>
           <AnswersStrip answers={draft.answers} onEdit={() => update({ mode: "steps", step: 0 })} />
 
           <div
@@ -630,8 +639,8 @@ function Describe({
                 }
               }}
               rows={7}
-              placeholder="Напр. „Имам козметично студио в Пловдив. Искам хората да виждат цените и да си записват час онлайн. Харесвам как изглежда…“"
-              aria-label="Идеята ти"
+              placeholder={tr("Напр. „Имам козметично студио в Пловдив. Искам хората да виждат цените и да си записват час онлайн. Харесвам как изглежда…“")}
+              aria-label={tr("Идеята ти")}
               className="placeholder:text-muted-foreground/60 block w-full resize-y bg-transparent px-3 py-2.5 text-[1.0625rem] leading-relaxed outline-none"
             />
             {picker.files.length ? (
@@ -641,7 +650,7 @@ function Describe({
             ) : null}
             <div className="flex flex-wrap items-center justify-between gap-3 px-1 pt-1">
               <AttachControls add={(l) => void picker.add(l)} busy={picker.busy} />
-              <span className="text-muted-foreground text-xs">Снимки, лого, PDF · до 10 MB · може и с влачене</span>
+              <span className="text-muted-foreground text-xs">{tr("Снимки, лого, PDF · до 10 MB · може и с влачене")}</span>
             </div>
             {picker.error ? <p className="text-destructive px-2 pt-2 text-xs">{picker.error}</p> : null}
           </div>
@@ -668,6 +677,7 @@ function Chat({
   onRestart: () => void;
   onSent: (token: string) => void;
 }) {
+  const { tr, lang } = useLang();
   const [streaming, setStreaming] = React.useState<string | null>(null);
   const [briefing, setBriefing] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -691,7 +701,7 @@ function Chat({
       setError("");
       let text = "";
       try {
-        text = await streamAi(draft.draftId, answers, conversation, (piece) => {
+        text = await streamAi(draft.draftId, answers, conversation, lang, (piece) => {
           text += piece;
           setStreaming(text);
         }, controller.signal);
@@ -706,7 +716,7 @@ function Chat({
         if (abort.current === controller) setStreaming(null);
       }
     },
-    [draft.draftId, update],
+    [draft.draftId, update, lang],
   );
 
   React.useEffect(() => () => abort.current?.abort(), []);
@@ -717,9 +727,9 @@ function Chat({
   React.useEffect(() => {
     if (opened.current || draft.conversation.length || ready === null) return;
     opened.current = true;
-    if (!ready.ai) update({ conversation: [{ role: "ai", text: FALLBACK[0].text }], fallbackStep: 0 });
+    if (!ready.ai) update({ conversation: [{ role: "ai", text: tr(FALLBACK[0].text) }], fallbackStep: 0 });
     else if (hasAnswers) void reply([], draft.answers);
-  }, [ready, draft.conversation.length, hasAnswers, draft.answers, reply, update]);
+  }, [ready, draft.conversation.length, hasAnswers, draft.answers, reply, update, tr]);
 
   /** One client message, from the box or a starter. */
   const send = async (text: string, files: ChatFile[] = []) => {
@@ -733,7 +743,7 @@ function Chat({
       const next = Math.min(draft.fallbackStep + 1, FALLBACK.length);
       const finished = next >= FALLBACK.length;
       update({
-        conversation: finished ? conversation : [...conversation, { role: "ai", text: FALLBACK[next].text }],
+        conversation: finished ? conversation : [...conversation, { role: "ai", text: tr(FALLBACK[next].text) }],
         brief: { ...brief, summary: brief.summary || brief.goal || brief.business },
         files: [...draft.files, ...files],
         fallbackStep: next,
@@ -756,7 +766,7 @@ function Chat({
     setBriefing(true);
     setError("");
     try {
-      const r = await briefAi(draft.draftId, draft.answers, draft.conversation);
+      const r = await briefAi(draft.draftId, draft.answers, draft.conversation, lang);
       update({
         conversation: r.reply ? [...draft.conversation, { role: "ai", text: r.reply }] : draft.conversation,
         brief: r.brief,
@@ -803,8 +813,8 @@ function Chat({
         <div className="bg-background/80 pointer-events-none fixed inset-0 z-[150] grid place-items-center backdrop-blur-sm">
           <div className="border-ice text-ice rounded-3xl border-2 border-dashed px-10 py-8 text-center">
             <ImagePlus aria-hidden="true" className="mx-auto size-8" />
-            <p className="mt-3 text-lg font-medium">Пусни файловете тук</p>
-            <p className="text-muted-foreground mt-1 text-sm">Снимки и PDF до 10 MB</p>
+            <p className="mt-3 text-lg font-medium">{tr("Пусни файловете тук")}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{tr("Снимки и PDF до 10 MB")}</p>
           </div>
         </div>
       ) : null}
@@ -815,21 +825,21 @@ function Chat({
           <div className="flex min-w-0 items-center gap-3">
             <Avatar />
             <div className="min-w-0">
-              <p className="truncate font-medium">Консултантът на 13:33</p>
-              <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                <span className="bg-ice relative inline-flex size-1.5 rounded-full" />
-                {ai ? "AI · само за сайтове и дигитални проекти" : "Кратък въпросник · консултантът почива"}
+              <p className="truncate font-medium">{tr("Консултантът на 13:33")}</p>
+              <p className="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
+                <span className="bg-ice relative inline-flex size-1.5 shrink-0 rounded-full" />
+                {ai ? tr("AI · само за сайтове и дигитални проекти") : tr("Кратък въпросник · консултантът почива")}
               </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3 text-sm">
             {hasAnswers ? (
               <button type="button" onClick={() => update({ mode: "steps", step: STEPS.length })} className="text-muted-foreground hover:text-foreground hidden transition-colors sm:inline">
-                Отговорите
+                {tr("Отговорите")}
               </button>
             ) : null}
             <button type="button" onClick={onRestart} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors">
-              <RotateCcw aria-hidden="true" className="size-3.5" /> Отначало
+              <RotateCcw aria-hidden="true" className="size-3.5" /> {tr("Отначало")}
             </button>
           </div>
         </div>
@@ -843,7 +853,7 @@ function Chat({
           </div>
         ) : null}
 
-        {ai && !hasAnswers ? <Line role="ai" text={OPENER} /> : null}
+        {ai && !hasAnswers ? <Line role="ai" text={tr(OPENER)} /> : null}
 
         {draft.conversation.map((t, i) => (
           <Line
@@ -860,7 +870,7 @@ function Chat({
           <div className="my-5 flex items-start gap-4">
             <Avatar />
             <p className="text-muted-foreground flex items-center gap-2 py-2 text-[0.9375rem]">
-              <Loader2 aria-hidden="true" className="size-4 animate-spin" /> Подреждам брифа…
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" /> {tr("Подреждам брифа…")}
             </p>
           </div>
         ) : null}
@@ -870,7 +880,7 @@ function Chat({
             <p>{error}</p>
             {lastIsClient || (hasAnswers && !draft.conversation.length) ? (
               <button type="button" onClick={() => void reply(draft.conversation, draft.answers)} className="border-foreground/20 hover:border-foreground/60 mt-3 rounded-full border px-4 py-2 text-sm transition-colors">
-                Опитай пак
+                {tr("Опитай пак")}
               </button>
             ) : null}
           </div>
@@ -882,10 +892,10 @@ function Chat({
               <button
                 key={q}
                 type="button"
-                onClick={() => void send(q)}
+                onClick={() => void send(tr(q))}
                 className="border-border bg-surface hover:border-primary/60 rounded-2xl border px-4 py-3.5 text-left text-[0.9375rem] leading-snug transition-[border-color,transform] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-0.5"
               >
-                {q}
+                {tr(q)}
               </button>
             ))}
           </div>
@@ -902,13 +912,13 @@ function Chat({
       <div className="bg-background/85 sticky bottom-0 z-20 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md">
         <div className="mx-auto max-w-3xl px-5 pt-3 sm:px-8">
           <BigComposer
-            placeholder={showContact ? "Искаш да добавиш нещо?" : "Напиши съобщение…"}
+            placeholder={showContact ? tr("Искаш да добавиш нещо?") : tr("Напиши съобщение…")}
             disabled={busy || briefing}
             upload={upload}
             onSend={(text, files) => send(text, files)}
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1">
-            <p className="text-muted-foreground text-xs">Цената и срокът ти ги пише основателят, лично.</p>
+            <p className="text-muted-foreground text-xs">{tr("Цената и срокът ти ги пише основателят, лично.")}</p>
             {!showContact && (aiTurns >= 1 || !ai) && draft.conversation.some((t) => t.role === "client") ? (
               <button
                 type="button"
@@ -916,7 +926,7 @@ function Chat({
                 disabled={busy || briefing}
                 className="text-ice hover:text-foreground inline-flex items-center gap-1 text-xs font-medium transition-colors disabled:opacity-40"
               >
-                Готово, изпрати запитването <ArrowRight aria-hidden="true" className="size-3" />
+                {tr("Готово, изпрати запитването")} <ArrowRight aria-hidden="true" className="size-3" />
               </button>
             ) : null}
           </div>
@@ -938,6 +948,7 @@ function Avatar() {
 
 /** One line of the chat: the consultant as plain text beside its mark, the client in a bubble on the right. */
 function Line({ role, text, files = [], live }: { role: "ai" | "client"; text: string; files?: ChatFile[]; live?: boolean }) {
+  const { tr } = useLang();
   const mine = role === "client";
   if (!mine) {
     return (
@@ -951,7 +962,7 @@ function Line({ role, text, files = [], live }: { role: "ai" | "client"; text: s
               {[0, 1, 2].map((i) => (
                 <span key={i} className="bg-muted-foreground size-1.5 animate-pulse rounded-full" style={{ animationDelay: `${i * 160}ms` }} />
               ))}
-              <span className="ml-1">мисли…</span>
+              <span className="ml-1">{tr("мисли…")}</span>
             </span>
           ) : null}
           {files.length ? <div className="mt-3"><Files files={files} /></div> : null}
@@ -1021,6 +1032,7 @@ function Inline({ text }: { text: string }) {
 }
 
 function Files({ files, onRemove }: { files: ChatFile[]; onRemove?: (path: string) => void }) {
+  const { tr } = useLang();
   return (
     <div className="flex flex-wrap gap-2">
       {files.map((f) => {
@@ -1038,7 +1050,7 @@ function Files({ files, onRemove }: { files: ChatFile[]; onRemove?: (path: strin
             {onRemove ? (
               <button
                 type="button"
-                aria-label={`Махни ${f.name}`}
+                aria-label={tr("Махни {name}", { name: f.name })}
                 onClick={() => onRemove(f.path)}
                 className="bg-background border-border absolute -top-2 -right-2 grid size-7 place-items-center rounded-full border"
               >
@@ -1066,6 +1078,7 @@ function BigComposer({
   highlightAttach?: boolean;
   disabled?: boolean;
 }) {
+  const { tr } = useLang();
   const [text, setText] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const area = React.useRef<HTMLTextAreaElement>(null);
@@ -1130,8 +1143,8 @@ function BigComposer({
           <AttachControls add={(l) => void add(l)} busy={busy} highlight={highlightAttach} />
           {error ? <span className="text-destructive mt-1 px-1 text-xs">{error}</span> : null}
         </div>
-        <RainbowButton onClick={() => void send()} disabled={sending || disabled || busy > 0 || (!text.trim() && !files.length)} aria-label="Изпрати">
-          Изпрати
+        <RainbowButton onClick={() => void send()} disabled={sending || disabled || busy > 0 || (!text.trim() && !files.length)} aria-label={tr("Изпрати")}>
+          {tr("Изпрати")}
           {sending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ArrowUp aria-hidden="true" className="size-4" />}
         </RainbowButton>
       </div>
@@ -1155,6 +1168,7 @@ function ContactCard({
   /** The describe path: the idea itself has to be written. */
   requireText?: boolean;
 }) {
+  const { tr } = useLang();
   const [consent, setConsent] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -1186,21 +1200,21 @@ function ContactCard({
   };
 
   return (
-    <section aria-label="Контакт" className="border-border bg-surface ww-rise mt-8 rounded-3xl border p-6 md:p-8">
-      <p className="eyebrow mb-3">Последно</p>
-      <h2 className="font-display text-title font-[500] tracking-[-0.025em]">Как да ти пишем?</h2>
+    <section aria-label={tr("Контакт")} className="border-border bg-surface ww-rise mt-8 rounded-3xl border p-6 md:p-8">
+      <p className="eyebrow mb-3">{tr("Последно")}</p>
+      <h2 className="font-display text-title font-[500] tracking-[-0.025em]">{tr("Как да ти пишем?")}</h2>
       <p className="text-muted-foreground mt-2 text-[0.9375rem] text-pretty">
-        Ще получиш личен чат на сайта. Там основателят ти пише цената, срока и капарото.
+        {tr("Ще получиш личен чат на сайта. Там основателят ти пише цената, срока и капарото.")}
       </p>
 
       <form onSubmit={send} noValidate className="mt-6 space-y-5">
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-medium">Име</span>
+            <span className="text-sm font-medium">{tr("Име")}</span>
             <input value={draft.name} onChange={(e) => update({ name: e.target.value })} autoComplete="name" className="field mt-2" />
           </label>
           <label className="block">
-            <span className="text-sm font-medium">Имейл</span>
+            <span className="text-sm font-medium">{tr("Имейл")}</span>
             <input
               type="email"
               inputMode="email"
@@ -1210,17 +1224,17 @@ function ContactCard({
               aria-invalid={Boolean(draft.email) && !emailOk}
               className="field mt-2"
             />
-            {draft.email && !emailOk ? <span className="text-destructive mt-1 block text-sm">Провери имейла.</span> : null}
+            {draft.email && !emailOk ? <span className="text-destructive mt-1 block text-sm">{tr("Провери имейла.")}</span> : null}
           </label>
         </div>
         <label className="block">
-          <span className="text-sm font-medium">Телефон</span>
-          <span className="text-muted-foreground text-sm"> · по желание</span>
+          <span className="text-sm font-medium">{tr("Телефон")}</span>
+          <span className="text-muted-foreground text-sm">{tr(" · по желание")}</span>
           <input type="tel" inputMode="tel" value={draft.phone} onChange={(e) => update({ phone: e.target.value })} autoComplete="tel" className="field mt-2" />
         </label>
 
         <ul className="text-muted-foreground space-y-2 text-[0.9375rem]">
-          {[requireText ? "Основателят чете описанието ти." : "Основателят преглежда разговора.", "Пише ти в личния чат: крайна цена, срок и капаро.", "Приемаш офертата, плащаш капарото и започваме."].map((t) => (
+          {[requireText ? "Основателят чете описанието ти." : "Основателят преглежда разговора.", "Пише ти в личния чат: крайна цена, срок и капаро.", "Приемаш офертата, плащаш капарото и започваме."].map((t) => tr(t)).map((t) => (
             <li key={t} className="flex gap-2.5">
               <Check aria-hidden="true" className="text-ice mt-1 size-4 shrink-0" />
               <span>{t}</span>
@@ -1231,15 +1245,15 @@ function ContactCard({
 
         <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem]">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="accent-primary mt-1 size-4 shrink-0" />
-          <span className="text-muted-foreground">Съгласен/на съм 13:33 да използва тези данни и файлове, за да отговори на запитването ми.</span>
+          <span className="text-muted-foreground">{tr("Съгласен/на съм 13:33 да използва тези данни и файлове, за да отговори на запитването ми.")}</span>
         </label>
 
         {disabled ? (
           <p className="text-destructive text-sm">
-            Онлайн запитванията още не са включени.
+            {tr("Онлайн запитванията още не са включени.")}
             {site.contactEmail ? (
               <>
-                {" "}Пиши ни на <a className="underline" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.
+                {" "}{tr("Пиши ни на")} <a className="underline" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.
               </>
             ) : null}
           </p>
@@ -1248,11 +1262,11 @@ function ContactCard({
 
         <div className="flex flex-wrap items-center gap-4 pt-1">
           <RainbowButton type="submit" disabled={!ok || pending || disabled}>
-            {pending ? "Изпращане…" : "Изпрати и отвори чата"}
+            {pending ? tr("Изпращане…") : tr("Изпрати и отвори чата")}
             {pending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="size-4" />}
           </RainbowButton>
           <Link to="/" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-            Към началото
+            {tr("Към началото")}
           </Link>
         </div>
       </form>

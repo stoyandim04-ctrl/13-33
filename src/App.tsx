@@ -18,12 +18,30 @@ export default function App() {
     if (!window.location.hash) window.scrollTo(0, 0);
   }, [pathname]);
 
+  // Anything marked data-reveal fades up once it enters the screen.
+  React.useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-in)"));
+    if (!els.length) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add("is-in");
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [pathname]);
+
   const chrome = !(pathname.startsWith("/studio") || pathname.startsWith("/zapitvane/") || pathname === "/zapochni");
 
   return (
     <>
       <SiteHeader />
-      <main id="main" tabIndex={-1} className="outline-none">
+      <main id="main" tabIndex={-1} key={pathname} className="page-in outline-none">
         <React.Suspense fallback={<div className="h-svh" />}>
           <Routes>
             <Route path="/" element={<Home />} />

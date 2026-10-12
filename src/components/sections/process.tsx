@@ -1,16 +1,19 @@
-import { process } from "@/data/content";
+import type * as React from "react";
+
+import { useContent } from "@/data/content";
 import { SectionHeader } from "@/components/sections/section-header";
 
 /** A real sequence, so it is numbered: four words on one line. */
 export function Process() {
+  const { process } = useContent();
   return (
     <section id="proces" aria-labelledby="proces-title" className="section bg-surface">
       <div className="container-wide">
-        <SectionHeader id="proces-title" label="Процес" title="От идея до реализация." />
+        <SectionHeader id="proces-title" label={process.label} title={process.title} />
 
         <ol className="hairline mt-14 grid grid-cols-2 gap-x-6 gap-y-10 pt-10 md:mt-20 lg:grid-cols-4">
-          {process.map((step, i) => (
-            <li key={step.name}>
+          {process.steps.map((step, i) => (
+            <li key={step.name} data-reveal style={{ "--d": i } as React.CSSProperties}>
               <span className="text-ice font-display block text-sm font-[500] tabular-nums">
                 {String(i + 1).padStart(2, "0")}
               </span>

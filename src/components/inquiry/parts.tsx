@@ -3,6 +3,7 @@ import * as React from "react";
 import { ArrowRight, Check, FileText, Loader2, Paperclip, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { ACCEPT, errorText, fmtDateTime, getSlots, MAX_FILE, roomAction } from "@/lib/inquiry-api";
 import { BRIEF_LABELS, DEPOSIT, STATUS_STEPS, type Brief, type ChatFile, type ChatMessage, type InquiryStatus, type Offer } from "@/lib/inquiry-shared";
@@ -60,6 +61,7 @@ export function Chip({ children, onClick, disabled }: { children: React.ReactNod
 }
 
 export function Thumbs({ files, onRemove }: { files: ChatFile[]; onRemove?: (path: string) => void }) {
+  const { tr } = useLang();
   if (!files.length) return null;
   return (
     <div className="mt-2 flex flex-wrap gap-2">
@@ -86,7 +88,7 @@ export function Thumbs({ files, onRemove }: { files: ChatFile[]; onRemove?: (pat
             {onRemove ? (
               <button
                 type="button"
-                aria-label={`Махни ${f.name}`}
+                aria-label={tr("Махни {name}", { name: f.name })}
                 onClick={() => onRemove(f.path)}
                 className="bg-background absolute -top-2 -right-2 grid size-6 place-items-center rounded-full border"
               >
@@ -112,6 +114,7 @@ export function AttachButton({
   label?: string;
   highlight?: boolean;
 }) {
+  const { tr } = useLang();
   const input = React.useRef<HTMLInputElement>(null);
   const [busy, setBusy] = React.useState(0);
   const [error, setError] = React.useState("");
@@ -120,7 +123,7 @@ export function AttachButton({
     setError("");
     for (const file of Array.from(list ?? []).slice(0, 8)) {
       if (file.size > MAX_FILE) {
-        setError("Файлът е над 10 MB.");
+        setError(tr("Файлът е над 10 MB."));
         continue;
       }
       setBusy((n) => n + 1);
@@ -147,7 +150,7 @@ export function AttachButton({
         )}
       >
         {busy ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <Paperclip aria-hidden="true" className="size-4" />}
-        {busy ? "Качване…" : label}
+        {busy ? tr("Качване…") : tr(label)}
       </button>
       <input ref={input} type="file" accept={ACCEPT} multiple hidden onChange={(e) => pick(e.target.files)} />
       {error ? <span className="text-destructive mt-1 text-xs">{error}</span> : null}
@@ -225,6 +228,7 @@ export function Composer({
   highlightAttach?: boolean;
   disabled?: boolean;
 }) {
+  const { tr } = useLang();
   const [text, setText] = React.useState("");
   const [files, setFiles] = React.useState<ChatFile[]>([]);
   const [sending, setSending] = React.useState(false);
@@ -255,7 +259,7 @@ export function Composer({
           ref={area}
           value={text}
           rows={1}
-          placeholder={placeholder}
+          placeholder={tr(placeholder)}
           onChange={(e) => {
             setText(e.target.value);
             e.target.style.height = "auto";
@@ -267,14 +271,14 @@ export function Composer({
               void send();
             }
           }}
-          aria-label={placeholder}
+          aria-label={tr(placeholder)}
           className="placeholder:text-muted-foreground/70 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base outline-none"
         />
         <button
           type="button"
           onClick={() => void send()}
           disabled={sending || disabled || (!text.trim() && !files.length)}
-          aria-label="Изпрати"
+          aria-label={tr("Изпрати")}
           className="bg-primary grid size-11 shrink-0 place-items-center rounded-full transition-opacity disabled:opacity-30"
         >
           {sending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="size-4" />}
@@ -290,14 +294,15 @@ export function Composer({
 }
 
 export function StatusSteps({ status }: { status: InquiryStatus }) {
+  const { tr } = useLang();
   const current = STATUS_STEPS.findIndex((s) => s.status.includes(status));
   return (
-    <ol className="flex gap-1.5" aria-label="Етап на проекта">
+    <ol className="flex gap-1.5" aria-label={tr("Етап на проекта")}>
       {STATUS_STEPS.map((s, i) => (
         <li key={s.label} className="flex-1" aria-current={i === current ? "step" : undefined}>
           <span className={cn("block h-1 rounded-full", i <= current ? "bg-primary" : "bg-border")} />
           <span className={cn("mt-2 block text-[0.6875rem] tracking-[0.12em] uppercase", i === current ? "text-foreground" : "text-muted-foreground")}>
-            {s.label}
+            {tr(s.label)}
           </span>
         </li>
       ))}
@@ -316,28 +321,29 @@ export function OfferCard({
   status: InquiryStatus;
   onAccept?: () => Promise<void>;
 }) {
+  const { tr } = useLang();
   const [busy, setBusy] = React.useState(false);
   const accepted = status !== "offer";
   return (
-    <section aria-label="Оферта" className="border-primary/50 bg-primary/[0.06] rounded-3xl border p-6">
-      <p className="eyebrow mb-4">{accepted ? "Приета оферта" : "Твоята оферта"}</p>
+    <section aria-label={tr("Оферта")} className="border-primary/50 bg-primary/[0.06] rounded-3xl border p-6">
+      <p className="eyebrow mb-4">{accepted ? tr("Приета оферта") : tr("Твоята оферта")}</p>
       <dl className="grid grid-cols-3 gap-4">
         <div>
-          <dt className="text-muted-foreground text-xs">Крайна цена</dt>
+          <dt className="text-muted-foreground text-xs">{tr("Крайна цена")}</dt>
           <dd className="font-display mt-1 text-2xl font-[600]">{euro(offer.price)}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground text-xs">Срок</dt>
+          <dt className="text-muted-foreground text-xs">{tr("Срок")}</dt>
           <dd className="mt-1 text-lg font-medium">{offer.deadline}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground text-xs">Капаро</dt>
+          <dt className="text-muted-foreground text-xs">{tr("Капаро")}</dt>
           <dd className="font-display mt-1 text-2xl font-[600]">{euro(offer.deposit)}</dd>
         </div>
       </dl>
       {offer.note ? <p className="text-muted-foreground mt-5 text-[0.9375rem] whitespace-pre-wrap">{offer.note}</p> : null}
       <p className="text-muted-foreground mt-4 text-sm">
-        Капарото се приспада от крайната цена. Остатъкът — {euro(offer.price - offer.deposit)} — се плаща при предаване.
+        {tr("Капарото се приспада от крайната цена. Остатъкът — {rest} — се плаща при предаване.", { rest: euro(offer.price - offer.deposit) })}
       </p>
       {status === "offer" && onAccept ? (
         <Button
@@ -352,13 +358,13 @@ export function OfferCard({
             }
           }}
         >
-          {busy ? "Изпращане…" : "Приемам офертата"}
+          {busy ? tr("Изпращане…") : tr("Приемам офертата")}
           <ArrowRight aria-hidden="true" />
         </Button>
       ) : null}
       {status === "accepted" && offer.payment ? (
         <div className="border-border mt-6 border-t pt-5">
-          <p className="text-sm font-medium">Как да платиш капарото</p>
+          <p className="text-sm font-medium">{tr("Как да платиш капарото")}</p>
           <p className="text-muted-foreground mt-2 text-[0.9375rem] whitespace-pre-wrap">
             <LinkifiedText text={offer.payment} />
           </p>
@@ -372,16 +378,18 @@ const LinkifiedText = ({ text }: { text: string }) => <Linkified text={text} />;
 
 /** The deposit rule, in one line, wherever the client meets it. */
 export function DepositNote({ className }: { className?: string }) {
+  const { tr } = useLang();
   return (
     <p className={cn("text-muted-foreground text-sm text-pretty", className)}>
-      <span className="text-foreground font-medium">Капаро: {DEPOSIT.standard} €</span> (при по-голям проект — {DEPOSIT.large} €).
-      Приспада се от крайната цена.
+      <span className="text-foreground font-medium">{tr("Капаро: {n} €", { n: DEPOSIT.standard })}</span>{" "}
+      {tr("(при по-голям проект — {n} €). Приспада се от крайната цена.", { n: DEPOSIT.large })}
     </p>
   );
 }
 
 /** Pick a day, then a time. Times are shown in Bulgarian time. */
 export function BookingPicker({ token, onBooked }: { token: string; onBooked: () => void }) {
+  const { tr } = useLang();
   const [slots, setSlots] = React.useState<string[] | null>(null);
   const [minutes, setMinutes] = React.useState(30);
   const [day, setDay] = React.useState("");
@@ -412,12 +420,12 @@ export function BookingPicker({ token, onBooked }: { token: string; onBooked: ()
   const activeDay = day || days[0]?.[0] || "";
   const times = days.find(([d]) => d === activeDay)?.[1] ?? [];
 
-  if (!slots) return <p className="text-muted-foreground text-sm">Зареждане на свободните часове…</p>;
-  if (!days.length) return <p className="text-muted-foreground text-sm">{error || "В момента няма свободни часове. Пиши ни в чата и ще намерим време."}</p>;
+  if (!slots) return <p className="text-muted-foreground text-sm">{tr("Зареждане на свободните часове…")}</p>;
+  if (!days.length) return <p className="text-muted-foreground text-sm">{error || tr("В момента няма свободни часове. Пиши ни в чата и ще намерим време.")}</p>;
 
   return (
     <div>
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2" role="tablist" aria-label="Ден">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2" role="tablist" aria-label={tr("Ден")}>
         {days.map(([d, list]) => (
           <button
             key={d}
@@ -455,7 +463,7 @@ export function BookingPicker({ token, onBooked }: { token: string; onBooked: ()
           </button>
         ))}
       </div>
-      <p className="text-muted-foreground mt-3 text-xs">Часовете са по българско време. Срещата е {minutes} мин, онлайн.</p>
+      <p className="text-muted-foreground mt-3 text-xs">{tr("Часовете са по българско време. Срещата е {m} мин, онлайн.", { m: minutes })}</p>
       {error ? <p className="text-destructive mt-2 text-sm">{error}</p> : null}
       <Button
         className="mt-4"
@@ -475,7 +483,7 @@ export function BookingPicker({ token, onBooked }: { token: string; onBooked: ()
           }
         }}
       >
-        {picked ? `Запази ${fmtDateTime(picked, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : "Избери час"}
+        {picked ? tr("Запази {when}", { when: fmtDateTime(picked, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) }) : tr("Избери час")}
       </Button>
     </div>
   );
@@ -499,17 +507,18 @@ export function usePoll(fn: () => void, ms: number) {
 }
 
 export function BriefCard({ brief, className }: { brief: Brief; className?: string }) {
+  const { tr } = useLang();
   const rows = BRIEF_LABELS.filter(([k]) => brief[k]);
   if (!rows.length && !brief.summary) return null;
   return (
-    <section aria-label="Брифът" className={cn("border-border bg-surface rounded-3xl border p-6", className)}>
-      <p className="eyebrow mb-3">Как го разбрахме</p>
+    <section aria-label={tr("Брифът")} className={cn("border-border bg-surface rounded-3xl border p-6", className)}>
+      <p className="eyebrow mb-3">{tr("Как го разбрахме")}</p>
       {brief.summary ? <p className="text-lg text-pretty">{brief.summary}</p> : null}
       {rows.length ? (
         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
           {rows.map(([k, label]) => (
             <div key={k}>
-              <dt className="text-muted-foreground text-xs tracking-[0.12em] uppercase">{label}</dt>
+              <dt className="text-muted-foreground text-xs tracking-[0.12em] uppercase">{tr(label)}</dt>
               <dd className="mt-1 text-[0.9375rem] text-pretty">{brief[k]}</dd>
             </div>
           ))}

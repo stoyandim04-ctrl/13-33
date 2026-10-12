@@ -32,6 +32,7 @@ import * as React from "react";
 import { ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn, clamp } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import { useCoarseDevice, useReducedMotion } from "@/hooks/use-media";
 
 export interface WorksWheelItem {
@@ -158,6 +159,7 @@ export function WorksWheel({
   style,
   ...props
 }: WorksWheelProps) {
+  const { tr } = useLang();
   const sectionRef = React.useRef<HTMLElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
   const wheelRef = React.useRef<HTMLDivElement>(null);
@@ -633,8 +635,8 @@ export function WorksWheel({
           ref={stageRef}
           tabIndex={0}
           role="group"
-          aria-roledescription="портфолио"
-          aria-label={`${label}: ${current?.title ?? ""}. Стрелките сменят проекта.`}
+          aria-roledescription={tr("портфолио")}
+          aria-label={`${label}: ${current?.title ?? ""}. ${tr("Стрелките сменят проекта.")}`}
           onKeyDown={onKeyDown}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -694,7 +696,7 @@ export function WorksWheel({
                   rel={item.href?.startsWith("http") ? "noreferrer" : undefined}
                   draggable={false}
                   tabIndex={isFront ? 0 : -1}
-                  aria-label={isFront ? `${action}: ${item.title}` : `${item.title} — избери`}
+                  aria-label={isFront ? `${action}: ${item.title}` : `${item.title} — ${tr("избери")}`}
                   aria-current={isFront ? "true" : undefined}
                   onClick={onCardClick(i, item)}
                   ref={(node) => {
@@ -809,7 +811,7 @@ export function WorksWheel({
         {/* Index - desktop. */}
         {!narrow ? (
           <nav
-            aria-label={`${label} — индекс`}
+            aria-label={`${label} — ${tr("индекс")}`}
             className="text-muted-foreground absolute top-[12%] right-[2.5%] z-[120] text-right leading-[1.9]"
             style={{ fontSize: clamp(metrics.index, 12, 15) }}
           >
@@ -834,12 +836,12 @@ export function WorksWheel({
         ) : (
           <div className="absolute right-5 bottom-6 left-5 z-[120] flex items-center justify-between sm:right-8 sm:left-8">
             <span className="text-label text-muted-foreground tracking-[0.22em] uppercase">
-              {open ? "Плъзни за следващия" : "Плъзни нагоре"}
+              {open ? tr("Плъзни за следващия") : tr("Плъзни нагоре")}
             </span>
             <div className="flex gap-2">
               <button
                 type="button"
-                aria-label="Предишен проект"
+                aria-label={tr("Предишен проект")}
                 onClick={() => to(Math.round(target.current) - 1)}
                 className="border-foreground/20 grid size-11 place-items-center rounded-full border"
               >
@@ -847,7 +849,7 @@ export function WorksWheel({
               </button>
               <button
                 type="button"
-                aria-label="Следващ проект"
+                aria-label={tr("Следващ проект")}
                 onClick={() => to(Math.round(target.current) + 1)}
                 className="border-foreground/20 grid size-11 place-items-center rounded-full border"
               >

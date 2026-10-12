@@ -1,6 +1,9 @@
-import { nav, site } from "@/data/content";
+import { site, useContent } from "@/data/content";
+import { useLang } from "@/lib/i18n";
 
 export function SiteFooter() {
+  const { nav, footer } = useContent();
+  const { tr } = useLang();
   return (
     <footer className="border-border border-t px-5 pt-16 pb-10 sm:px-8 lg:px-14">
       <div className="container-wide">
@@ -9,9 +12,9 @@ export function SiteFooter() {
             <p className="font-display text-[clamp(4rem,12vw,9rem)] leading-[0.85] font-[400] tracking-[-0.06em]">
               13:33
             </p>
-            <p className="eyebrow mt-4">Digital Studio · България</p>
+            <p className="eyebrow mt-4">{footer.tagline}</p>
           </div>
-          <nav aria-label="Навигация във футъра">
+          <nav aria-label={tr("Навигация във футъра")}>
             <ul className="flex flex-wrap gap-x-8 gap-y-3">
               {nav.map((item) => (
                 <li key={item.href}>
@@ -32,7 +35,7 @@ export function SiteFooter() {
         </div>
         <div className="hairline text-muted-foreground mt-14 flex flex-col justify-between gap-3 pt-6 text-sm sm:flex-row">
           <p>© {new Date().getFullYear()} 13:33 — Digital Studio</p>
-          <p>Проектите в портфолиото са означени според статуса си.</p>
+          <p>{footer.note}</p>
         </div>
       </div>
     </footer>

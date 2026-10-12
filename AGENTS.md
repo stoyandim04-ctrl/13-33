@@ -1,6 +1,6 @@
 # Notes for agents working on this repo
 
-- Bulgarian first: all visible copy is Bulgarian; `<html lang="bg">` turns on the Bulgarian Cyrillic forms of Manrope (the site font) — keep it, and only switch to fonts that carry the `cyrl/BGR` locl forms.
+- Bulgarian first, English second. Structured copy lives twice in `src/data/content.ts` (`useContent()`); every other visible string is written in Bulgarian in the component and wrapped in `tr()` from `src/lib/i18n.tsx`, with its English in `src/lib/en.ts` (the Bulgarian text is the key — a missing key shows Bulgarian). The switch is in the header; the choice is kept in localStorage and sets `<html lang>`. Manrope carries the Bulgarian Cyrillic forms — only switch to fonts with `cyrl/BGR` locl forms. The founder's panel (`/studio`) stays Bulgarian.
 - Never invent clients, results, testimonials, prices or deadlines. Concept projects stay labelled (`status: "concept"`).
 - Visual system lives in `src/index.css` (`@theme`): deep violet-black background, white text, one lilac accent (#8F7BFF for actions/current state, #C8B6FF `ice` for highlights); the lilac→peach text gradients (`.grad-lilac`, `.grad-peach`) are only for the hero's key words. Fixed type scale (`text-label/body/lead/title/heading/display`); big statements are Manrope 300; every section opens with `eyebrow → heading → lead`.
 - The primary action is always the `RainbowLink`/`RainbowButton` (`components/ui/rainbow-button.tsx`), one per view; other buttons lift and glow on hover (`components/ui/button.tsx`), menu links use `.nav-link`.

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { manifest } from "@/data/content";
+import { useContent } from "@/data/content";
 import { useReducedMotion } from "@/hooks/use-media";
 
 // Three statements, set big and light. As the section travels up the screen
@@ -9,6 +9,7 @@ import { useReducedMotion } from "@/hooks/use-media";
 export function Manifest() {
   const ref = React.useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const { manifest } = useContent();
 
   React.useEffect(() => {
     const el = ref.current;
@@ -40,11 +41,11 @@ export function Manifest() {
       window.removeEventListener("resize", onScroll);
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [reduced]);
+  }, [reduced, manifest]);
 
   return (
-    <section id="manifest" aria-label="Как работим" className="section">
-      <div ref={ref} className="container-wide grid gap-6 md:gap-8">
+    <section id="manifest" aria-label="13:33" className="section">
+      <div ref={ref} data-reveal className="container-wide grid gap-6 md:gap-8">
         {manifest.map((line) => (
           <p
             key={line}

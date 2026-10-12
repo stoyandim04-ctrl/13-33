@@ -53,6 +53,7 @@ export async function streamAi(
   draftId: string,
   answers: Answers,
   conversation: AiTurn[],
+  lang: "bg" | "en",
   onDelta: (text: string) => void,
   signal?: AbortSignal,
 ): Promise<string> {
@@ -61,7 +62,7 @@ export async function streamAi(
     res = await fetch("/api/ai", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/plain" },
-      body: JSON.stringify({ draftId, mode: "chat", answers, conversation }),
+      body: JSON.stringify({ draftId, mode: "chat", lang, answers, conversation }),
       signal,
     });
   } catch (e) {
@@ -89,8 +90,8 @@ export async function streamAi(
 }
 
 /** The structured brief, read from the whole conversation. */
-export const briefAi = (draftId: string, answers: Answers, conversation: AiTurn[]) =>
-  call<AiReply>("/api/ai", { method: "POST", json: { draftId, mode: "brief", answers, conversation } });
+export const briefAi = (draftId: string, answers: Answers, conversation: AiTurn[], lang: "bg" | "en") =>
+  call<AiReply>("/api/ai", { method: "POST", json: { draftId, mode: "brief", lang, answers, conversation } });
 
 export const createInquiry = (payload: {
   draftId: string;

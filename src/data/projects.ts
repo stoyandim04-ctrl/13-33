@@ -50,10 +50,13 @@ export interface ProjectVideo {
 export interface Project {
   /** Display name. */
   name: string;
+  /** English display name, when it differs. */
+  nameEn?: string;
   /** URL segment: /proekti/<slug>. */
   slug: string;
   /** What kind of solution it is. */
   category: string;
+  categoryEn?: string;
   /** Sector / type of business it is for. */
   sector: string;
   /** One or two sentences. */
@@ -90,6 +93,7 @@ export const projects: Project[] = [
     name: "Obsidian",
     slug: "obsidian",
     category: "Кинематографична продуктова страница",
+    categoryEn: "Cinematic product page",
     sector: "Парфюмен бранд",
     summary:
       "Сайт за измислен парфюм в тъмно стъкло: флаконът се разглежда при скрол — стъклото, месинговият пръстен, пулверизаторът — до избор на размер.",
@@ -112,6 +116,7 @@ export const projects: Project[] = [
     name: "Strong Muse",
     slug: "strong-muse",
     category: "Сайт за фитнес бранд",
+    categoryEn: "Fitness brand website",
     sector: "Фитнес и коучинг",
     summary:
       "Дизайн концепция за фитнес и коучинг бранд: енергично начало, четири посоки за тренировка, хранителни материали и въпроси преди първата стъпка.",
@@ -132,8 +137,10 @@ export const projects: Project[] = [
     // Real site of ours (branch `varovik`, varovik.vercel.app). Building, homes and areas are
     // invented; frames and photos generated for the concept.
     name: "Варовик",
+    nameEn: "Varovik",
     slug: "varovik",
     category: "Сайт с филм при скрол",
+    categoryEn: "Scroll-driven film website",
     sector: "Жилищна сграда",
     summary:
       "Концепция за жилищна сграда, в която скролът ви разхожда: от басейна пред сградата през входа и лобито до вътрешния двор.",
@@ -156,6 +163,7 @@ export const projects: Project[] = [
     name: "Black Clove",
     slug: "black-clove",
     category: "Продуктова страница",
+    categoryEn: "Product page",
     sector: "Храна — черен чесън",
     summary:
       "Сайт за черен чесън в крафт кутия: при скрол кутията се отваря, скилидките се изсипват и страницата разказва процеса, вкуса и как се готви с него.",
@@ -177,8 +185,10 @@ export const projects: Project[] = [
     // from it (scripts/build-tsukibi-media.mjs). Restaurant, menu and prices
     // are invented for the concept.
     name: "Цукиби 月火",
+    nameEn: "Tsukibi 月火",
     slug: "tsukibi",
     category: "Сайт с интерактивно меню",
+    categoryEn: "Interactive menu website",
     sector: "Азиатски ресторант",
     summary:
       "Анимиран сайт за измислен азиатски ресторант: кинематографично начало и меню, в което всяко ястие се разглежда отблизо — с натискане чинията се накланя и показва съставките си в 3D.",

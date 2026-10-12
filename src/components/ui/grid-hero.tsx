@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 
-import { hero } from "@/data/content";
+import { useContent } from "@/data/content";
 import { useReducedMotion } from "@/hooks/use-media";
 import { RainbowLink } from "@/components/ui/rainbow-button";
 
@@ -15,6 +15,7 @@ export function GridHero({ id }: { id?: string }) {
   const floor = React.useRef<HTMLDivElement>(null);
   const beam = React.useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const { hero } = useContent();
 
   React.useEffect(() => {
     if (reduced) return;
@@ -43,7 +44,7 @@ export function GridHero({ id }: { id?: string }) {
     <section
       ref={section}
       id={id}
-      aria-label="Начало"
+      aria-label={hero.pill}
       className="relative isolate flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 pt-28 pb-32 text-center sm:px-8 md:pb-40"
     >
       <div aria-hidden="true" className="hero-glow absolute inset-0 -z-20" />

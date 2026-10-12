@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { BookingPicker, BriefCard, Bubble, Composer, OfferCard, StatusSteps, usePoll } from "@/components/inquiry/parts";
 import { ApiError, errorText, fmtDateTime, getRoom, roomAction, uploadFile } from "@/lib/inquiry-api";
 import type { Room } from "@/lib/inquiry-shared";
+import { useLang } from "@/lib/i18n";
 
 export default function RoomPage() {
   const { token = "" } = useParams();
+  const { tr } = useLang();
   const [room, setRoom] = React.useState<Room | null>(null);
   const [missing, setMissing] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -31,9 +33,9 @@ export default function RoomPage() {
   }, [token]);
 
   React.useEffect(() => {
-    document.title = "Твоят проект — 13:33";
+    document.title = tr("Твоят проект — 13:33");
     void load();
-  }, [load]);
+  }, [load, tr]);
   usePoll(load, 6000);
 
   React.useEffect(() => {
@@ -43,16 +45,16 @@ export default function RoomPage() {
   if (missing) {
     return (
       <div className="mx-auto max-w-xl px-5 pt-36 pb-24 text-center">
-        <h1 className="font-display text-3xl font-[500]">Не намерихме този чат</h1>
-        <p className="text-muted-foreground mt-4">Провери дали линкът е пълен. Можеш и да започнеш ново запитване.</p>
-        <Link to="/zapochni" className="text-ice mt-6 inline-block underline">Започни проект</Link>
+        <h1 className="font-display text-3xl font-[500]">{tr("Не намерихме този чат")}</h1>
+        <p className="text-muted-foreground mt-4">{tr("Провери дали линкът е пълен. Можеш и да започнеш ново запитване.")}</p>
+        <Link to="/zapochni" className="text-ice mt-6 inline-block underline">{tr("Започни проект")}</Link>
       </div>
     );
   }
   if (!room) {
     return (
       <div className="text-muted-foreground flex h-svh items-center justify-center gap-2">
-        <Loader2 aria-hidden="true" className="size-4 animate-spin" /> {error || "Зареждане…"}
+        <Loader2 aria-hidden="true" className="size-4 animate-spin" /> {error || tr("Зареждане…")}
       </div>
     );
   }
@@ -64,17 +66,17 @@ export default function RoomPage() {
     <div className="px-5 pt-24 pb-10 sm:px-8 md:pt-32">
       <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[1fr_20rem]">
         {/* Chat */}
-        <section aria-label="Чат" className="min-w-0">
-          <p className="eyebrow mb-3">Проект №{room.number} · {room.projectType}</p>
+        <section aria-label={tr("Чат")} className="min-w-0">
+          <p className="eyebrow mb-3">{tr("Проект №{n}", { n: room.number })} · {tr(room.projectType)}</p>
           <h1 className="font-display text-[clamp(1.75rem,1.3rem+1.8vw,2.5rem)] leading-tight font-[500] tracking-[-0.035em]">
-            Здравей, {room.name}
+            {tr("Здравей, {name}", { name: room.name })}
           </h1>
           <p className="text-muted-foreground mt-2 flex items-center gap-2 text-[0.9375rem]">
             <span className="relative flex size-2.5">
               <span className="bg-ice/60 absolute inline-flex size-full animate-ping rounded-full" />
               <span className="bg-ice relative inline-flex size-2.5 rounded-full" />
             </span>
-            {room.studioName} ти отговаря лично — човек, не бот.
+            {tr("{who} ти отговаря лично — човек, не бот.", { who: room.studioName })}
           </p>
 
           <div className="mt-8">
@@ -126,7 +128,7 @@ export default function RoomPage() {
         <aside className="space-y-6 lg:pt-14">
           <section className="border-border bg-surface rounded-3xl border p-5">
             <p className="flex items-center gap-2 font-medium">
-              <Video aria-hidden="true" className="size-4" /> Онлайн среща
+              <Video aria-hidden="true" className="size-4" /> {tr("Онлайн среща")}
             </p>
             {upcoming.length ? (
               <ul className="mt-3 space-y-3">
@@ -135,15 +137,15 @@ export default function RoomPage() {
                     <p className="font-medium">{fmtDateTime(b.starts_at, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</p>
                     {b.meet_url ? (
                       <a href={b.meet_url} target="_blank" rel="noreferrer" className="text-ice mt-1 inline-block underline">
-                        Влез в срещата
+                        {tr("Влез в срещата")}
                       </a>
                     ) : (
-                      <p className="text-muted-foreground mt-1">Линкът ще дойде в чата.</p>
+                      <p className="text-muted-foreground mt-1">{tr("Линкът ще дойде в чата.")}</p>
                     )}
                     <button
                       type="button"
                       onClick={async () => {
-                        if (!window.confirm("Да откажа ли тази среща?")) return;
+                        if (!window.confirm(tr("Да откажа ли тази среща?"))) return;
                         try {
                           await roomAction(token, "cancel", { id: b.id });
                           await load();
@@ -153,13 +155,13 @@ export default function RoomPage() {
                       }}
                       className="text-muted-foreground hover:text-foreground mt-2 inline-flex items-center gap-1 text-xs"
                     >
-                      <X aria-hidden="true" className="size-3" /> Откажи
+                      <X aria-hidden="true" className="size-3" /> {tr("Откажи")}
                     </button>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-muted-foreground mt-2 text-sm">30 минути разговор, за да обсъдим идеята ти на живо.</p>
+              <p className="text-muted-foreground mt-2 text-sm">{tr("30 минути разговор, за да обсъдим идеята ти на живо.")}</p>
             )}
             {booking ? (
               <div className="mt-4">
@@ -173,14 +175,14 @@ export default function RoomPage() {
               </div>
             ) : upcoming.length < 2 ? (
               <Button variant="outline" size="sm" className="mt-4" onClick={() => setBooking(true)}>
-                <CalendarDays aria-hidden="true" /> Запази среща
+                <CalendarDays aria-hidden="true" /> {tr("Запази среща")}
               </Button>
             ) : null}
           </section>
 
           <section className="border-border rounded-3xl border p-5 text-sm">
-            <p className="font-medium">Запази този линк</p>
-            <p className="text-muted-foreground mt-1">Тук ще ти пишем. Отвори го по всяко време — от телефон или компютър.</p>
+            <p className="font-medium">{tr("Запази този линк")}</p>
+            <p className="text-muted-foreground mt-1">{tr("Тук ще ти пишем. Отвори го по всяко време — от телефон или компютър.")}</p>
             <Button
               variant="ghost"
               size="sm"
@@ -191,18 +193,18 @@ export default function RoomPage() {
                   setCopied(true);
                   window.setTimeout(() => setCopied(false), 2000);
                 } catch {
-                  window.prompt("Копирай линка:", link);
+                  window.prompt(tr("Копирай линка:"), link);
                 }
               }}
             >
               {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-              {copied ? "Копирано" : "Копирай линка"}
+              {copied ? tr("Копирано") : tr("Копирай линка")}
             </Button>
           </section>
 
           <section>
             <button type="button" onClick={() => setShowBrief((v) => !v)} className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-4">
-              {showBrief ? "Скрий брифа" : "Виж брифа си"}
+              {showBrief ? tr("Скрий брифа") : tr("Виж брифа си")}
             </button>
             {showBrief ? <BriefCard brief={room.brief} className="mt-3" /> : null}
           </section>
