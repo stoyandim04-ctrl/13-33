@@ -11,8 +11,15 @@ export const env = {
   studioPassword: (process.env.STUDIO_PASSWORD ?? "").trim(),
   /** Shown to clients as who they are writing with. */
   studioName: process.env.STUDIO_NAME || "Основателят на 13:33",
-  telegramToken: process.env.TELEGRAM_BOT_TOKEN ?? "",
-  telegramChat: process.env.TELEGRAM_CHAT_ID ?? "",
+  telegramToken: (process.env.TELEGRAM_BOT_TOKEN ?? "").trim(),
+  telegramChat: (process.env.TELEGRAM_CHAT_ID ?? "").trim(),
+  /** Stripe: the deposit is paid online. Secret key + the webhook's signing secret. */
+  stripeKey: (process.env.STRIPE_SECRET_KEY ?? "").trim(),
+  stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET ?? "").trim(),
+  /** Resend: e-mails to the client. From must be on a verified domain. */
+  resendKey: (process.env.RESEND_API_KEY ?? "").trim(),
+  mailFrom: (process.env.MAIL_FROM ?? "").trim(),
+  mailReplyTo: (process.env.MAIL_REPLY_TO ?? "").trim(),
   siteUrl: (process.env.SITE_URL || "https://13-33-1gsb.vercel.app").replace(/\/$/, ""),
 };
 

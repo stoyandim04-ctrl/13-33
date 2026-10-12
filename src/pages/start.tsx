@@ -5,8 +5,9 @@
 //   • the assistant - a full chat, like a messaging app: write freely, send
 //     pictures and files, tap a ready answer; the assistant asks only what it
 //     still needs and keeps a brief.
-// Both end with name and e-mail inside the chat and the client's private room,
-// where the founder answers with the price, the deadline and the deposit.
+// The consultant asks for name and e-mail itself and sends the inquiry when it
+// has enough; the questionnaire ends with a short contact card. Both land on
+// the client's page: the brief, the deposit (paid online) and what follows.
 import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -31,8 +32,8 @@ import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { Button } from "@/components/ui/button";
-import { BriefCard, Choice, DepositNote } from "@/components/inquiry/parts";
-import { ACCEPT, briefAi, createInquiry, errorText, getReady, MAX_FILE, newDraftId, store, streamAi, uploadFile } from "@/lib/inquiry-api";
+import { BriefCard, Choice } from "@/components/inquiry/parts";
+import { ACCEPT, createInquiry, errorText, getReady, MAX_FILE, newDraftId, store, streamAi, uploadFile, type Ready } from "@/lib/inquiry-api";
 import {
   BUDGET,
   emptyBrief,
@@ -130,13 +131,13 @@ export default function StartPage() {
       ? { ...fresh(), ...saved, mode: "choose", files: (saved.files ?? []).map((f) => ({ ...f, url: undefined })) }
       : fresh();
   });
-  const [ready, setReady] = React.useState<{ ready: boolean; ai: boolean } | null>(null);
+  const [ready, setReady] = React.useState<Ready | null>(null);
 
   React.useEffect(() => {
     document.title = tr("Започни проект — 13:33");
     getReady()
       .then(setReady)
-      .catch(() => setReady({ ready: false, ai: false }));
+      .catch(() => setReady({ ready: false, ai: false, pay: false }));
   }, [lang, tr]);
 
   React.useEffect(() => {
@@ -210,7 +211,7 @@ function Choose({
           <p className="eyebrow mb-5">{tr("Започни проект")}</p>
           <h1 className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">{tr("Как искаш да ни разкажеш?")}</h1>
           <p className="text-lead text-muted-foreground mt-6 max-w-[42ch] text-pretty">
-            {tr("И по двата пътя накрая получаваш личен чат с основателя: цена, срок и капаро. Без регистрация.")}
+            {tr("И по двата пътя накрая виждаш брифа си и капарото на лична страница. Без регистрация.")}
           </p>
         </header>
 
@@ -579,7 +580,7 @@ function Describe({
 }: {
   draft: Draft;
   update: (p: Partial<Draft>) => void;
-  ready: { ready: boolean; ai: boolean } | null;
+  ready: Ready | null;
   onSent: (token: string) => void;
 }) {
   const { tr } = useLang();
@@ -679,13 +680,13 @@ function Chat({
 }: {
   draft: Draft;
   update: (p: Partial<Draft>) => void;
-  ready: { ready: boolean; ai: boolean } | null;
+  ready: Ready | null;
   onRestart: () => void;
   onSent: (token: string) => void;
 }) {
   const { tr, lang } = useLang();
   const [streaming, setStreaming] = React.useState<string | null>(null);
-  const [briefing, setBriefing] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState("");
   const [dragging, setDragging] = React.useState(false);
   const end = React.useRef<HTMLDivElement>(null);
@@ -707,11 +708,16 @@ function Chat({
       setError("");
       let text = "";
       try {
-        text = await streamAi(draft.draftId, answers, conversation, lang, (piece) => {
-          text += piece;
-          setStreaming(text);
+        const r = await streamAi(draft.draftId, answers, conversation, lang, (sofar) => {
+          text = sofar;
+          setStreaming(sofar);
         }, controller.signal);
-        update({ conversation: [...conversation, { role: "ai", text }] });
+        update({ conversation: r.text ? [...conversation, { role: "ai", text: r.text }] : conversation });
+        // The consultant sent the inquiry itself: on to the client's page.
+        if (r.token) {
+          setSent(true);
+          onSent(r.token);
+        }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
         // Keep whatever arrived; the client can retry.
@@ -722,7 +728,7 @@ function Chat({
         if (abort.current === controller) setStreaming(null);
       }
     },
-    [draft.draftId, update, lang],
+    [draft.draftId, update, lang, onSent],
   );
 
   React.useEffect(() => () => abort.current?.abort(), []);
@@ -762,39 +768,13 @@ function Chat({
     await reply(conversation, draft.answers);
   };
 
-  /** Done talking: the consultant writes the brief, then name and e-mail. */
-  const finish = async () => {
-    if (busy || briefing) return;
-    if (!ai) {
-      update({ contact: true, brief: { ...draft.brief, summary: draft.brief.summary || lastClientText(draft) } });
-      return;
-    }
-    setBriefing(true);
-    setError("");
-    try {
-      const r = await briefAi(draft.draftId, draft.answers, draft.conversation, lang);
-      update({
-        conversation: r.reply ? [...draft.conversation, { role: "ai", text: r.reply }] : draft.conversation,
-        brief: r.brief,
-        done: true,
-        contact: true,
-      });
-    } catch (e) {
-      // The brief can be written by the founder too; let the client continue.
-      update({ contact: true, brief: { ...draft.brief, summary: draft.brief.summary || lastClientText(draft) } });
-      setError(errorText(e));
-    } finally {
-      setBriefing(false);
-    }
-  };
-
   React.useEffect(() => {
     end.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [draft.conversation.length, streaming, draft.done, draft.contact, briefing]);
+  }, [draft.conversation.length, streaming, draft.done]);
 
-  const aiTurns = draft.conversation.filter((t) => t.role === "ai").length;
   const lastIsClient = draft.conversation[draft.conversation.length - 1]?.role === "client";
-  const showContact = draft.done || draft.contact;
+  // Without the consultant the scripted questions end with the contact card.
+  const showContact = !ai && draft.done;
   const empty = !draft.conversation.length && !busy;
   const upload = ready?.ready ? (file: File) => uploadFile(file, { draftId: draft.draftId }) : undefined;
 
@@ -872,11 +852,11 @@ function Chat({
 
         {streaming !== null ? <Line role="ai" text={streaming} live /> : null}
 
-        {briefing ? (
+        {sent ? (
           <div className="my-5 flex items-start gap-4">
             <Avatar />
-            <p className="text-muted-foreground flex items-center gap-2 py-2 text-[0.9375rem]">
-              <Loader2 aria-hidden="true" className="size-4 animate-spin" /> {tr("Подреждам брифа…")}
+            <p className="text-ice flex items-center gap-2 py-2 text-[0.9375rem]">
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" /> {tr("Запитването е изпратено. Отваряме страницата ти…")}
             </p>
           </div>
         ) : null}
@@ -907,7 +887,7 @@ function Chat({
           </div>
         ) : null}
 
-        {draft.done ? <BriefCard brief={draft.brief} className="mt-8" /> : null}
+        {showContact ? <BriefCard brief={draft.brief} className="mt-8" /> : null}
 
         {showContact ? <ContactCard draft={draft} update={update} disabled={ready !== null && !ready.ready} onSent={onSent} /> : null}
 
@@ -919,30 +899,18 @@ function Chat({
         <div className="mx-auto max-w-3xl px-5 pt-3 sm:px-8">
           <BigComposer
             placeholder={showContact ? tr("Искаш да добавиш нещо?") : tr("Напиши съобщение…")}
-            disabled={busy || briefing}
+            disabled={busy || sent}
             upload={upload}
             onSend={(text, files) => send(text, files)}
           />
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1">
-            <p className="text-muted-foreground text-xs">{tr("Цената и срокът ти ги пише основателят, лично.")}</p>
-            {!showContact && (aiTurns >= 1 || !ai) && draft.conversation.some((t) => t.role === "client") ? (
-              <button
-                type="button"
-                onClick={() => void finish()}
-                disabled={busy || briefing}
-                className="text-ice hover:text-foreground inline-flex items-center gap-1 text-xs font-medium transition-colors disabled:opacity-40"
-              >
-                {tr("Готово, изпрати запитването")} <ArrowRight aria-hidden="true" className="size-3" />
-              </button>
-            ) : null}
-          </div>
+          <p className="text-muted-foreground mt-2 px-1 text-xs">
+            {ai ? tr("Щом консултантът има всичко, изпраща запитването сам. Цената ти я пише основателят, лично.") : tr("Цената ти я пише основателят, лично.")}
+          </p>
         </div>
       </div>
     </div>
   );
 }
-
-const lastClientText = (d: Draft) => [...d.conversation].reverse().find((t) => t.role === "client")?.text ?? "";
 
 function Avatar() {
   return (
@@ -1210,7 +1178,7 @@ function ContactCard({
       <p className="eyebrow mb-3">{tr("Последно")}</p>
       <h2 className="font-display text-title font-[500] tracking-[-0.025em]">{tr("Как да ти пишем?")}</h2>
       <p className="text-muted-foreground mt-2 text-[0.9375rem] text-pretty">
-        {tr("Ще получиш личен чат на сайта. Там основателят ти пише цената, срока и капарото.")}
+        {tr("Ще видиш брифа си и капарото на лична страница. После основателят ти пише на имейл.")}
       </p>
 
       <form onSubmit={send} noValidate className="mt-6 space-y-5">
@@ -1240,14 +1208,13 @@ function ContactCard({
         </label>
 
         <ul className="text-muted-foreground space-y-2 text-[0.9375rem]">
-          {[requireText ? "Основателят чете описанието ти." : "Основателят преглежда разговора.", "Пише ти в личния чат: крайна цена, срок и капаро.", "Приемаш офертата, плащаш капарото и започваме."].map((t) => tr(t)).map((t) => (
+          {[requireText ? "Основателят чете описанието ти." : "Основателят преглежда разговора.", "Плащаш капарото онлайн — приспада се от крайната цена.", "Получаваш имейл с точна цена и план, и започваме."].map((t) => tr(t)).map((t) => (
             <li key={t} className="flex gap-2.5">
               <Check aria-hidden="true" className="text-ice mt-1 size-4 shrink-0" />
               <span>{t}</span>
             </li>
           ))}
         </ul>
-        <DepositNote />
 
         <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem]">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="accent-primary mt-1 size-4 shrink-0" />
@@ -1268,7 +1235,7 @@ function ContactCard({
 
         <div className="flex flex-wrap items-center gap-4 pt-1">
           <RainbowButton type="submit" disabled={!ok || pending || disabled}>
-            {pending ? tr("Изпращане…") : tr("Изпрати и отвори чата")}
+            {pending ? tr("Изпращане…") : tr("Изпрати запитването")}
             {pending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="size-4" />}
           </RainbowButton>
           <Link to="/" className="text-muted-foreground hover:text-foreground text-sm transition-colors">

@@ -1,14 +1,6 @@
 // Shapes shared by the site and the server routes in /api. No DOM, no path
 // aliases - the server imports this file directly.
 
-/** Rule the AI states and the studio's offer follows. The studio confirms the
-    exact amount in the offer. */
-export const DEPOSIT = {
-  standard: 50,
-  large: 100,
-  text: "Капарото е 50 € (при по-голям проект — 100 €) и се приспада от крайната цена. Точната сума потвърждава основателят в офертата.",
-} as const;
-
 export const PROJECT_TYPES = [
   { id: "site", label: "Сайт за бизнеса", hint: "Представяне, услуги, контакт" },
   { id: "shop", label: "Онлайн магазин", hint: "Продукти, количка, плащане" },
@@ -18,6 +10,25 @@ export const PROJECT_TYPES = [
   { id: "unsure", label: "Още не знам", hint: "Ще го измислим заедно" },
 ] as const;
 export type ProjectTypeId = (typeof PROJECT_TYPES)[number]["id"];
+
+/** The concrete kinds a deposit is set for (the consultant picks one of these). */
+export const CONCRETE_TYPES = ["site", "shop", "landing", "brand", "system"] as const satisfies readonly ProjectTypeId[];
+export type ConcreteTypeId = (typeof CONCRETE_TYPES)[number];
+
+/**
+ * The deposit, in euro, by kind of project. Set by the founder; 0 means "not
+ * set yet" - the client then sees the brief without a payment step and the
+ * founder writes to them. Deducted from the final price.
+ */
+export const DEPOSITS: Record<ConcreteTypeId, number> = {
+  site: 0,
+  shop: 0,
+  landing: 0,
+  brand: 0,
+  system: 0,
+};
+
+export const depositFor = (type: string): number => DEPOSITS[type as ConcreteTypeId] ?? 0;
 
 export const HAS_SITE = ["Нямам", "Имам, искам нов", "Имам, искам промени"] as const;
 export const WHEN = ["Няма бързане", "До месец", "Възможно най-скоро"] as const;
@@ -74,46 +85,14 @@ export interface AiTurn {
   files?: string[];
 }
 
-export interface AiReply {
-  reply: string;
-  /** Two to four short answers the client can tap. */
-  quickReplies: string[];
-  /** The question is best answered with pictures (logo, examples, screenshots). */
-  askFiles: boolean;
-  /** Enough is known - show the summary and move on to contact. */
-  done: boolean;
-  brief: Brief;
-}
-
-export type InquiryStatus =
-  | "new"
-  | "offer"
-  | "accepted"
-  | "deposit_paid"
-  | "in_progress"
-  | "done"
-  | "archived";
+export type InquiryStatus = "new" | "deposit_paid" | "in_progress" | "done" | "archived";
 
 export const STATUS_STEPS: { status: InquiryStatus[]; label: string }[] = [
   { status: ["new"], label: "Получено" },
-  { status: ["offer"], label: "Оферта" },
-  { status: ["accepted"], label: "Капаро" },
-  { status: ["deposit_paid", "in_progress"], label: "В работа" },
+  { status: ["deposit_paid"], label: "Капаро" },
+  { status: ["in_progress"], label: "В работа" },
   { status: ["done"], label: "Готово" },
 ];
-
-export interface Offer {
-  /** Final price in euro. */
-  price: number;
-  /** Deposit in euro - 50 or 100 by the rule, the studio decides. */
-  deposit: number;
-  /** Delivery, as the studio writes it ("3 седмици", "до 15 ноември"). */
-  deadline: string;
-  /** What is included. */
-  note: string;
-  /** How to pay the deposit (bank details or a payment link). */
-  payment: string;
-}
 
 export interface ChatFile {
   path: string;
@@ -121,44 +100,22 @@ export interface ChatFile {
   url?: string;
 }
 
-export interface ChatMessage {
-  id: number;
-  sender: "client" | "studio" | "system";
-  body: string;
-  files: ChatFile[];
-  created_at: string;
-}
-
-export interface Booking {
-  id: number;
-  starts_at: string;
-  minutes: number;
-  status: "booked" | "cancelled";
-  meet_url: string | null;
-}
-
-/** The client's room, as the server returns it. */
+/** The client's page, as the server returns it. */
 export interface Room {
   number: number;
   name: string;
+  email: string;
   projectType: string;
   status: InquiryStatus;
-  offer: Offer | null;
   brief: Brief;
   answers: Answers;
-  messages: ChatMessage[];
-  bookings: Booking[];
+  files: ChatFile[];
+  /** Euro; 0 when no deposit is set for this kind of project. */
+  deposit: number;
+  paidAt: string | null;
+  /** Online payment is configured on the server. */
+  canPay: boolean;
   studioName: string;
-}
-
-export interface Availability {
-  timeZone: string;
-  weekdays: number[];
-  start: string;
-  end: string;
-  minutes: number;
-  daysAhead: number;
-  noticeHours: number;
 }
 
 export const projectTypeLabel = (id: string) =>

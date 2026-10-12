@@ -4,14 +4,12 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 
 import { site, useContent } from "@/data/content";
 import { store } from "@/lib/inquiry-api";
-import { DEPOSIT } from "@/lib/inquiry-shared";
 import { RainbowLink } from "@/components/ui/rainbow-button";
 
 export function Contact() {
   const { contact } = useContent();
-  const deposit = `${DEPOSIT.standard} € / ${DEPOSIT.large} €`;
-  const STEPS = contact.steps.map((s) => ({ ...s, body: s.body.replace("{deposit}", deposit) }));
-  // Someone who already sent an inquiry gets back to their chat in one tap.
+  const STEPS = contact.steps;
+  // Someone who already sent an inquiry gets back to their page in one tap.
   const [room, setRoom] = React.useState<string | null>(null);
   React.useEffect(() => {
     setRoom(store<string[]>("1333-rooms")?.[0] ?? null);

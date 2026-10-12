@@ -1,51 +1,54 @@
-// /zapitvane/:token - the client's private room. A real person (the founder)
-// answers here; the price, the deadline and the deposit arrive as an offer.
+// /zapitvane/:token - the client's page after the inquiry: the brief as we
+// understood it, the deposit (paid online, right here) and what follows. No
+// chat: after the deposit the founder writes by e-mail.
 import * as React from "react";
-import { Link, useParams } from "react-router-dom";
-import { CalendarDays, Check, Copy, Loader2, Video, X } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { ArrowRight, Check, Copy, Loader2, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { BookingPicker, BriefCard, Bubble, Composer, OfferCard, StatusSteps, usePoll } from "@/components/inquiry/parts";
-import { ApiError, errorText, fmtDateTime, getRoom, roomAction, uploadFile } from "@/lib/inquiry-api";
-import type { Room } from "@/lib/inquiry-shared";
+import { RainbowButton } from "@/components/ui/rainbow-button";
+import { BriefCard, euro, StatusSteps, Thumbs, usePoll } from "@/components/inquiry/parts";
+import { ApiError, errorText, fmtDateTime, getRoom, startPayment } from "@/lib/inquiry-api";
+import { projectTypeLabel, type Room } from "@/lib/inquiry-shared";
 import { useLang } from "@/lib/i18n";
 
 export default function RoomPage() {
   const { token = "" } = useParams();
+  const [params, setParams] = useSearchParams();
   const { tr } = useLang();
   const [room, setRoom] = React.useState<Room | null>(null);
   const [missing, setMissing] = React.useState(false);
   const [error, setError] = React.useState("");
-  const [booking, setBooking] = React.useState(false);
+  const [paying, setPaying] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
-  const [showBrief, setShowBrief] = React.useState(false);
-  const end = React.useRef<HTMLDivElement>(null);
-  const count = room?.messages.length ?? 0;
+  // Back from Stripe: the page keeps asking until the payment is settled.
+  const backFromPay = params.get("paid") === "1";
+  const waiting = backFromPay && Boolean(room) && !room?.paidAt;
 
   const load = React.useCallback(async () => {
     try {
-      setRoom(await getRoom(token));
+      setRoom(await getRoom(token, backFromPay));
       setError("");
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) setMissing(true);
       else setError(errorText(e));
     }
-  }, [token]);
+  }, [token, backFromPay]);
 
   React.useEffect(() => {
     document.title = tr("Твоят проект — 13:33");
     void load();
   }, [load, tr]);
-  usePoll(load, 6000);
+  usePoll(load, waiting ? 3000 : 20000);
 
   React.useEffect(() => {
-    if (count) end.current?.scrollIntoView({ block: "nearest" });
-  }, [count]);
+    if (backFromPay && room?.paidAt) setParams({}, { replace: true });
+  }, [backFromPay, room?.paidAt, setParams]);
 
   if (missing) {
     return (
       <div className="mx-auto max-w-xl px-5 pt-36 pb-24 text-center">
-        <h1 className="font-display text-3xl font-[500]">{tr("Не намерихме този чат")}</h1>
+        <h1 className="font-display text-3xl font-[500]">{tr("Не намерихме това запитване")}</h1>
         <p className="text-muted-foreground mt-4">{tr("Провери дали линкът е пълен. Можеш и да започнеш ново запитване.")}</p>
         <Link to="/zapochni" className="text-ice mt-6 inline-block underline">{tr("Започни проект")}</Link>
       </div>
@@ -59,130 +62,117 @@ export default function RoomPage() {
     );
   }
 
-  const upcoming = room.bookings.filter((b) => b.status === "booked" && new Date(b.starts_at).getTime() > Date.now() - 3600_000);
-  const link = typeof window !== "undefined" ? window.location.href : "";
+  const link = typeof window !== "undefined" ? `${window.location.origin}/zapitvane/${token}` : "";
+  const paid = Boolean(room.paidAt);
+  const needsDeposit = room.deposit > 0 && !paid;
+
+  const pay = async () => {
+    setPaying(true);
+    setError("");
+    try {
+      const { url } = await startPayment(token);
+      window.location.assign(url);
+    } catch (e) {
+      setError(errorText(e));
+      setPaying(false);
+    }
+  };
 
   return (
-    <div className="px-5 pt-24 pb-10 sm:px-8 md:pt-32">
+    <div className="px-5 pt-24 pb-16 sm:px-8 md:pt-32">
       <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[1fr_20rem]">
-        {/* Chat */}
-        <section aria-label={tr("Чат")} className="min-w-0">
-          <p className="eyebrow mb-3">{tr("Проект №{n}", { n: room.number })} · {tr(room.projectType)}</p>
+        <section className="min-w-0">
+          <p className="eyebrow mb-3">{tr("Проект №{n}", { n: room.number })} · {tr(projectTypeLabel(room.projectType))}</p>
           <h1 className="font-display text-[clamp(1.75rem,1.3rem+1.8vw,2.5rem)] leading-tight font-[500] tracking-[-0.035em]">
-            {tr("Здравей, {name}", { name: room.name })}
+            {paid ? tr("Благодарим, {name}. Започваме.", { name: room.name }) : tr("Брифът ти е при нас, {name}.", { name: room.name })}
           </h1>
-          <p className="text-muted-foreground mt-2 flex items-center gap-2 text-[0.9375rem]">
-            <span className="relative flex size-2.5">
-              <span className="bg-ice/60 absolute inline-flex size-full animate-ping rounded-full" />
-              <span className="bg-ice relative inline-flex size-2.5 rounded-full" />
-            </span>
-            {tr("{who} ти отговаря лично — човек, не бот.", { who: room.studioName })}
+          <p className="text-muted-foreground mt-3 max-w-[40ch] text-[1.0625rem] text-pretty">
+            {paid
+              ? tr("{who} преглежда брифа и ще ти пише на {email} с точна цена, план и първите стъпки.", { who: room.studioName, email: room.email })
+              : needsDeposit
+                ? tr("Запитването вече е при основателя. Остава капарото — плаща се тук, онлайн, и се приспада от крайната цена.")
+                : tr("{who} преглежда брифа и ще ти пише на {email}.", { who: room.studioName, email: room.email })}
           </p>
 
           <div className="mt-8">
             <StatusSteps status={room.status} />
           </div>
 
-          {room.offer ? (
-            <div className="mt-8">
-              <OfferCard
-                offer={room.offer}
-                status={room.status}
-                onAccept={async () => {
-                  try {
-                    await roomAction(token, "accept");
-                    await load();
-                  } catch (e) {
-                    setError(errorText(e));
-                  }
-                }}
-              />
-            </div>
+          {needsDeposit ? (
+            <section aria-label={tr("Капаро")} className="border-primary/50 bg-primary/[0.06] mt-8 rounded-3xl border p-6 md:p-8">
+              <p className="eyebrow mb-4">{tr("Капаро")}</p>
+              <p className="font-display text-[2.5rem] leading-none font-[600] tracking-[-0.03em]">{euro(room.deposit)}</p>
+              <p className="text-muted-foreground mt-3 max-w-[40ch] text-[0.9375rem] text-pretty">
+                {tr("За {type}. Приспада се от крайната цена. Карта, Apple Pay или Google Pay; сигурно плащане през Stripe.", { type: tr(projectTypeLabel(room.projectType)).toLowerCase() })}
+              </p>
+              {waiting ? (
+                <p className="text-ice mt-6 flex items-center gap-2 text-[0.9375rem]">
+                  <Loader2 aria-hidden="true" className="size-4 animate-spin" /> {tr("Проверяваме плащането…")}
+                </p>
+              ) : room.canPay ? (
+                <div className="mt-6">
+                  <RainbowButton onClick={() => void pay()} disabled={paying}>
+                    {paying ? tr("Отваряме плащането…") : tr("Плати капарото")}
+                    {paying ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="size-4" />}
+                  </RainbowButton>
+                </div>
+              ) : (
+                <p className="text-muted-foreground mt-6 text-sm">{tr("Плащането онлайн още не е включено. {who} ще ти пише на {email}.", { who: room.studioName, email: room.email })}</p>
+              )}
+              {error ? <p className="text-destructive mt-3 text-sm">{error}</p> : null}
+            </section>
           ) : null}
 
-          <div className="border-border mt-8 min-h-[16rem] border-t pt-4" aria-live="polite">
-            {room.messages.map((m) => (
-              <Bubble key={m.id} message={m} mine={m.sender === "client"} who={m.sender === "studio" ? room.studioName : undefined} />
-            ))}
-            <div ref={end} />
-          </div>
+          {paid ? (
+            <section aria-label={tr("Капаро")} className="border-border bg-surface mt-8 flex items-start gap-4 rounded-3xl border p-6">
+              <span className="bg-primary/20 text-ice grid size-10 shrink-0 place-items-center rounded-full">
+                <Check aria-hidden="true" className="size-5" />
+              </span>
+              <div>
+                <p className="font-medium">{tr("Капарото е получено: {n}", { n: euro(room.deposit) })}</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {room.paidAt ? fmtDateTime(room.paidAt, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : null}
+                  {" · "}
+                  {tr("Приспада се от крайната цена.")}
+                </p>
+              </div>
+            </section>
+          ) : null}
 
-          <div className="bg-background/90 sticky bottom-0 -mx-1 px-1 pt-3 pb-4 backdrop-blur">
-            {error ? <p className="text-destructive mb-2 text-sm">{error}</p> : null}
-            <Composer
-              upload={(file) => uploadFile(file, { token })}
-              onSend={async (text, files) => {
-                try {
-                  await roomAction(token, "message", { body: text, files: files.map((f) => f.path) });
-                  await load();
-                } catch (e) {
-                  setError(errorText(e));
-                  throw e;
-                }
-              }}
-            />
-          </div>
+          <BriefCard brief={room.brief} className="mt-8" />
+          {room.files.length ? (
+            <div className="mt-6">
+              <p className="text-muted-foreground text-xs tracking-[0.12em] uppercase">{tr("Снимки и файлове")}</p>
+              <Thumbs files={room.files} />
+            </div>
+          ) : null}
         </section>
 
-        {/* Side: meeting, link, brief */}
         <aside className="space-y-6 lg:pt-14">
           <section className="border-border bg-surface rounded-3xl border p-5">
             <p className="flex items-center gap-2 font-medium">
-              <Video aria-hidden="true" className="size-4" /> {tr("Онлайн среща")}
+              <Mail aria-hidden="true" className="size-4" /> {tr("Какво следва")}
             </p>
-            {upcoming.length ? (
-              <ul className="mt-3 space-y-3">
-                {upcoming.map((b) => (
-                  <li key={b.id} className="bg-surface-2 rounded-2xl p-3 text-sm">
-                    <p className="font-medium">{fmtDateTime(b.starts_at, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</p>
-                    {b.meet_url ? (
-                      <a href={b.meet_url} target="_blank" rel="noreferrer" className="text-ice mt-1 inline-block underline">
-                        {tr("Влез в срещата")}
-                      </a>
-                    ) : (
-                      <p className="text-muted-foreground mt-1">{tr("Линкът ще дойде в чата.")}</p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!window.confirm(tr("Да откажа ли тази среща?"))) return;
-                        try {
-                          await roomAction(token, "cancel", { id: b.id });
-                          await load();
-                        } catch (e) {
-                          setError(errorText(e));
-                        }
-                      }}
-                      className="text-muted-foreground hover:text-foreground mt-2 inline-flex items-center gap-1 text-xs"
-                    >
-                      <X aria-hidden="true" className="size-3" /> {tr("Откажи")}
-                    </button>
+            <ol className="text-muted-foreground mt-3 space-y-2.5 text-sm">
+              {[
+                tr("Основателят чете брифа ти — лично."),
+                needsDeposit ? tr("Плащаш капарото тук.") : null,
+                tr("Получаваш имейл на {email} с точна цена и план.", { email: room.email }),
+                tr("Одобряваш и започваме."),
+              ]
+                .filter(Boolean)
+                .map((t, i) => (
+                  <li key={i} className="flex gap-2.5">
+                    <span className="text-ice shrink-0 tabular-nums">{i + 1}.</span>
+                    <span>{t}</span>
                   </li>
                 ))}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground mt-2 text-sm">{tr("30 минути разговор, за да обсъдим идеята ти на живо.")}</p>
-            )}
-            {booking ? (
-              <div className="mt-4">
-                <BookingPicker
-                  token={token}
-                  onBooked={() => {
-                    setBooking(false);
-                    void load();
-                  }}
-                />
-              </div>
-            ) : upcoming.length < 2 ? (
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => setBooking(true)}>
-                <CalendarDays aria-hidden="true" /> {tr("Запази среща")}
-              </Button>
-            ) : null}
+            </ol>
           </section>
 
           <section className="border-border rounded-3xl border p-5 text-sm">
             <p className="font-medium">{tr("Запази този линк")}</p>
-            <p className="text-muted-foreground mt-1">{tr("Тук ще ти пишем. Отвори го по всяко време — от телефон или компютър.")}</p>
+            <p className="text-muted-foreground mt-1">{tr("Брифът и капарото ти са тук. Отвори го по всяко време — от телефон или компютър.")}</p>
             <Button
               variant="ghost"
               size="sm"
@@ -200,13 +190,6 @@ export default function RoomPage() {
               {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
               {copied ? tr("Копирано") : tr("Копирай линка")}
             </Button>
-          </section>
-
-          <section>
-            <button type="button" onClick={() => setShowBrief((v) => !v)} className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-4">
-              {showBrief ? tr("Скрий брифа") : tr("Виж брифа си")}
-            </button>
-            {showBrief ? <BriefCard brief={room.brief} className="mt-3" /> : null}
           </section>
         </aside>
       </div>

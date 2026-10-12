@@ -1,5 +1,5 @@
-// Browser side of /api/inquiry, /api/ai and /api/studio. Same origin, no keys.
-import type { AiReply, AiTurn, Answers, Brief, Room } from "@/lib/inquiry-shared";
+// Browser side of /api/inquiry, /api/ai, /api/pay and /api/studio. Same origin, no keys.
+import type { AiTurn, Answers, Brief, Room } from "@/lib/inquiry-shared";
 
 export class ApiError extends Error {
   constructor(
@@ -36,8 +36,9 @@ export function errorText(error: unknown): string {
   if (code === "offline") return "Няма връзка. Провери интернета и опитай пак.";
   if (code === "not-configured" || code === "ai-not-configured" || status === 404 && code === "error")
     return "Тази част още не е включена. Опитай по-късно.";
+  if (code === "pay-not-configured") return "Плащането онлайн още не е включено. Ще ти пишем на имейл.";
+  if (code === "already-paid") return "Капарото вече е платено.";
   if (code === "busy" || status === 429) return "Твърде много заявки наведнъж. Изчакай малко и опитай пак.";
-  if (code === "slot-taken") return "Този час току-що беше зает. Избери друг.";
   if (code === "file-type") return "Този файл не се поддържа. Пробвай снимка (JPG, PNG) или PDF.";
   if (code === "email") return "Провери имейла.";
   if (code === "wrong-password") return "Грешна парола.";
@@ -46,23 +47,37 @@ export function errorText(error: unknown): string {
 
 // ---- client ----
 
-export const getReady = () => call<{ ready: boolean; ai: boolean }>("/api/inquiry?ready");
+export interface Ready {
+  ready: boolean;
+  ai: boolean;
+  pay: boolean;
+}
 
-/** The consultant's reply, streamed as plain text. `onDelta` gets each piece. */
+export const getReady = () => call<Ready>("/api/inquiry?ready");
+
+/** The server ends the stream with this line once the consultant has sent the inquiry. */
+const SENT = /\n\[\[inquiry:([a-f0-9]{48})\]\]\s*$/;
+const SENT_PREFIX = "\n[[inquiry:";
+
+/**
+ * The consultant's reply, streamed as plain text. `onText` gets the whole
+ * visible reply so far. Resolves with the final text and, when the consultant
+ * sent the inquiry itself, the token of the client's page.
+ */
 export async function streamAi(
   draftId: string,
   answers: Answers,
   conversation: AiTurn[],
   lang: "bg" | "en",
-  onDelta: (text: string) => void,
+  onText: (text: string) => void,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<{ text: string; token?: string }> {
   let res: Response;
   try {
     res = await fetch("/api/ai", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/plain" },
-      body: JSON.stringify({ draftId, mode: "chat", lang, answers, conversation }),
+      body: JSON.stringify({ draftId, lang, answers, conversation }),
       signal,
     });
   } catch (e) {
@@ -80,18 +95,22 @@ export async function streamAi(
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
-    const piece = decoder.decode(value, { stream: true });
-    if (!piece) continue;
-    full += piece;
-    onDelta(piece);
+    full += decoder.decode(value, { stream: true });
+    onText(visible(full));
   }
   if (full.endsWith("[грешка]")) throw new ApiError(502, "ai-error");
-  return full.trim();
+  const sent = SENT.exec(full);
+  const text = full.replace(SENT, "").trim();
+  onText(text);
+  return sent ? { text, token: sent[1] } : { text };
 }
 
-/** The structured brief, read from the whole conversation. */
-export const briefAi = (draftId: string, answers: Answers, conversation: AiTurn[], lang: "bg" | "en") =>
-  call<AiReply>("/api/ai", { method: "POST", json: { draftId, mode: "brief", lang, answers, conversation } });
+/** The reply without the (possibly half-arrived) sent line at its end. */
+function visible(full: string) {
+  const at = full.lastIndexOf("\n[[");
+  if (at >= 0 && SENT_PREFIX.startsWith(full.slice(at, at + SENT_PREFIX.length))) return full.slice(0, at);
+  return full.replace(SENT, "");
+}
 
 export const createInquiry = (payload: {
   draftId: string;
@@ -105,13 +124,11 @@ export const createInquiry = (payload: {
   consent: boolean;
 }) => call<{ token: string; number: number }>("/api/inquiry", { method: "POST", json: { action: "create", ...payload } });
 
-export const getRoom = (token: string) => call<Room>(`/api/inquiry?token=${encodeURIComponent(token)}`);
+export const getRoom = (token: string, paid = false) =>
+  call<Room>(`/api/inquiry?token=${encodeURIComponent(token)}${paid ? "&paid" : ""}`);
 
-export const getSlots = (token: string) =>
-  call<{ timeZone: string; minutes: number; slots: string[] }>(`/api/inquiry?token=${encodeURIComponent(token)}&slots`);
-
-export const roomAction = (token: string, action: string, extra: Record<string, unknown> = {}) =>
-  call<{ ok: true }>("/api/inquiry", { method: "POST", json: { action, token, ...extra } });
+/** Stripe Checkout for the deposit; the page goes to the returned address. */
+export const startPayment = (token: string) => call<{ url: string }>("/api/pay", { method: "POST", json: { token } });
 
 // ---- files ----
 
@@ -119,18 +136,12 @@ export const MAX_FILE = 10 * 1024 * 1024;
 export const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,application/pdf";
 
 /** Uploads one file straight to storage through a signed URL; returns its path. */
-export async function uploadFile(file: File, target: { draftId?: string; token?: string; studio?: { n: number; auth: string } }) {
+export async function uploadFile(file: File, target: { draftId: string }) {
   if (file.size > MAX_FILE) throw new ApiError(413, "too-large");
-  const signed = target.studio
-    ? await call<{ path: string; url: string }>(
-        "/api/studio",
-        { method: "POST", json: { action: "upload", n: target.studio.n, name: file.name, type: file.type } },
-        target.studio.auth,
-      )
-    : await call<{ path: string; url: string }>("/api/inquiry", {
-        method: "POST",
-        json: { action: "upload", draftId: target.draftId, token: target.token, name: file.name, type: file.type },
-      });
+  const signed = await call<{ path: string; url: string }>("/api/inquiry", {
+    method: "POST",
+    json: { action: "upload", draftId: target.draftId, name: file.name, type: file.type },
+  });
   const res = await fetch(signed.url, { method: "PUT", body: file, headers: { "Content-Type": file.type } }).catch(() => null);
   if (!res?.ok) throw new ApiError(res?.status ?? 0, "upload");
   return signed.path;

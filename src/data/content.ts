@@ -132,13 +132,13 @@ const bg: Content = {
   contact: {
     label: "Започни проект",
     title: "Какво искаш да създадем?",
-    lead: "Разкажи го в чата. Без регистрация и без ангажимент.",
+    lead: "Разкажи го на консултанта. Без регистрация, без чакане.",
     cta: "Започни проект",
-    myChat: "Към моя чат",
+    myChat: "Моят проект",
     steps: [
-      { title: "Разказваш", body: "Кратък въпросник или чат с консултанта, със свои думи. Снимки, лого и примери са добре дошли." },
-      { title: "Получаваш оферта", body: "Основателят ти пише лично в същия чат: крайна цена, срок и капаро. Можеш да запазиш и онлайн среща." },
-      { title: "Започваме", body: "Приемаш офертата, плащаш капарото ({deposit}) и започваме." },
+      { title: "Разказваш", body: "Кратък въпросник или разговор с консултанта, със свои думи. Снимки, лого и примери са добре дошли." },
+      { title: "Капаро", body: "Виждаш брифа си и капарото на лична страница. Плащаш онлайн; то се приспада от крайната цена." },
+      { title: "Започваме", body: "Основателят ти пише на имейл с точна цена и план. Одобряваш и започваме." },
     ],
   },
   footer: {
@@ -234,13 +234,13 @@ const en: Content = {
   contact: {
     label: "Start a project",
     title: "What shall we create?",
-    lead: "Tell us in the chat. No sign-up, no commitment.",
+    lead: "Tell the consultant. No sign-up, no waiting.",
     cta: "Start a project",
-    myChat: "To my chat",
+    myChat: "My project",
     steps: [
-      { title: "You tell us", body: "A short questionnaire or a chat with the consultant, in your own words. Pictures, logo and examples are welcome." },
-      { title: "You get an offer", body: "The founder writes you personally in the same chat: final price, timeline and deposit. You can book an online meeting too." },
-      { title: "We begin", body: "You accept the offer, pay the deposit ({deposit}) and we begin." },
+      { title: "You tell us", body: "A short questionnaire or a conversation with the consultant, in your own words. Pictures, logo and examples are welcome." },
+      { title: "Deposit", body: "You see your brief and the deposit on a private page. Pay online; it is deducted from the final price." },
+      { title: "We begin", body: "The founder e-mails you the exact price and plan. You approve and we begin." },
     ],
   },
   footer: {
