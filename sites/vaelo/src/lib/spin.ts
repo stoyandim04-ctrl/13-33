@@ -14,7 +14,7 @@ export function spinFrames(slug: string, n: number): HTMLImageElement[] {
     list = Array.from({ length: n }, (_, i) => {
       const img = new Image();
       img.decoding = "async";
-      img.src = `/img/spin/${slug}/${String(i).padStart(2, "0")}.webp`;
+      img.src = `img/spin/${slug}/${String(i).padStart(2, "0")}.webp`;
       return img;
     });
     cache.set(slug, list);

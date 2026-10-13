@@ -190,7 +190,7 @@ export function Cart() {
                       }}
                       aria-label={`Разгледай ${p.name}`}
                     >
-                      <img src={`/img/p/${p.slug}.webp`} alt="" className="h-full w-full object-contain" />
+                      <img src={`img/p/${p.slug}.webp`} alt="" className="h-full w-full object-contain" />
                     </button>
                     <div className="flex flex-1 flex-col">
                       <div className="flex justify-between gap-3">

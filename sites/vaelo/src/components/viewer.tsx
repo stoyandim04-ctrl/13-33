@@ -170,7 +170,7 @@ export function Viewer() {
                 onClick={() => view(k)}
                 className={`h-14 w-11 rounded-md border transition-all duration-300 ${k === i ? "border-ink bg-bone" : "border-transparent opacity-50 hover:opacity-100"}`}
               >
-                <img src={`/img/p/${pr.slug}.webp`} alt="" className="h-full w-full object-contain p-1" />
+                <img src={`img/p/${pr.slug}.webp`} alt="" className="h-full w-full object-contain p-1" />
               </button>
             ))}
           </div>

@@ -34,7 +34,7 @@ export function Collection() {
 function Card({ p, i }: { p: Product; i: number }) {
   const { view } = useStore();
   const tilt = useRef<HTMLDivElement>(null);
-  const back = p.spin ? `/img/spin/${p.slug}/${String(Math.round(p.spin / 2)).padStart(2, "0")}.webp` : null;
+  const back = p.spin ? `img/spin/${p.slug}/${String(Math.round(p.spin / 2)).padStart(2, "0")}.webp` : null;
 
   const onMove = (e: React.PointerEvent) => {
     if (e.pointerType !== "mouse" || !tilt.current) return;
@@ -68,7 +68,7 @@ function Card({ p, i }: { p: Product; i: number }) {
         />
         <span className="label absolute left-4 top-4 text-muted">{String(i + 1).padStart(2, "0")}</span>
         <img
-          src={`/img/p/${p.slug}.webp`}
+          src={`img/p/${p.slug}.webp`}
           alt=""
           loading="lazy"
           className={`absolute inset-[9%] h-[82%] w-[82%] object-contain drop-shadow-[0_24px_24px_rgba(20,18,16,0.18)] transition-all duration-700 ease-[var(--ease-out-expo)] ${back ? "group-hover:scale-95 group-hover:opacity-0" : "group-hover:scale-105"}`}

@@ -196,7 +196,7 @@ export function Orbit() {
             }}
           >
             <img
-              src={`/img/p/${pr.slug}.webp`}
+              src={`img/p/${pr.slug}.webp`}
               alt=""
               draggable={false}
               className="aspect-[3/4] w-full object-contain drop-shadow-[0_40px_40px_rgba(20,18,16,0.22)]"

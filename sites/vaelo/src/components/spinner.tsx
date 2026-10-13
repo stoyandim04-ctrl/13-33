@@ -121,7 +121,7 @@ export const Spinner = forwardRef<SpinnerHandle, Props>(function Spinner({ produ
       ) : (
         <img
           ref={img}
-          src={`/img/p/${product.slug}.webp`}
+          src={`img/p/${product.slug}.webp`}
           alt=""
           draggable={false}
           className={`absolute inset-0 h-full w-full object-contain will-change-transform ${align === "top" ? "object-top" : ""}`}
