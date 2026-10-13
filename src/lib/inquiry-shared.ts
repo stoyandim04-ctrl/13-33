@@ -21,11 +21,11 @@ export type ConcreteTypeId = (typeof CONCRETE_TYPES)[number];
  * founder writes to them. Deducted from the final price.
  */
 export const DEPOSITS: Record<ConcreteTypeId, number> = {
-  site: 0,
-  shop: 0,
-  landing: 0,
-  brand: 0,
-  system: 0,
+  landing: 60,
+  site: 100,
+  brand: 100,
+  shop: 180,
+  system: 180,
 };
 
 export const depositFor = (type: string): number => DEPOSITS[type as ConcreteTypeId] ?? 0;
