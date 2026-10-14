@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { addJob } from "../lib/scroll";
 
 /**
  * Интро: ЗВЯР се забива буква по буква, броячът стига 100, когато сцената е
@@ -12,20 +13,22 @@ export function Intro({ ready, onOpen }: { ready: boolean; onOpen: () => void })
   useEffect(() => {
     const start = performance.now();
     const min = reduced ? 200 : 1500;
-    let raf = 0;
-    const tick = (now: number) => {
-      const k = Math.min(1, (now - start) / min);
+    let done = false;
+    // В общия цикъл (lib/scroll.ts) — така и записът на видео го движи кадър по кадър.
+    const stop = addJob((now) => {
+      if (done) return;
+      const k = Math.min(1, Math.max(0, (now - start) / min));
       // Без готова сцена броячът спира на 87.
       const v = Math.round((ready ? k : Math.min(k, 0.87)) * 100);
-      setN(v);
-      if (v >= 100) {
-        setPhase("split");
-        return;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+      return () => {
+        setN(v);
+        if (v >= 100) {
+          done = true;
+          setPhase("split");
+        }
+      };
+    });
+    return stop;
   }, [ready, reduced]);
 
   useEffect(() => {
@@ -44,7 +47,7 @@ export function Intro({ ready, onOpen }: { ready: boolean; onOpen: () => void })
       <div className={`${half} top-0 h-1/2 ${split ? "-translate-y-full" : ""}`} />
       <div className={`${half} bottom-0 h-1/2 ${split ? "translate-y-full" : ""}`} />
       <div className={`absolute inset-0 grid place-items-center transition-opacity duration-200 ${split ? "opacity-0" : ""}`}>
-        <div className="display flex text-[clamp(4.5rem,22vw,20rem)] leading-none">
+        <div className="display flex text-[clamp(7rem,36vw,32rem)] leading-none">
           {"FERAL".split("").map((ch, i) => (
             <span key={i} className="slam-in inline-block" style={{ animationDelay: `${0.12 + i * 0.13}s` }}>
               {ch}

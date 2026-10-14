@@ -82,6 +82,7 @@ export class Stage {
   private t = 0;
   private mobile = false;
   private maxDt = new URLSearchParams(location.search).has("shot") ? 2 : 0.05;
+  private rec = new URLSearchParams(location.search).has("rec");
   private reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   private rim: THREE.DirectionalLight;
 
@@ -251,7 +252,7 @@ export class Stage {
    * намаляме pixel ratio на стъпки до 1; ако е лесно — връщаме нагоре.
    */
   private adapt(raw: number) {
-    if (raw > 0.25 || this.maxDt > 0.05) return; // скрит таб / режим за снимки
+    if (raw > 0.25 || this.maxDt > 0.05 || this.rec) return; // скрит таб / снимки / запис
     this.frameAvg += (raw - this.frameAvg) * 0.05;
     if (++this.frameCount < 90) return;
     this.frameCount = 0;

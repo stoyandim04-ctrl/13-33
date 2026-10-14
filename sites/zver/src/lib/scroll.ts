@@ -13,7 +13,14 @@ type Job = (now: number) => (() => void) | void;
 const jobs = new Set<Job>();
 let raf = 0;
 
-function loop(now: number) {
+/*
+  ?rec — режим за запис на промо видео: цикълът не върви сам, а кадър по кадър
+  от записващия скрипт (window.__step(now)). Така всеки кадър е точно един
+  рендер, независимо колко бавен е браузърът.
+*/
+const REC = typeof location !== "undefined" && new URLSearchParams(location.search).has("rec");
+
+function step(now: number) {
   lenis?.raf(now);
   const writes: (() => void)[] = [];
   for (const j of jobs) {
@@ -21,12 +28,18 @@ function loop(now: number) {
     if (w) writes.push(w);
   }
   for (const w of writes) w();
+}
+
+function loop(now: number) {
+  step(now);
   raf = requestAnimationFrame(loop);
 }
 
+if (REC) (window as unknown as { __step: (now: number) => void }).__step = step;
+
 export function addJob(job: Job) {
   jobs.add(job);
-  if (!raf) raf = requestAnimationFrame(loop);
+  if (!raf && !REC) raf = requestAnimationFrame(loop);
   return () => {
     jobs.delete(job);
     if (!jobs.size && !lenis) {
@@ -40,7 +53,7 @@ export function useLenis() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     lenis = new Lenis({ duration: 1.1, easing: (t) => 1 - Math.pow(1 - t, 4), anchors: true });
-    if (!raf) raf = requestAnimationFrame(loop);
+    if (!raf && !REC) raf = requestAnimationFrame(loop);
     return () => {
       lenis?.destroy();
       lenis = null;
