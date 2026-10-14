@@ -17,15 +17,15 @@ export function Lineup() {
         <div className="relative z-20 md:flex md:items-end md:justify-between md:gap-8">
           <div>
             <Eyebrow n="04" className="mb-3">
-              Линията
+              The lineup
             </Eyebrow>
             <h2 id="line-h" className="display text-heading">
-              Шест начина
+              Six ways
               <br />
-              <span className="bg-black px-[0.08em] text-[var(--f-hi)] [box-decoration-break:clone]">да не заспиш.</span>
+              <span className="bg-black px-[0.08em] text-[var(--f-hi)] [box-decoration-break:clone]">to stay up.</span>
             </h2>
           </div>
-          <p className="mt-3 max-w-xs text-lead font-medium md:mt-0">Всичките без захар. Всичките със 160 мг кофеин. Различни само по това как удрят.</p>
+          <p className="mt-3 max-w-xs text-lead font-medium md:mt-0">All sugar-free. All 160 mg of caffeine. Different only in how they hit.</p>
         </div>
 
         <ul className="relative z-20 mt-4 grid flex-1 grid-cols-3 gap-x-2 gap-y-3 md:mt-6 md:grid-cols-6 md:gap-4">
@@ -42,7 +42,7 @@ export function Lineup() {
                   scrollToId("shop");
                 }}
                 className="group flex min-h-0 w-full flex-col text-left"
-                aria-label={`${f.name} — ${f.fruit}. Към магазина`}
+                aria-label={`${f.name} — ${f.fruit}. Go to shop`}
               >
                 <span data-anchor={`line-${i}`} className="mx-auto block min-h-0 w-full flex-1" aria-hidden />
                 <span className={`mt-2 border-t-[3px] border-black pt-2 ${i === sel ? "" : ""}`}>

@@ -20,7 +20,7 @@ export function Burst() {
 
 
   return (
-    <section ref={ref} id="burst" data-stage="burst" className="relative h-[300svh]" aria-label="Звярът е пуснат">
+    <section ref={ref} id="burst" data-stage="burst" className="relative h-[300svh]" aria-label="Unleashed">
       <div className="sticky top-0 h-svh overflow-hidden">
         {/* Преди: ДРЪЖ СЕ. */}
         <div
@@ -31,9 +31,9 @@ export function Burst() {
           }}
         >
           <p className="display text-center text-[clamp(4rem,19vw,20rem)] leading-[0.8]">
-            ДРЪЖ
+            HOLD
             <br />
-            <span className="outline-text">СЕ.</span>
+            <span className="outline-text">ON.</span>
           </p>
         </div>
 
@@ -46,9 +46,9 @@ export function Burst() {
           }}
         >
           <div className="text-center">
-            <p className="label mb-4">Звярът е</p>
-            <p className="display text-[clamp(3.6rem,17vw,19rem)] leading-[0.8]">ПУСНАТ.</p>
-            <p className="display mt-4 text-[clamp(1rem,2.6vw,2.4rem)]">Без захар. Без спирачки.</p>
+            <p className="label mb-4">The beast is</p>
+            <p className="display text-[clamp(3.6rem,17vw,19rem)] leading-[0.8]">LOOSE.</p>
+            <p className="display mt-4 text-[clamp(1rem,2.6vw,2.4rem)]">No sugar. No brakes.</p>
           </div>
         </div>
 
@@ -59,10 +59,10 @@ export function Burst() {
           aria-hidden
         >
           <Tape className="display absolute top-[18%] left-[-10%] w-[120%] rotate-[-7deg] bg-black py-3 text-xl text-[var(--f-hi)] md:text-3xl" speed={18}>
-            <TapeWords words={["ЗВЯР", "Без захар", "Без спирачки", "160 мг"]} />
+            <TapeWords words={["FERAL", "No sugar", "No brakes", "160 mg"]} />
           </Tape>
           <Tape className="display absolute bottom-[16%] left-[-10%] w-[120%] rotate-[6deg] border-y-[3px] border-black bg-bone py-3 text-xl text-black md:text-3xl" speed={20} reverse>
-            <TapeWords words={["Не е за деца", "Дръж се", "ЗВЯР", "Пусни го"]} />
+            <TapeWords words={["Not for kids", "Hold on", "FERAL", "Let it out"]} />
           </Tape>
         </div>
 

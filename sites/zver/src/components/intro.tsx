@@ -45,14 +45,14 @@ export function Intro({ ready, onOpen }: { ready: boolean; onOpen: () => void })
       <div className={`${half} bottom-0 h-1/2 ${split ? "translate-y-full" : ""}`} />
       <div className={`absolute inset-0 grid place-items-center transition-opacity duration-200 ${split ? "opacity-0" : ""}`}>
         <div className="display flex text-[clamp(4.5rem,22vw,20rem)] leading-none">
-          {"ЗВЯР".split("").map((ch, i) => (
+          {"FERAL".split("").map((ch, i) => (
             <span key={i} className="slam-in inline-block" style={{ animationDelay: `${0.12 + i * 0.13}s` }}>
               {ch}
             </span>
           ))}
         </div>
         <div className="label absolute bottom-6 left-5 right-5 flex justify-between sm:bottom-8 sm:left-8 sm:right-8">
-          <span>Зареждане на звяра</span>
+          <span>Waking the beast</span>
           <span className="tabular-nums">{String(n).padStart(3, "0")}</span>
         </div>
         <div className="absolute bottom-0 left-0 h-1.5 bg-[var(--f-bg)]" style={{ width: `${n}%` }} />

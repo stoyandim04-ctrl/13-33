@@ -13,7 +13,7 @@ export function Tour() {
   const c = CLAIMS[idx];
 
   return (
-    <section ref={ref} id="tour" data-stage="tour" className="relative h-[420svh]" aria-label="Какво има вътре">
+    <section ref={ref} id="tour" data-stage="tour" className="relative h-[420svh]" aria-label="What's inside">
       <div className="sticky top-0 h-svh overflow-hidden">
         {/* Въртящ се надпис зад кенчето */}
         <div
@@ -28,7 +28,7 @@ export function Tour() {
             <circle cx="200" cy="200" r="196" fill="none" stroke="currentColor" strokeWidth="3" />
             <circle cx="200" cy="200" r="140" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 10" />
             <text className="display" fontSize="25" fill="currentColor" letterSpacing="3">
-              <textPath href="#ring">ЗВЯР ■ БЕЗ ЗАХАР ■ БЕЗ СПИРАЧКИ ■ ЗВЯР ■ БЕЗ ЗАХАР ■ БЕЗ СПИРАЧКИ ■</textPath>
+              <textPath href="#ring">FERAL ■ NO SUGAR ■ NO BRAKES ■ FERAL ■ NO SUGAR ■ NO BRAKES ■</textPath>
             </text>
           </svg>
         </div>
@@ -41,7 +41,7 @@ export function Tour() {
       <div className="sticky top-0 z-20 -mt-[100svh] h-svh">
         <div className="absolute inset-x-0 bottom-0 px-4 pb-8 sm:px-8 md:top-0 md:bottom-auto md:flex md:h-full md:w-[55%] md:flex-col md:justify-center md:pb-0">
           <Eyebrow n={`0${idx + 1}`} className="mb-3 md:mb-6">
-            Вътре в кенчето — {CLAIMS.length} числа
+            Inside the can — {CLAIMS.length} numbers
           </Eyebrow>
           <div key={idx} className="slam-in">
             <p className="display flex items-start leading-[0.8]">
@@ -56,7 +56,7 @@ export function Tour() {
               <span key={i} className={`h-2 border-2 border-current transition-all duration-500 ${i === idx ? "w-16 bg-current" : i < idx ? "w-6 bg-current" : "w-6"}`} />
             ))}
           </div>
-          <p className="label mt-4 hidden opacity-70 md:block">{f.name} — завърти скрола, за да видиш гърба</p>
+          <p className="label mt-4 hidden opacity-70 md:block">{f.name} — keep scrolling to see the back</p>
         </div>
       </div>
     </section>

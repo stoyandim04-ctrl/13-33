@@ -16,14 +16,16 @@ const LABEL_W = 2048;
 // Етикетът не трябва да се разтяга: височината спрямо обиколката.
 const LABEL_H = Math.round((LABEL_W * BODY_H) / (2 * Math.PI * CAN_R));
 
-const DISPLAY = '"Unbounded", sans-serif';
-const MONO = '"JetBrains Mono", ui-monospace, monospace';
+const DISPLAY = '"Archivo Variable", "Archivo", sans-serif';
+// Тясната тежка ширина на Archivo — през shorthand-а на canvas (font-stretch).
+const TIGHT = "extra-condensed";
+const MONO = '"Geist Mono Variable", "Geist Mono", ui-monospace, monospace';
 
 export async function loadFonts() {
   await Promise.all([
-    document.fonts.load(`900 120px ${DISPLAY}`, "ЗВЯР"),
-    document.fonts.load(`700 40px ${MONO}`, "ЗВЯР 0"),
-    document.fonts.load(`400 40px ${MONO}`, "ЗВЯР 0"),
+    document.fonts.load(`900 ${TIGHT} 120px ${DISPLAY}`, "FERAL"),
+    document.fonts.load(`700 40px ${MONO}`, "FERAL 0"),
+    document.fonts.load(`400 40px ${MONO}`, "FERAL 0"),
   ]).catch(() => undefined);
 }
 
@@ -40,10 +42,11 @@ function verticalWord(
 ) {
   ctx.save();
   let size = maxSize;
-  ctx.font = `${weight} ${size}px ${family}`;
+  const stretch = family === DISPLAY ? TIGHT : "normal";
+  ctx.font = `${weight} ${stretch} ${size}px ${family}`;
   const w = ctx.measureText(text).width;
   if (w > fitWidth) size = Math.floor((size * fitWidth) / w);
-  ctx.font = `${weight} ${size}px ${family}`;
+  ctx.font = `${weight} ${stretch} ${size}px ${family}`;
   ctx.translate(cx, cy);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = "center";
@@ -113,16 +116,16 @@ export function drawLabel(f: Flavour): HTMLCanvasElement {
   // Главното: ЗВЯР вертикално, през цялата височина.
   ctx.fillStyle = f.ink;
   const usable = LABEL_H - band * 2 - 70;
-  const s = verticalWord(ctx, "ЗВЯР", front - 70, LABEL_H / 2, usable, 520);
+  const s = verticalWord(ctx, "FERAL", front - 60, LABEL_H / 2, usable, 760);
 
   // Вкусът — до него.
-  verticalWord(ctx, f.name, front + s * 0.5 + 40, LABEL_H / 2, usable * 0.92, 150);
+  verticalWord(ctx, f.name, front + s * 0.5 + 60, LABEL_H / 2, usable * 0.92, 210);
   ctx.save();
   ctx.font = `700 30px ${MONO}`;
-  ctx.translate(front + s * 0.5 + 170, LABEL_H / 2);
+  ctx.translate(front + s * 0.5 + 215, LABEL_H / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = "center";
-  ctx.fillText(`${f.fruit.toUpperCase()} · ЕНЕРГИЙНА НАПИТКА`, 0, 0);
+  ctx.fillText(`${f.fruit.toUpperCase()} · ENERGY DRINK`, 0, 0);
   ctx.restore();
 
   // Отляво на лицето: малки маркери.
@@ -131,7 +134,7 @@ export function drawLabel(f: Flavour): HTMLCanvasElement {
   ctx.translate(front - s * 0.5 - 150, LABEL_H / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = "center";
-  ctx.fillText("0 ЗАХАР ■ 160 МГ КОФЕИН ■ 500 МЛ", 0, 0);
+  ctx.fillText("ZERO SUGAR ■ 160 MG CAFFEINE ■ 500 ML", 0, 0);
   ctx.restore();
 
   // Гърбът: таблица и предупреждение (виждат се при завъртане).
@@ -142,22 +145,22 @@ export function drawLabel(f: Flavour): HTMLCanvasElement {
   ctx.fillStyle = f.ink;
   ctx.lineWidth = 6;
   ctx.strokeRect(tx, ty, tw, 640);
-  ctx.font = `900 46px ${DISPLAY}`;
-  ctx.fillText("ХРАНИТЕЛНА", tx + 24, ty + 66);
-  ctx.fillText("СТОЙНОСТ", tx + 24, ty + 118);
+  ctx.font = `900 ${TIGHT} 64px ${DISPLAY}`;
+  ctx.fillText("NUTRITION", tx + 24, ty + 70);
+  ctx.fillText("FACTS", tx + 24, ty + 128);
   ctx.font = `400 26px ${MONO}`;
-  ctx.fillText("на 100 мл", tx + 24, ty + 160);
+  ctx.fillText("per 100 ml", tx + 24, ty + 164);
   ty += 190;
   const rows: [string, string][] = [
-    ["Енергия", `${f.kcal} ккал`],
-    ["Мазнини", "0 г"],
-    ["Въглехидрати", "1.1 г"],
-    ["  от които захари", f.sugar],
-    ["Белтъчини", "0 г"],
-    ["Сол", "0.06 г"],
-    ["Кофеин", "32 мг"],
-    ["Витамин B6", "0.4 мг"],
-    ["Витамин B12", "0.5 мкг"],
+    ["Energy", `${f.kcal} kcal`],
+    ["Fat", "0 g"],
+    ["Carbohydrate", "1.1 g"],
+    ["  of which sugars", f.sugar],
+    ["Protein", "0 g"],
+    ["Salt", "0.06 g"],
+    ["Caffeine", "32 mg"],
+    ["Vitamin B6", "0.4 mg"],
+    ["Vitamin B12", "0.5 µg"],
   ];
   ctx.font = `700 26px ${MONO}`;
   for (const [k, v] of rows) {
@@ -171,23 +174,23 @@ export function drawLabel(f: Flavour): HTMLCanvasElement {
   ctx.textAlign = "left";
 
   const wx = 120;
-  ctx.font = `900 40px ${DISPLAY}`;
-  ctx.fillText("ВНИМАНИЕ.", wx, band + 150);
+  ctx.font = `900 ${TIGHT} 60px ${DISPLAY}`;
+  ctx.fillText("WARNING.", wx, band + 150);
   ctx.font = `400 26px ${MONO}`;
   const warn = [
-    "Високо съдържание на кофеин",
-    "(32 мг/100 мл). Не се препоръчва",
-    "за деца, бременни и кърмещи",
-    "жени. Не превишавай 2 кенчета",
-    "на ден.",
+    "High caffeine content",
+    "(32 mg/100 ml). Not recommended",
+    "for children or pregnant or",
+    "breastfeeding women. Do not",
+    "exceed 2 cans per day.",
     "",
-    "Съставки: газирана вода, плодов",
-    `сок 12% (${f.fruit.toLowerCase()}),`,
-    "киселина лимонена, кофеин от",
-    "зелено кафе, еритритол, стевия,",
-    "витамини B3, B6, B12.",
+    "Ingredients: carbonated water,",
+    `fruit juice 12% (${f.fruit.toLowerCase()}),`,
+    "citric acid, caffeine from",
+    "green coffee, erythritol, stevia,",
+    "vitamins B3, B6, B12.",
     "",
-    "Концепция на 13:33.",
+    "A concept by 13:33.",
   ];
   warn.forEach((l, i) => ctx.fillText(l, wx, band + 210 + i * 40));
 

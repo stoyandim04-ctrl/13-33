@@ -8,14 +8,14 @@ export function Faq() {
     <section id="faq" data-stage="faq" className="relative z-20 bg-black px-4 py-24 text-bone sm:px-8 md:py-36" aria-labelledby="faq-h">
       <div className="mx-auto max-w-6xl">
         <Eyebrow n="06" className="mb-4 text-[var(--f-hi)]">
-          Въпроси
+          FAQ
         </Eyebrow>
         <h2 id="faq-h" className="display text-[clamp(2.1rem,8.6vw,8.5rem)] leading-[0.86]">
-          Питат ни.
+          You ask.
           <br />
-          <span className="outline-text [--outline-fill:#0a0a0a] [--outline-ink:#f4f1ea]">Отговаряме.</span>
+          <span className="outline-text [--outline-fill:#0a0a0a] [--outline-ink:#f4f1ea]">We answer.</span>
         </h2>
-        <p className="mt-6 max-w-md text-lead font-medium opacity-80">Кратко и честно — особено за кофеина.</p>
+        <p className="mt-6 max-w-md text-lead font-medium opacity-80">Short and straight — especially about the caffeine.</p>
 
         <ul className="mt-12 border-t-[3px] border-bone">
           {FAQ.map((q, i) => {

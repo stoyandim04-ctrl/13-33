@@ -1,27 +1,26 @@
 /*
-  ЗВЯР · визуална система
+  FERAL · визуална система
 
   Брутално: цял екран в цвета на вкуса, черен (или кремав) текст, дебели
-  черни рамки и твърди сенки без размазване. Unbounded 900 — само главни
-  букви за заглавията (кирилицата там е еднаква за всички езици);
-  Manrope за текста (носи българските форми); JetBrains Mono за етикетите.
+  черни рамки и твърди сенки без размазване. Archivo 900 в тясна ширина
+  (font-stretch 62%) — само главни букви за заглавията; Inter Tight за
+  текста; Geist Mono за етикетите.
   Цветът на вкуса идва от --f-bg/--f-ink/--f-acc (задава ги App);
   --bg/--ink са това, което секцията ползва в момента.
 */
 @import "tailwindcss";
-@import "@fontsource/unbounded/900.css";
-@import "@fontsource-variable/manrope";
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/700.css";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/inter-tight";
+@import "@fontsource-variable/geist-mono";
 
 @theme {
   --color-black: #0a0a0a;
   --color-cream: #efe9dc;
   --color-bone: #f4f1ea;
 
-  --font-display: "Unbounded", system-ui, sans-serif;
-  --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Archivo Variable", "Archivo", system-ui, sans-serif;
+  --font-sans: "Inter Tight Variable", "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, monospace;
 
   --text-label: 0.6875rem;
   --text-label--letter-spacing: 0.14em;
@@ -30,12 +29,12 @@
   --text-body--line-height: 1.55;
   --text-lead: clamp(1rem, 0.92rem + 0.4vw, 1.25rem);
   --text-lead--line-height: 1.45;
-  --text-title: clamp(1.5rem, 1rem + 1.6vw, 2.75rem);
+  --text-title: clamp(1.9rem, 1.2rem + 2.2vw, 3.6rem);
   --text-title--line-height: 1;
-  --text-heading: clamp(2.6rem, 0.9rem + 6.4vw, 8.5rem);
-  --text-heading--line-height: 0.86;
-  --text-mega: clamp(6rem, 1rem + 25vw, 30rem);
-  --text-mega--line-height: 0.78;
+  --text-heading: clamp(3.4rem, 1rem + 8.6vw, 11rem);
+  --text-heading--line-height: 0.84;
+  --text-mega: clamp(8rem, 2rem + 34vw, 40rem);
+  --text-mega--line-height: 0.8;
 
   --ease-slam: cubic-bezier(0.2, 1.4, 0.4, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -85,8 +84,9 @@
   .display {
     font-family: var(--font-display);
     font-weight: 900;
+    font-stretch: 62%;
     text-transform: uppercase;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.005em;
   }
   .label {
     font-family: var(--font-mono);
@@ -127,8 +127,9 @@
     color: var(--f-hi);
     font-family: var(--font-display);
     font-weight: 900;
-    font-size: 0.95rem;
-    letter-spacing: -0.01em;
+    font-stretch: 75%;
+    font-size: 1.15rem;
+    letter-spacing: 0.01em;
     text-transform: uppercase;
     border: 3px solid var(--color-black);
     box-shadow: 6px 6px 0 var(--color-bone);

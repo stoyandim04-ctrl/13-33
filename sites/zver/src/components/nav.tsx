@@ -3,11 +3,11 @@ import { scrollToId } from "../lib/scroll";
 import { Claw } from "./bits";
 
 const LINKS = [
-  ["Вкусове", "hero"],
-  ["Вътре", "tour"],
-  ["Линията", "line"],
-  ["Купи", "shop"],
-  ["Въпроси", "faq"],
+  ["Flavours", "hero"],
+  ["Inside", "tour"],
+  ["Lineup", "line"],
+  ["Shop", "shop"],
+  ["FAQ", "faq"],
 ] as const;
 
 export function Nav() {
@@ -21,12 +21,12 @@ export function Nav() {
           scrollToId("hero");
         }}
         className="flex items-center gap-1.5"
-        aria-label="ЗВЯР — начало"
+        aria-label="FERAL — home"
       >
         <Claw className="h-7 w-7" />
-        <span className="display text-xl">ЗВЯР</span>
+        <span className="display text-2xl">FERAL</span>
       </a>
-      <nav className="label hidden items-center gap-7 md:flex" aria-label="Основно меню">
+      <nav className="label hidden items-center gap-7 md:flex" aria-label="Main menu">
         {LINKS.map(([t, id]) => (
           <a
             key={id}
@@ -45,9 +45,9 @@ export function Nav() {
         type="button"
         onClick={() => setCartOpen(true)}
         className="slab label flex items-center gap-2 bg-bone px-3 py-2 text-black"
-        aria-label={`Количка, ${count} в нея`}
+        aria-label={`Cart, ${count} items`}
       >
-        Количка
+        Cart
         <span className="grid h-6 min-w-6 place-items-center bg-black px-1 text-bone tabular-nums">{count}</span>
       </button>
     </header>

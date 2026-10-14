@@ -40,20 +40,20 @@ export function Shop() {
           onPointerUp={() => (drag.current = null)}
           onPointerCancel={() => (drag.current = null)}
           role="img"
-          aria-label={`Кенче ${f.name}. Дръпни, за да го завъртиш.`}
+          aria-label={`${f.name} can. Drag to spin it.`}
         >
-          <p className="label absolute bottom-2 left-0 md:bottom-8">← Дръпни кенчето →</p>
+          <p className="label absolute bottom-2 left-0 md:bottom-8">← Drag the can →</p>
         </div>
 
         <div className="slab on-light relative z-20 w-full bg-bone p-5 text-black hover:transform-none hover:shadow-[6px_6px_0_#0a0a0a] sm:p-7 md:w-[min(460px,40vw)]">
-          <Eyebrow n="05">Купи · 500 мл · кашон</Eyebrow>
+          <Eyebrow n="05">Shop · 500 ml · packs</Eyebrow>
           <h2 id="shop-h" key={f.id} className="display slam-in mt-4 text-title">
             {f.name}
           </h2>
           <p className="mt-1 text-body font-semibold opacity-70">{f.fruit}</p>
 
-          <p className="label mt-6 mb-2">Вкус</p>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Вкус">
+          <p className="label mt-6 mb-2">Flavour</p>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Flavour">
             {FLAVOURS.map((x, i) => (
               <button
                 key={x.id}
@@ -69,8 +69,8 @@ export function Shop() {
             ))}
           </div>
 
-          <p className="label mt-5 mb-2">Опаковка</p>
-          <div className="grid grid-cols-3 border-[3px] border-black" role="radiogroup" aria-label="Опаковка">
+          <p className="label mt-5 mb-2">Pack</p>
+          <div className="grid grid-cols-3 border-[3px] border-black" role="radiogroup" aria-label="Pack">
             {PACKS.map((p, i) => (
               <button
                 key={p.size}
@@ -81,20 +81,20 @@ export function Shop() {
                 className={`px-2 py-2.5 text-center ${i ? "border-l-[3px] border-black" : ""} ${p.size === pack ? "bg-black text-bone" : "hover:bg-black/5"}`}
               >
                 <span className="display block text-lg leading-none">{p.size}</span>
-                <span className="label mt-1 block opacity-70">{money(p.price / p.size)} / бр.</span>
+                <span className="label mt-1 block opacity-70">{money(p.price / p.size)} / can</span>
               </button>
             ))}
           </div>
 
           <div className="mt-6 flex items-end justify-between gap-4">
             <div className="flex items-center border-[3px] border-black">
-              <button type="button" className="h-11 w-11 text-xl font-bold" onClick={() => setQty(Math.max(1, qty - 1))} aria-label="По-малко">
+              <button type="button" className="h-11 w-11 text-xl font-bold" onClick={() => setQty(Math.max(1, qty - 1))} aria-label="Fewer">
                 −
               </button>
               <span className="w-8 text-center font-bold tabular-nums" aria-live="polite">
                 {qty}
               </span>
-              <button type="button" className="h-11 w-11 text-xl font-bold" onClick={() => setQty(Math.min(20, qty + 1))} aria-label="Повече">
+              <button type="button" className="h-11 w-11 text-xl font-bold" onClick={() => setQty(Math.min(20, qty + 1))} aria-label="More">
                 +
               </button>
             </div>
@@ -112,9 +112,9 @@ export function Shop() {
               setTimeout(() => setCartOpen(true), 350);
             }}
           >
-            {added ? "Вътре е ✓" : `Добави ${pack} × ${f.name}`}
+            {added ? "In the cart ✓" : `Add ${pack} × ${f.name}`}
           </button>
-          <p className="label mt-4 opacity-60">Концепция на 13:33 — нищо не се продава и не се доставя.</p>
+          <p className="label mt-4 opacity-60">A concept by 13:33 — nothing is sold or shipped.</p>
         </div>
       </div>
     </section>

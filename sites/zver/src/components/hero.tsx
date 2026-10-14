@@ -41,11 +41,11 @@ export function Hero({ live }: { live: boolean }) {
   });
 
   return (
-    <section ref={ref} id="hero" data-stage="hero" className="relative h-svh min-h-[620px] overflow-x-clip" aria-label="ЗВЯР — енергийна напитка">
+    <section ref={ref} id="hero" data-stage="hero" className="relative h-svh min-h-[620px] overflow-x-clip" aria-label="FERAL — energy drink">
       {/* Зад кенчетата */}
       <div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center pb-[8svh] select-none">
-        <h1 className="display glitch text-mega text-[var(--ink)]" data-text="ЗВЯР">
-          ЗВЯР
+        <h1 className="display glitch text-mega text-[var(--ink)]" data-text="FERAL">
+          FERAL
         </h1>
         <p key={f.id} className="display outline-text slam-in -mt-[1vw] text-[clamp(2rem,8vw,8rem)] leading-none whitespace-nowrap">
           {f.name}
@@ -66,12 +66,12 @@ export function Hero({ live }: { live: boolean }) {
             {f.line}
           </p>
           <button type="button" className="btn-main" onClick={() => scrollToId("shop")}>
-            Вземи {f.name} <span aria-hidden>→</span>
+            Get {f.name} <span aria-hidden>→</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-2" role="radiogroup" aria-label="Вкус">
-          <button type="button" className="slab label grid h-11 w-11 place-items-center bg-bone text-black" onClick={() => pick(sel - 1)} aria-label="Предишен вкус">
+        <div className="flex items-center gap-2" role="radiogroup" aria-label="Flavour">
+          <button type="button" className="slab label grid h-11 w-11 place-items-center bg-bone text-black" onClick={() => pick(sel - 1)} aria-label="Previous flavour">
             ←
           </button>
           {FLAVOURS.map((x, i) => (
@@ -86,14 +86,14 @@ export function Hero({ live }: { live: boolean }) {
               style={{ background: x.can }}
             />
           ))}
-          <button type="button" className="slab label grid h-11 w-11 place-items-center bg-bone text-black" onClick={() => pick(sel + 1)} aria-label="Следващ вкус">
+          <button type="button" className="slab label grid h-11 w-11 place-items-center bg-bone text-black" onClick={() => pick(sel + 1)} aria-label="Next flavour">
             →
           </button>
         </div>
       </div>
 
       <Tape className="label absolute inset-x-[-2%] bottom-0 z-20 -rotate-1 bg-black py-3 text-[var(--f-hi)]" speed={26}>
-        <TapeWords words={["160 мг кофеин", "0 г захар", "12% плодов сок", "500 мл", "Не е за деца", "ЗВЯР"]} />
+        <TapeWords words={["160 mg caffeine", "0 g sugar", "12% real juice", "500 ml", "Not for kids", "FERAL"]} />
       </Tape>
     </section>
   );
