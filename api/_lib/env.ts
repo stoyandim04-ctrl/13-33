@@ -20,7 +20,7 @@ export const env = {
   resendKey: (process.env.RESEND_API_KEY ?? "").trim(),
   mailFrom: (process.env.MAIL_FROM ?? "").trim(),
   mailReplyTo: (process.env.MAIL_REPLY_TO ?? "").trim(),
-  siteUrl: (process.env.SITE_URL || "https://13-33-1gsb.vercel.app").replace(/\/$/, ""),
+  siteUrl: (process.env.SITE_URL || "https://digistudio13.com").replace(/\/$/, ""),
 };
 
 export const BUCKET = "inquiry-files";
