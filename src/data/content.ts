@@ -1,5 +1,5 @@
-// Site copy, Bulgarian and English. No invented results, clients, prices or
-// deadlines. Components read it through useContent() (src/lib/i18n.tsx).
+// Site copy, Bulgarian and English. No invented results, clients or prices;
+// the one promise is the studio's own: the first version within 4 working days. Components read it through useContent() (src/lib/i18n.tsx).
 import { useCopy } from "@/lib/i18n";
 
 export const site = {
@@ -20,14 +20,15 @@ export interface Service {
 
 export interface Content {
   nav: { label: string; href: string }[];
-  /** The first screen. The sentence is the founder's reference; `lilac` and
-      `peach` are the words that carry the gradients. */
+  /** The first screen: the promise in two lines (the second carries the
+      lilac gradient), what we are, and three facts. */
   hero: {
-    pill: string;
-    title: { before: string; lilac: string; peach: string };
+    eyebrow: string;
+    title: { before: string; accent: string };
     description: string;
     primary: { label: string; href: string };
     secondary: { label: string; href: string };
+    facts: { value: string; label: string }[];
   };
   works: { heading: string; subheading: string; label: string; action: string };
   /** Three statements instead of paragraphs. Lit word by word by the scroll. */
@@ -42,7 +43,7 @@ export interface Content {
     myChat: string;
     steps: { title: string; body: string }[];
   };
-  footer: { tagline: string; note: string };
+  footer: { tagline: string };
 }
 
 const bg: Content = {
@@ -53,11 +54,17 @@ const bg: Content = {
     { label: "Контакт", href: "#kontakt" },
   ],
   hero: {
-    pill: "Добре дошъл в 13:33",
-    title: { before: "Превръщаме идеите ти в", lilac: "красиви дигитални", peach: "изживявания" },
-    description: "Сайтове, онлайн магазини, брандове и платформи. От първата идея до работещия продукт.",
+    eyebrow: "Digital Studio · дизайн и разработка",
+    title: { before: "Разказваш идеята.", accent: "До 4 работни дни я виждаш като сайт." },
+    description:
+      "Екип от дизайнери и разработчици. Изслушваме те, разбираме бизнеса ти и превръщаме идеята в сайт, магазин или система, после я изглаждаме с теб до последния детайл.",
     primary: { label: "Започни проект", href: "/zapochni" },
     secondary: { label: "Виж проектите", href: "#proekti" },
+    facts: [
+      { value: "4", label: "работни дни до първата версия" },
+      { value: "0", label: "шаблона, всичко от нулата" },
+      { value: "24/7", label: "консултант, който те изслушва" },
+    ],
   },
   works: {
     heading: "Нашата работа",
@@ -66,9 +73,9 @@ const bg: Content = {
     action: "Отвори сайта",
   },
   manifest: [
-    "Без шаблони. Всеки проект започва от бял лист.",
-    "Работи на телефон, преди да работи на десктоп.",
-    "Виждаш работеща версия, не презентация.",
+    "Един разговор и вече знаем какво ти трябва.",
+    "Първата версия идва на имейла ти до 4 работни дни.",
+    "После я изглаждаме, докато стане точно твоя.",
   ],
   services: {
     label: "Услуги",
@@ -121,29 +128,28 @@ const bg: Content = {
   },
   process: {
     label: "Процес",
-    title: "От идея до реализация.",
+    title: "От идея до пускане.",
     steps: [
-      { name: "Разбиране", body: "Целите, клиентите и процесът ти." },
-      { name: "Дизайн", body: "Структура и визия. Одобряваш преди кода." },
-      { name: "Разработка", body: "Работеща версия на етапи, не изненада в края." },
-      { name: "Пускане", body: "Тест на телефон и компютър, после поддръжка." },
+      { name: "Разговор", body: "Разказваш ни идеята. Разбираме бизнеса, клиентите и целта ти." },
+      { name: "Първа версия", body: "До 4 работни дни: истински сайт на имейла ти, не скица." },
+      { name: "Изглаждане", body: "Променяме всеки детайл по твой вкус, докато стане твой." },
+      { name: "Пускане", body: "Домейн, плащания и форми. Тест на телефон и компютър, после поддръжка." },
     ],
   },
   contact: {
     label: "Започни проект",
     title: "Какво искаш да създадем?",
-    lead: "Разкажи го на консултанта. Без регистрация, без чакане.",
+    lead: "Разкажи го на консултанта. Цената виждаш веднага, първата версия идва до 4 работни дни.",
     cta: "Започни проект",
     myChat: "Моят проект",
     steps: [
-      { title: "Разказваш", body: "Кратък въпросник или разговор с консултанта, със свои думи. Снимки, лого и примери са добре дошли." },
-      { title: "Капаро", body: "Виждаш брифа си и капарото на лична страница. Плащаш онлайн; то се приспада от крайната цена." },
-      { title: "Започваме", body: "Основателят ти пише на имейл с точна цена и план. Одобряваш и започваме." },
+      { title: "Разказваш", body: "Със свои думи, на консултанта. Снимки, лого и примери са добре дошли." },
+      { title: "Цена и капаро", body: "Веднага виждаш цената на проекта на лична страница. Капарото плащаш онлайн и то се приспада от цената." },
+      { title: "Първа версия", body: "До 4 работни дни я получаваш на имейла си. После я изглаждаме заедно и пускаме." },
     ],
   },
   footer: {
     tagline: "Digital Studio · България",
-    note: "Проектите в портфолиото са означени според статуса си.",
   },
 };
 
@@ -155,11 +161,17 @@ const en: Content = {
     { label: "Contact", href: "#kontakt" },
   ],
   hero: {
-    pill: "Welcome to 13:33",
-    title: { before: "We turn your ideas into", lilac: "beautiful digital", peach: "experiences" },
-    description: "Websites, online stores, brands and platforms. From the first idea to the working product.",
+    eyebrow: "Digital Studio · design and development",
+    title: { before: "You tell us the idea.", accent: "Within 4 working days you see it as a site." },
+    description:
+      "A team of designers and developers. We listen, understand your business and turn the idea into a site, a store or a system, then refine it with you down to the last detail.",
     primary: { label: "Start a project", href: "/zapochni" },
     secondary: { label: "See the work", href: "#proekti" },
+    facts: [
+      { value: "4", label: "working days to the first version" },
+      { value: "0", label: "templates, everything from scratch" },
+      { value: "24/7", label: "a consultant who listens" },
+    ],
   },
   works: {
     heading: "Our work",
@@ -168,9 +180,9 @@ const en: Content = {
     action: "Open the site",
   },
   manifest: [
-    "No templates. Every project starts from a blank page.",
-    "It works on a phone before it works on a desktop.",
-    "You see a working version, not a presentation.",
+    "One conversation and we know what you need.",
+    "The first version reaches your inbox within 4 working days.",
+    "Then we refine it until it is exactly yours.",
   ],
   services: {
     label: "Services",
@@ -225,27 +237,26 @@ const en: Content = {
     label: "Process",
     title: "From idea to launch.",
     steps: [
-      { name: "Understanding", body: "Your goals, clients and process." },
-      { name: "Design", body: "Structure and look. You approve before the code." },
-      { name: "Build", body: "A working version in stages, not a surprise at the end." },
-      { name: "Launch", body: "Tested on phone and desktop, then support." },
+      { name: "Conversation", body: "You tell us the idea. We learn your business, clients and goal." },
+      { name: "First version", body: "Within 4 working days: a real site in your inbox, not a sketch." },
+      { name: "Refining", body: "We adjust every detail to your taste until it is yours." },
+      { name: "Launch", body: "Domain, payments and forms. Tested on phone and desktop, then support." },
     ],
   },
   contact: {
     label: "Start a project",
     title: "What shall we create?",
-    lead: "Tell the consultant. No sign-up, no waiting.",
+    lead: "Tell the consultant. You see the price right away; the first version arrives within 4 working days.",
     cta: "Start a project",
     myChat: "My project",
     steps: [
-      { title: "You tell us", body: "A short questionnaire or a conversation with the consultant, in your own words. Pictures, logo and examples are welcome." },
-      { title: "Deposit", body: "You see your brief and the deposit on a private page. Pay online; it is deducted from the final price." },
-      { title: "We begin", body: "The founder e-mails you the exact price and plan. You approve and we begin." },
+      { title: "You tell us", body: "In your own words, to the consultant. Pictures, logo and examples are welcome." },
+      { title: "Price and deposit", body: "You see the project's price right away on a private page. Pay the deposit online; it is deducted from the price." },
+      { title: "First version", body: "It reaches your inbox within 4 working days. Then we refine it together and launch." },
     ],
   },
   footer: {
     tagline: "Digital Studio · Bulgaria",
-    note: "Every project in the portfolio is labelled by its status.",
   },
 };
 

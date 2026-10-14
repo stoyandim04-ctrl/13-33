@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BriefCard, Bubble, euro, StatusSteps, Thumbs, usePoll } from "@/components/inquiry/parts";
 import { ApiError, errorText, fmtDateTime, store, studioGet, studioLogin, studioPost } from "@/lib/inquiry-api";
-import { emptyBrief, projectTypeLabel, type AiTurn, type Answers, type Brief, type ChatFile, type InquiryStatus } from "@/lib/inquiry-shared";
+import { emptyBrief, projectTypeLabel, type AiTurn, type Answers, type Brief, type ChatFile, type Estimate, type InquiryStatus } from "@/lib/inquiry-shared";
 
 const AUTH_KEY = "1333-studio";
 
@@ -39,6 +39,7 @@ interface Detail {
   transcript: AiTurn[];
   deposit: number;
   deposit_paid_at: string | null;
+  offer: Estimate | null;
   roomPath: string;
   files: ChatFile[];
 }
@@ -331,6 +332,22 @@ function DetailView({
       </div>
 
       <aside className="space-y-4">
+        {d.offer?.price ? (
+          <section className="border-border rounded-3xl border p-5">
+            <p className="flex items-baseline justify-between font-medium">
+              Цена (консултантът) <span className="font-display text-2xl font-[500] tabular-nums">{euro(d.offer.price)}</span>
+            </p>
+            <ul className="text-muted-foreground mt-3 space-y-1.5 text-sm">
+              {d.offer.items.map((i) => (
+                <li key={i.name} className="flex justify-between gap-3">
+                  <span>{i.name}</span>
+                  <span className="tabular-nums">{euro(i.price)}</span>
+                </li>
+              ))}
+            </ul>
+            {d.offer.note ? <p className="text-muted-foreground mt-3 text-sm">{d.offer.note}</p> : null}
+          </section>
+        ) : null}
         <section className={cn("rounded-3xl border p-5", d.deposit_paid_at ? "border-primary/50 bg-primary/[0.06]" : "border-border")}>
           <p className="font-medium">Капаро</p>
           {d.deposit > 0 ? (
@@ -345,7 +362,7 @@ function DetailView({
               )}
             </>
           ) : (
-            <p className="text-muted-foreground mt-2 text-sm">Няма зададено капаро за този вид проект (src/lib/inquiry-shared.ts → DEPOSITS).</p>
+            <p className="text-muted-foreground mt-2 text-sm">Няма капаро: консултантът не изчисли цена и за този вид проект няма фиксирано капаро (src/lib/inquiry-shared.ts → DEPOSITS).</p>
           )}
         </section>
         <section className="border-border rounded-3xl border p-5">

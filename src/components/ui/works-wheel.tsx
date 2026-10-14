@@ -168,7 +168,6 @@ export function WorksWheel({
   const headRef = React.useRef<HTMLDivElement>(null);
   const frontRef = React.useRef<HTMLDivElement>(null);
   const dimRefs = React.useRef<(HTMLSpanElement | null)[]>([]);
-  const numRef = React.useRef<HTMLDivElement>(null);
   const glowRef = React.useRef<HTMLDivElement>(null);
   /** Pointer position over the stage, -1..1, for the lean. */
   const pointer = React.useRef({ x: 0, y: 0 });
@@ -423,7 +422,7 @@ export function WorksWheel({
     if (!stage.h || !count) return;
     let frame = 0;
     let visible = true;
-    const { ringR, ringScale, helixR, pitch, ringShift, cardH } = metrics;
+    const { ringR, ringScale, helixR, pitch, ringShift } = metrics;
     const still = reduced;
     let speed = 0; // smoothed turns per frame
     let lean = { x: 0, y: 0 };
@@ -509,10 +508,6 @@ export function WorksWheel({
       }
       const shown = clamp((m - 0.55) / 0.45, 0, 1);
       if (frontRef.current) frontRef.current.style.opacity = String(shown);
-      if (numRef.current) {
-        numRef.current.style.opacity = String(shown);
-        numRef.current.style.transform = `translate3d(${-lean.x * 18}px, ${-speed * cardH * 30}px, 0)`;
-      }
       if (glowRef.current) {
         glowRef.current.style.opacity = String(m * (0.75 + 0.25 * Math.sin(time * 1.2)));
       }
@@ -653,21 +648,7 @@ export function WorksWheel({
           )}
           style={{ perspective: `${metrics.depth}px` }}
         >
-          {/* Depth layers behind the spiral: the project number, huge and
-              hollow, and a soft light under the front card. */}
-          <div
-            ref={numRef}
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 grid place-items-center opacity-0"
-          >
-            <span
-              key={active}
-              className="ww-num font-display leading-none font-[500] tracking-[-0.06em] text-transparent tabular-nums [-webkit-text-stroke:1px_rgb(168_216_255/0.14)]"
-              style={{ fontSize: metrics.cardH * (narrow ? 1.5 : 2.3) }}
-            >
-              {String(active + 1).padStart(2, "0")}
-            </span>
-          </div>
+          {/* A soft light under the front card. */}
           <div
             ref={glowRef}
             aria-hidden="true"

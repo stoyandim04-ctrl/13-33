@@ -46,6 +46,7 @@ export function GET(request: Request) {
       answers: { projectType: "", hasSite: "", siteUrl: "", when: "", budget: "", ...row.answers },
       files: await withUrls(row.files ?? []),
       deposit: row.deposit,
+      estimate: row.offer && typeof row.offer.price === "number" ? row.offer : null,
       paidAt: row.deposit_paid_at,
       canPay: Boolean(env.stripeKey),
       studioName: env.studioName,

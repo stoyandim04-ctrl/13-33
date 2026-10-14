@@ -38,7 +38,9 @@ export function POST(request: Request) {
             unit_amount: row.deposit * 100,
             product_data: {
               name: `Капаро — проект №${row.number}`,
-              description: "13:33 Digital Studio. Приспада се от крайната цена на проекта.",
+              description: row.offer?.price
+                ? `13:33 Digital Studio. Цена на проекта ${row.offer.price} €; капарото се приспада от нея.`
+                : "13:33 Digital Studio. Приспада се от крайната цена на проекта.",
             },
           },
         },

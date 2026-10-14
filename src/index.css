@@ -3,17 +3,16 @@
 
   1. Subject & audience — business owners in Bulgaria. In three seconds:
      "a serious studio; they build sites, shops and systems; I can start here."
-  2. Reference — the founder's reference: a dark hero, thin geometric type, two
-     or three words in a lilac→peach gradient, one glowing button, a quiet
-     perspective grid drifting underneath.
+  2. Reference — a dark hero, thin geometric type, one line in a white→lilac
+     gradient, one glowing button, a quiet perspective grid drifting underneath.
   3. Palette — deep violet-black #07060F (+2 close shades), pure white text,
      mist #B8B3CC. The accent is lilac: #8F7BFF for actions and current state,
-     #C8B6FF (`ice`) for highlights, and the lilac→peach gradient only on the
-     hero's key words. Nothing else is coloured.
+     #C8B6FF (`ice`) for highlights, and the white→lilac gradient only on the
+     hero's key line. Nothing else is coloured.
   4. Type — Manrope for everything (it carries the Bulgarian Cyrillic forms;
      lang="bg" switches them on). Light (300) for the big statements, regular
      body. Fixed scale below.
-  5. Signature — the hero: the sentence, the gradient words, the grid floor
+  5. Signature — the hero: the promise, the gradient line, the grid floor
      that leans away and the glowing "Започни проект".
 */
 @import "tailwindcss";
@@ -109,15 +108,9 @@
     @apply border-ice;
   }
 
-  /* The two gradients. Only the hero's key words and nothing else. */
+  /* The one gradient: white into lilac, only on the hero's key line. */
   .grad-lilac {
-    background: linear-gradient(90deg, #d9c8ff, #e7b6f0 55%, #f3b8d4);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .grad-peach {
-    background: linear-gradient(90deg, #f3c38b, #e6a872);
+    background: linear-gradient(100deg, #ffffff 0%, #ddd2ff 40%, #a996ff 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -165,7 +158,7 @@
   }
 }
 
-/* ---------- Rainbow button (the founder's component) ----------
+/* ---------- Rainbow button ----------
    A rotating white streak behind a translucent pill. Scales up on hover,
    presses on click. One per view: the primary action. */
 .rainbow {
@@ -221,19 +214,68 @@
 /* ---------- Hero ---------- */
 .hero-glow {
   background:
-    radial-gradient(60% 45% at 50% -5%, rgb(120 90 220 / 0.5), transparent 70%),
-    radial-gradient(40% 30% at 50% 0%, rgb(200 182 255 / 0.28), transparent 70%),
-    linear-gradient(180deg, #0a0812, #07060f 60%);
+    radial-gradient(70% 55% at 50% -12%, rgb(120 96 230 / 0.32), transparent 70%),
+    linear-gradient(180deg, #0a0814, #07060f 70%);
 }
-.hero-beam {
-  left: 50%;
-  top: 0;
-  width: min(34rem, 60vw);
-  height: 62%;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, rgb(170 150 255 / 0.22), transparent);
-  filter: blur(28px);
-  mix-blend-mode: screen;
+/* Two slow lilac lights. Only opacity and transform move. */
+.hero-aura::before,
+.hero-aura::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform;
+}
+.hero-aura::before {
+  width: min(48rem, 90vw);
+  aspect-ratio: 1;
+  right: -14%;
+  top: -18%;
+  background: radial-gradient(closest-side, rgb(143 123 255 / 0.34), transparent);
+  animation: hero-drift 18s ease-in-out infinite alternate;
+}
+.hero-aura::after {
+  width: min(30rem, 70vw);
+  aspect-ratio: 1;
+  left: -10%;
+  bottom: 4%;
+  background: radial-gradient(closest-side, rgb(200 182 255 / 0.12), transparent);
+  animation: hero-drift 22s ease-in-out -6s infinite alternate-reverse;
+}
+@keyframes hero-drift {
+  to {
+    transform: translate3d(-6%, 8%, 0) scale(1.08);
+  }
+}
+/* The work beside the promise: a slight lean, the video fades in over the poster. */
+.hero-reel {
+  transform: perspective(80rem) rotateY(-9deg) rotateX(3deg);
+  transition: transform 1.2s var(--ease-out-expo);
+}
+a:hover > .hero-reel {
+  transform: perspective(80rem) rotateY(-4deg) rotateX(1deg) translateY(-0.4rem);
+}
+.hero-reel-video {
+  animation: reel-in 1.2s ease both;
+}
+@keyframes reel-in {
+  from {
+    opacity: 0;
+  }
+}
+.hero-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 0 rgb(143 123 255 / 0.6);
+  animation: hero-dot 2.6s ease-out infinite;
+}
+@keyframes hero-dot {
+  70%,
+  100% {
+    box-shadow: 0 0 0 0.6rem rgb(143 123 255 / 0);
+  }
 }
 .hero-floor {
   --cell: clamp(3rem, 7vw, 7rem);
@@ -244,9 +286,9 @@
   transform: perspective(60rem) rotateX(62deg);
   transform-origin: 50% 100%;
   background:
-    linear-gradient(90deg, rgb(255 255 255 / 0.14) 1px, transparent 1px) 0 0 / var(--cell) 100%,
-    linear-gradient(0deg, rgb(255 255 255 / 0.14) 1px, transparent 1px) 0 0 / 100% var(--cell);
-  mask-image: linear-gradient(180deg, transparent, #000 35%, #000);
+    linear-gradient(90deg, rgb(255 255 255 / 0.07) 1px, transparent 1px) 0 0 / var(--cell) 100%,
+    linear-gradient(0deg, rgb(255 255 255 / 0.07) 1px, transparent 1px) 0 0 / 100% var(--cell);
+  mask-image: linear-gradient(180deg, transparent, #000 45%, rgb(0 0 0 / 0.6));
   animation: hero-floor 9s linear infinite;
 }
 @keyframes hero-floor {
@@ -277,7 +319,7 @@
   color: var(--color-foreground);
 }
 
-/* Portfolio: the caption and the big number arrive with each new project. */
+/* Portfolio: the caption arrives with each new project. */
 @keyframes ww-rise {
   from {
     opacity: 0;
@@ -290,25 +332,11 @@
     filter: none;
   }
 }
-@keyframes ww-num {
-  from {
-    opacity: 0;
-    transform: translateY(14%) scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
 .ww-rise {
   animation: ww-rise 0.7s var(--ease-out-expo) both;
 }
 .ww-d1 {
   animation-delay: 0.06s;
-}
-.ww-num {
-  display: inline-block;
-  animation: ww-num 0.9s var(--ease-out-expo) both;
 }
 
 

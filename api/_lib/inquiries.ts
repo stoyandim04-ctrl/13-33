@@ -1,6 +1,6 @@
 // Creating an inquiry - from the questionnaire, the description or the
 // consultant's own call at the end of the conversation. One place, so the
-// founder's Telegram, the client's e-mail and the deposit are always the same.
+// studio's Telegram, the client's e-mail, the price and the deposit always agree.
 import { db, env, HttpError } from "./env.js";
 import { adopt } from "./files.js";
 import { cleanPaths, isEmail, str } from "./http.js";
@@ -10,12 +10,17 @@ import {
   BRIEF_LABELS,
   CONCRETE_TYPES,
   depositFor,
+  depositFromPrice,
   emptyBrief,
+  FIRST_VERSION_DAYS,
+  PRICE_GUIDE,
   projectTypeLabel,
   PROJECT_TYPES,
   type AiTurn,
   type Answers,
   type Brief,
+  type ConcreteTypeId,
+  type Estimate,
 } from "../../src/lib/inquiry-shared.js";
 
 export interface NewInquiry {
@@ -29,9 +34,30 @@ export interface NewInquiry {
   phone: string;
   /** The consultant's choice, when the questionnaire did not say. */
   projectType?: string;
+  /** The consultant's price, item by item. */
+  estimate?: unknown;
 }
 
 export const isConcreteType = (v: string) => (CONCRETE_TYPES as readonly string[]).includes(v);
+
+/**
+ * The consultant's price, checked: whole euro items, a total inside the guide
+ * for the kind of project ([from, 2 × to]). Anything else is no price at all -
+ * the inquiry then falls back to the fixed deposit.
+ */
+export function cleanEstimate(raw: unknown, type: string): Estimate | null {
+  if (!isConcreteType(type) || !raw || typeof raw !== "object") return null;
+  const r = raw as { items?: unknown; note?: unknown };
+  const items = (Array.isArray(r.items) ? r.items : [])
+    .slice(0, 12)
+    .map((i) => ({ name: str((i as { name?: unknown })?.name, 120), price: Math.round(Number((i as { price?: unknown })?.price)) }))
+    .filter((i) => i.name && Number.isFinite(i.price) && i.price > 0);
+  if (!items.length) return null;
+  const price = items.reduce((sum, i) => sum + i.price, 0);
+  const guide = PRICE_GUIDE[type as ConcreteTypeId];
+  if (price < guide.from || price > guide.to * 2) return null;
+  return { price, items, note: str(r.note, 400) };
+}
 
 export async function createInquiry(input: NewInquiry): Promise<{ token: string; number: number; deposit: number }> {
   const draftId = str(input.draftId, 64);
@@ -60,7 +86,8 @@ export async function createInquiry(input: NewInquiry): Promise<{ token: string;
   const transcript = (Array.isArray(input.transcript) ? input.transcript : [])
     .slice(-40)
     .map((t) => ({ role: t.role === "ai" ? "ai" : "client", text: str(t.text, 3000), files: cleanPaths(t.files, [`drafts/${draftId}/`]) }));
-  const deposit = depositFor(projectType);
+  const estimate = cleanEstimate(input.estimate, projectType);
+  const deposit = estimate ? depositFromPrice(estimate.price) : depositFor(projectType);
 
   // A light brake on repeated sends from one address.
   const hourAgo = new Date(Date.now() - 3600_000).toISOString();
@@ -69,7 +96,7 @@ export async function createInquiry(input: NewInquiry): Promise<{ token: string;
 
   const { data, error } = await db()
     .from("inquiries")
-    .insert({ name, email, phone: phone || null, project_type: projectType, answers, brief, transcript, deposit })
+    .insert({ name, email, phone: phone || null, project_type: projectType, answers, brief, transcript, deposit, offer: estimate })
     .select("id, number, token")
     .single();
   if (error || !data) throw new HttpError(500, "create");
@@ -83,8 +110,9 @@ export async function createInquiry(input: NewInquiry): Promise<{ token: string;
     [
       `Ново запитване №${data.number} — ${name}`,
       [email, phone].filter(Boolean).join(" · "),
-      `${projectTypeLabel(projectType)} · капаро ${deposit > 0 ? `${deposit} €` : "не е зададено"}`,
+      `${projectTypeLabel(projectType)} · ${estimate ? `цена ${estimate.price} € · ` : ""}капаро ${deposit > 0 ? `${deposit} €` : "не е зададено"}`,
       brief.summary,
+      ...(estimate ? estimate.items.map((i) => `· ${i.name}: ${i.price} €`) : []),
       ...lines,
       files.length ? `Файлове: ${files.length}` : "",
       studioLink(data.number),
@@ -102,10 +130,11 @@ export async function createInquiry(input: NewInquiry): Promise<{ token: string;
       `Здравей, ${name}!`,
       [
         `Получихме запитването ти за <strong>${projectTypeLabel(projectType)}</strong>. Брифът е подреден и е на личния ти линк.`,
+        estimate ? `Цената на проекта е <strong>${estimate.price} €</strong>; разбивката е на страницата ти.` : "",
         deposit > 0
-          ? `Следващата стъпка е капарото от <strong>${deposit} €</strong> - плаща се онлайн на същата страница и се приспада от крайната цена. След него ${env.studioName} ти пише на този имейл с точна цена и план.`
+          ? `Следващата стъпка е капарото от <strong>${deposit} €</strong> - плаща се онлайн на същата страница и се приспада от цената. До ${FIRST_VERSION_DAYS} работни дни след него първата версия е на този имейл.`
           : `${env.studioName} ще прегледа брифа и ще ти пише на този имейл.`,
-      ],
+      ].filter(Boolean),
       { label: deposit > 0 ? "Виж брифа и плати капарото" : "Виж брифа си", href: link },
     ),
   );

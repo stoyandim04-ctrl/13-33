@@ -211,7 +211,7 @@ function Choose({
           <p className="eyebrow mb-5">{tr("Започни проект")}</p>
           <h1 className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">{tr("Как искаш да ни разкажеш?")}</h1>
           <p className="text-lead text-muted-foreground mt-6 max-w-[42ch] text-pretty">
-            {tr("И по двата пътя накрая виждаш брифа си и капарото на лична страница. Без регистрация.")}
+            {tr("И по двата пътя накрая виждаш брифа си на лична страница. Без регистрация.")}
           </p>
         </header>
 
@@ -904,7 +904,7 @@ function Chat({
             onSend={(text, files) => send(text, files)}
           />
           <p className="text-muted-foreground mt-2 px-1 text-xs">
-            {ai ? tr("Щом консултантът има всичко, изпраща запитването сам. Цената ти я пише основателят, лично.") : tr("Цената ти я пише основателят, лично.")}
+            {ai ? tr("Щом консултантът има всичко, изчислява цената и изпраща запитването сам.") : tr("Екипът чете всяко запитване лично.")}
           </p>
         </div>
       </div>
@@ -914,7 +914,7 @@ function Chat({
 
 function Avatar() {
   return (
-    <span className="from-ice to-peach text-background grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br font-display text-[0.8rem] font-[700] tracking-[-0.04em]">
+    <span className="from-ice to-primary text-background grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br font-display text-[0.8rem] font-[700] tracking-[-0.04em]">
       13
     </span>
   );
@@ -1178,7 +1178,7 @@ function ContactCard({
       <p className="eyebrow mb-3">{tr("Последно")}</p>
       <h2 className="font-display text-title font-[500] tracking-[-0.025em]">{tr("Как да ти пишем?")}</h2>
       <p className="text-muted-foreground mt-2 text-[0.9375rem] text-pretty">
-        {tr("Ще видиш брифа си и капарото на лична страница. После основателят ти пише на имейл.")}
+        {tr("Ще видиш брифа си на лична страница. До 4 работни дни след капарото първата версия е на имейла ти.")}
       </p>
 
       <form onSubmit={send} noValidate className="mt-6 space-y-5">
@@ -1208,7 +1208,7 @@ function ContactCard({
         </label>
 
         <ul className="text-muted-foreground space-y-2 text-[0.9375rem]">
-          {[requireText ? "Основателят чете описанието ти." : "Основателят преглежда разговора.", "Плащаш капарото онлайн — приспада се от крайната цена.", "Получаваш имейл с точна цена и план, и започваме."].map((t) => tr(t)).map((t) => (
+          {[requireText ? "Екипът чете описанието ти." : "Екипът преглежда разговора.", "Плащаш капарото онлайн — приспада се от цената.", "До 4 работни дни първата версия е на имейла ти."].map((t) => tr(t)).map((t) => (
             <li key={t} className="flex gap-2.5">
               <Check aria-hidden="true" className="text-ice mt-1 size-4 shrink-0" />
               <span>{t}</span>

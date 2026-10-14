@@ -33,9 +33,8 @@ export function SiteFooter() {
             </ul>
           </nav>
         </div>
-        <div className="hairline text-muted-foreground mt-14 flex flex-col justify-between gap-3 pt-6 text-sm sm:flex-row">
+        <div className="hairline text-muted-foreground mt-14 pt-6 text-sm">
           <p>© {new Date().getFullYear()} 13:33 — Digital Studio</p>
-          <p>{footer.note}</p>
         </div>
       </div>
     </footer>
