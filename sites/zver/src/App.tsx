@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FLAVOURS } from "./data/flavours";
-import { Stage } from "./lib/stage";
 import { stageRef } from "./lib/stage-ref";
 import { StoreProvider, useStore } from "./lib/store";
-import { useLenis } from "./lib/scroll";
+import { addJob, useLenis } from "./lib/scroll";
 import { Intro } from "./components/intro";
 import { Nav } from "./components/nav";
 import { Hero } from "./components/hero";
@@ -24,9 +23,15 @@ function Site() {
 
   useEffect(() => {
     if (!canvas.current) return;
-    const stage = new Stage(canvas.current);
+    const el = canvas.current;
     let alive = true;
-    stage.init().then(() => {
+    let dispose = () => {};
+    // three.js се зарежда отделно — интрото се показва веднага.
+    import("./lib/stage").then(async ({ Stage }) => {
+      if (!alive) return;
+      const stage = new Stage(el);
+      dispose = () => stage.dispose();
+      await stage.init();
       if (!alive) return;
       stageRef.current = stage;
       stage.start();
@@ -34,7 +39,7 @@ function Site() {
     });
     return () => {
       alive = false;
-      stage.dispose();
+      dispose();
       stageRef.current = null;
     };
   }, []);
@@ -53,22 +58,19 @@ function Site() {
 
   // Линията е на кремав фон.
   useEffect(() => {
-    let raf = 0;
     let tone = "";
-    const tick = () => {
+    return addJob(() => {
       const H = window.innerHeight;
       const line = document.getElementById("line")?.getBoundingClientRect();
       const shop = document.getElementById("shop")?.getBoundingClientRect();
       const next = line && shop && line.top < H * 0.5 && shop.top > H * 0.5 ? "cream" : "";
-      if (next !== tone) {
-        tone = next;
+      if (next === tone) return;
+      tone = next;
+      return () => {
         if (tone) document.documentElement.dataset.tone = tone;
         else delete document.documentElement.dataset.tone;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+      };
+    });
   }, []);
 
   const onOpen = useCallback(() => {

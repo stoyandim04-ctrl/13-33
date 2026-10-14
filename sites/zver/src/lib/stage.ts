@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { FLAVOURS } from "../data/flavours";
+import { addJob } from "./scroll";
 import { CAN_H, FRUIT_KIND, createCan, drawLabel, drawSlice, loadFonts, type Can, type FruitKind } from "./can";
 
 /*
@@ -72,7 +73,11 @@ export class Stage {
   private pos: Float32Array = new Float32Array(N_CANS * K);
   private vel: Float32Array = new Float32Array(N_CANS * K);
   private lastSlot: number[] = new Array(N_CANS).fill(0);
-  private raf = 0;
+  private stop: () => void = () => undefined;
+  private hidden = false;
+  private dpr = 1;
+  private frameAvg = 0.016;
+  private frameCount = 0;
   private last = 0;
   private t = 0;
   private mobile = false;
@@ -145,6 +150,11 @@ export class Stage {
       this.pos[i * K + 6] = i < 6 ? 1 : 0;
     }
     this.buildParticles();
+    // Шейдърите и текстурите — сега, докато върви интрото, а не при първата
+    // експлозия (иначе тя засича за част от секундата).
+    this.resize();
+    this.renderer.compile(this.scene, this.camera);
+    for (const tex of this.labels) this.renderer.initTexture(tex);
     this.setFlavour(this.sel, false);
     this.resize();
     window.addEventListener("resize", this.resize);
@@ -171,9 +181,8 @@ export class Stage {
     const cube = new THREE.InstancedMesh(new RoundedBoxGeometry(0.32, 0.32, 0.32, 3, 0.06), this.cubeMat, nf);
     this.fruit = { slice, berry, cube };
 
-    const iceMat = this.mobile
-      ? new THREE.MeshPhysicalMaterial({ color: "#eaf8ff", roughness: 0.05, transparent: true, opacity: 0.55, clearcoat: 1 })
-      : new THREE.MeshPhysicalMaterial({ color: "#ffffff", transmission: 1, thickness: 0.5, roughness: 0.06, ior: 1.31, clearcoat: 1 });
+    // Без transmission: тя рисува цялата сцена втори път всеки кадър.
+    const iceMat = new THREE.MeshPhysicalMaterial({ color: "#eef9ff", roughness: 0.04, metalness: 0.1, transparent: true, opacity: 0.62, clearcoat: 1, depthWrite: false });
     this.ice = new THREE.InstancedMesh(new RoundedBoxGeometry(0.42, 0.42, 0.42, 3, 0.08), iceMat, ni);
     this.dropMat = new THREE.MeshPhysicalMaterial({ roughness: 0.02, clearcoat: 1, transparent: true, opacity: 0.85 });
     this.drops = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 12, 8), this.dropMat, nd);
@@ -211,20 +220,54 @@ export class Stage {
     if (!this.reduced) this.shake = Math.max(this.shake, amount);
   }
 
+  /**
+   * Върви в общия цикъл (lib/scroll.ts): първо всички четения от DOM, после
+   * записите — така браузърът не преизчислява оформлението по няколко пъти на кадър.
+   */
   start() {
     this.last = performance.now();
-    const loop = (now: number) => {
+    this.stop = addJob((now) => {
       // ?shot — за снимки в бавен браузер: по-голяма стъпка, пружината стига целта.
-      const dt = Math.min(this.maxDt, (now - this.last) / 1000);
+      const raw = (now - this.last) / 1000;
+      const dt = Math.min(this.maxDt, raw);
       this.last = now;
-      this.frame(dt);
-      this.raf = requestAnimationFrame(loop);
-    };
-    this.raf = requestAnimationFrame(loop);
+      const draw = this.frame(dt);
+      return () => {
+        const hidden = !draw;
+        if (hidden !== this.hidden) {
+          this.hidden = hidden;
+          this.canvas.style.visibility = hidden ? "hidden" : "";
+        }
+        if (draw) {
+          this.renderer.render(this.scene, this.camera);
+          this.adapt(raw);
+        }
+      };
+    });
+  }
+
+  /**
+   * Адаптивна резолюция: ако средният кадър е над ~20 мс (под 50 fps),
+   * намаляме pixel ratio на стъпки до 1; ако е лесно — връщаме нагоре.
+   */
+  private adapt(raw: number) {
+    if (raw > 0.25 || this.maxDt > 0.05) return; // скрит таб / режим за снимки
+    this.frameAvg += (raw - this.frameAvg) * 0.05;
+    if (++this.frameCount < 90) return;
+    this.frameCount = 0;
+    const max = Math.min(window.devicePixelRatio, this.mobile ? 1.5 : 1.75);
+    let next = this.dpr;
+    if (this.frameAvg > 0.02) next = Math.max(1, this.dpr - 0.25);
+    else if (this.frameAvg < 0.0135) next = Math.min(max, this.dpr + 0.25);
+    if (next !== this.dpr) {
+      this.dpr = next;
+      this.renderer.setPixelRatio(next);
+      this.renderer.setSize(window.innerWidth, window.innerHeight, false);
+    }
   }
 
   dispose() {
-    cancelAnimationFrame(this.raf);
+    this.stop();
     window.removeEventListener("resize", this.resize);
     window.removeEventListener("pointermove", this.onPointer);
     this.renderer.dispose();
@@ -239,7 +282,8 @@ export class Stage {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.mobile = Math.min(w, h) < 700;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.mobile ? 1.5 : 1.75));
+    this.dpr = Math.min(window.devicePixelRatio, this.mobile ? 1.5 : 1.5);
+    this.renderer.setPixelRatio(this.dpr);
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
@@ -277,8 +321,9 @@ export class Stage {
     return 2 * 12 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
   }
 
-  private frame(dt: number) {
-    if (!this.cans.length) return;
+  /** Смята кадъра; връща false, ако няма какво да се рисува. */
+  private frame(dt: number): boolean {
+    if (!this.cans.length) return false;
     this.t += dt;
     const t = this.t;
     const visH = this.visH();
@@ -292,11 +337,7 @@ export class Stage {
     const faq = this.section("faq");
 
     // Под FAQ платното е покрито — не рисуваме.
-    if (faq.top <= 0) {
-      this.canvas.style.visibility = "hidden";
-      return;
-    }
-    this.canvas.style.visibility = "";
+    if (faq.top <= 0) return false;
 
     const p = this.pointer;
     p.sx += (p.x - p.sx) * Math.min(1, dt * 4);
@@ -437,7 +478,7 @@ export class Stage {
     );
     this.camera.rotation.z = Math.sin(t * 57) * sh * 0.04;
 
-    this.renderer.render(this.scene, this.camera);
+    return true;
   }
 
   private spring(i: number, target: Pose, dt: number) {
@@ -475,7 +516,12 @@ export class Stage {
     const hy = aHero?.y ?? 0;
 
     const place = (m: THREE.InstancedMesh, list: Particle[], k: number, inHero: number, scale: number) => {
+      // Рисуваме само видимите: в hero-то — първите няколко, при експлозията — всички.
+      const shown = burstVis > 0 ? list.length : heroVis > 0 ? inHero : 0;
+      m.count = shown;
+      if (!shown) return;
       list.forEach((q, n) => {
+        if (n >= shown) return;
         let vis = 0;
         if (burstVis > 0) {
           vis = burstVis;
