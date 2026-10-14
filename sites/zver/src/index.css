@@ -1,0 +1,259 @@
+/*
+  ЗВЯР · визуална система
+
+  Брутално: цял екран в цвета на вкуса, черен (или кремав) текст, дебели
+  черни рамки и твърди сенки без размазване. Unbounded 900 — само главни
+  букви за заглавията (кирилицата там е еднаква за всички езици);
+  Manrope за текста (носи българските форми); JetBrains Mono за етикетите.
+  Цветът на вкуса идва от --f-bg/--f-ink/--f-acc (задава ги App);
+  --bg/--ink са това, което секцията ползва в момента.
+*/
+@import "tailwindcss";
+@import "@fontsource/unbounded/900.css";
+@import "@fontsource-variable/manrope";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/700.css";
+
+@theme {
+  --color-black: #0a0a0a;
+  --color-cream: #efe9dc;
+  --color-bone: #f4f1ea;
+
+  --font-display: "Unbounded", system-ui, sans-serif;
+  --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-label: 0.6875rem;
+  --text-label--letter-spacing: 0.14em;
+  --text-label--line-height: 1.35;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.55;
+  --text-lead: clamp(1rem, 0.92rem + 0.4vw, 1.25rem);
+  --text-lead--line-height: 1.45;
+  --text-title: clamp(1.5rem, 1rem + 1.6vw, 2.75rem);
+  --text-title--line-height: 1;
+  --text-heading: clamp(2.6rem, 0.9rem + 6.4vw, 8.5rem);
+  --text-heading--line-height: 0.86;
+  --text-mega: clamp(6rem, 1rem + 25vw, 30rem);
+  --text-mega--line-height: 0.78;
+
+  --ease-slam: cubic-bezier(0.2, 1.4, 0.4, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  --f-bg: #ff2b1c;
+  --f-ink: #0a0a0a;
+  --f-acc: #ffd400;
+  --f-hi: #ff2b1c;
+  --bg: var(--f-bg);
+  --ink: var(--f-ink);
+}
+:root[data-tone="cream"] {
+  --bg: var(--color-cream);
+  --ink: var(--color-black);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    transition: background-color 0.5s ease;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--bg);
+    transition: background-color 0.5s ease, color 0.5s ease;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: var(--color-black);
+    color: var(--f-hi);
+  }
+  :focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
+  }
+  button {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+  }
+  .label {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: var(--text-label--letter-spacing);
+    line-height: var(--text-label--line-height);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  /* Контур: обводката е под заливката (paint-order), за да не се виждат
+     вътрешните пресичания на контурите в шрифта. */
+  .outline-text {
+    color: var(--outline-fill, var(--bg));
+    -webkit-text-stroke: 5px var(--outline-ink, var(--ink));
+    paint-order: stroke fill;
+  }
+  /* Твърдата сянка — всеки бутон и карта. */
+  .slab {
+    border: 3px solid var(--color-black);
+    box-shadow: 6px 6px 0 var(--color-black);
+    transition: transform 0.18s var(--ease-slam), box-shadow 0.18s var(--ease-slam);
+  }
+  .slab:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0 var(--color-black);
+  }
+  .slab:active {
+    transform: translate(4px, 4px);
+    box-shadow: 2px 2px 0 var(--color-black);
+  }
+  /* Главното действие — едно на изглед. */
+  .btn-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--color-black);
+    color: var(--f-hi);
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    border: 3px solid var(--color-black);
+    box-shadow: 6px 6px 0 var(--color-bone);
+    transition: transform 0.18s var(--ease-slam), box-shadow 0.18s var(--ease-slam);
+  }
+  :root[data-tone="cream"] .btn-main,
+  .on-light .btn-main {
+    color: var(--color-bone);
+    box-shadow: 6px 6px 0 var(--f-hi);
+  }
+  .btn-main:hover {
+    transform: translate(-3px, -3px) rotate(-1deg);
+    box-shadow: 10px 10px 0 var(--color-bone);
+  }
+  .btn-main:active {
+    transform: translate(4px, 4px);
+    box-shadow: 1px 1px 0 var(--color-bone);
+  }
+  .nav-link {
+    position: relative;
+    padding: 0.4rem 0.1rem;
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.3s var(--ease-out-expo);
+  }
+  .nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* Лента — безкраен надпис. */
+.tape {
+  display: flex;
+  width: max-content;
+  animation: tape var(--tape-speed, 22s) linear infinite;
+}
+.tape-rev {
+  animation-direction: reverse;
+}
+@keyframes tape {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Глич на заглавието: два отместени слоя, които потрепват. */
+.glitch {
+  position: relative;
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.glitch::before {
+  color: var(--f-acc);
+  mix-blend-mode: multiply;
+  animation: glitch-a 3.2s steps(1) infinite;
+}
+.glitch::after {
+  color: var(--color-bone);
+  mix-blend-mode: difference;
+  opacity: 0.6;
+  animation: glitch-b 2.7s steps(1) infinite;
+}
+@keyframes glitch-a {
+  0%, 88%, 100% { transform: none; clip-path: inset(0 0 100% 0); }
+  89% { transform: translate(-0.04em, 0.01em); clip-path: inset(12% 0 60% 0); }
+  92% { transform: translate(0.05em, 0); clip-path: inset(55% 0 20% 0); }
+  95% { transform: translate(-0.02em, -0.02em); clip-path: inset(30% 0 45% 0); }
+}
+@keyframes glitch-b {
+  0%, 90%, 100% { transform: none; clip-path: inset(0 0 100% 0); }
+  91% { transform: translate(0.05em, 0); clip-path: inset(70% 0 5% 0); }
+  94% { transform: translate(-0.05em, 0.02em); clip-path: inset(5% 0 75% 0); }
+}
+
+/* Зърно върху всичко. */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain 0.9s steps(4) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -3%); }
+  75% { transform: translate(-1%, 3%); }
+}
+
+/* Смяна на вкуса: диагонален удар с новия цвят. */
+.wipe {
+  animation: wipe 0.6s cubic-bezier(0.7, 0, 0.2, 1) forwards;
+}
+@keyframes wipe {
+  0% { clip-path: polygon(0 0, 0 0, -20% 100%, -20% 100%); }
+  55% { clip-path: polygon(0 0, 120% 0, 100% 100%, -20% 100%); }
+  100% { clip-path: polygon(120% 0, 120% 0, 100% 100%, 100% 100%); }
+}
+
+.slam-in {
+  animation: slam 0.55s var(--ease-slam) both;
+}
+@keyframes slam {
+  from { transform: translateY(-0.4em) scale(1.25); opacity: 0; filter: blur(6px); }
+  to { transform: none; opacity: 1; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tape, .grain, .glitch::before, .glitch::after { animation: none; }
+  .wipe, .slam-in { animation-duration: 0.01s; }
+}
