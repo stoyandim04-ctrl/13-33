@@ -10,7 +10,7 @@ export const env = {
   anthropicKey: (process.env.ANTHROPIC_API_KEY ?? "").trim(),
   studioPassword: (process.env.STUDIO_PASSWORD ?? "").trim(),
   /** Shown to clients as who they are writing with. */
-  studioName: process.env.STUDIO_NAME || "Основателят на 13:33",
+  studioName: /основател|founder/i.test(process.env.STUDIO_NAME ?? "") ? "Екипът на 13:33" : process.env.STUDIO_NAME || "Екипът на 13:33",
   telegramToken: (process.env.TELEGRAM_BOT_TOKEN ?? "").trim(),
   telegramChat: (process.env.TELEGRAM_CHAT_ID ?? "").trim(),
   /** Stripe: the deposit is paid online. Secret key + the webhook's signing secret. */

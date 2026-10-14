@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { db, env, HttpError } from "./env.js";
 import { layout, sendMail } from "./mail.js";
 import { notify, studioLink } from "./notify.js";
-import type { Brief, InquiryStatus } from "../../src/lib/inquiry-shared.js";
+import { FIRST_VERSION_DAYS, type Brief, type Estimate, type InquiryStatus } from "../../src/lib/inquiry-shared.js";
 
 export const TOKEN_RE = /^[a-f0-9]{48}$/;
 
@@ -20,6 +20,8 @@ export interface InquiryRow {
   answers: Record<string, string>;
   files: string[];
   deposit: number;
+  /** The consultant's price (Estimate), or null. */
+  offer: Estimate | null;
   deposit_paid_at: string | null;
   stripe_session_id: string | null;
   created_at: string;
@@ -33,7 +35,7 @@ export function stripe(): Stripe {
 }
 
 /**
- * The deposit went through: remember it, tell the founder, thank the client.
+ * The deposit went through: remember it, tell the studio, thank the client.
  * Idempotent - Stripe may deliver the same event twice, and the page may
  * reconcile the session before the webhook arrives.
  */
@@ -61,8 +63,8 @@ export async function markPaid(session: Stripe.Checkout.Session) {
     layout(
       `Благодарим, ${row.name}!`,
       [
-        `Получихме капарото от <strong>${row.deposit} €</strong> за проект №${row.number}. То се приспада от крайната цена.`,
-        `${env.studioName} вече преглежда брифа ти и ще ти пише на този имейл с точна цена, план и първите стъпки.`,
+        `Получихме капарото от <strong>${row.deposit} €</strong> за проект №${row.number}. То се приспада от цената.`,
+        `Екипът вече работи. До ${FIRST_VERSION_DAYS} работни дни първата версия на проекта ти е на този имейл; после я изглаждаме заедно, докато стане точно каквато я искаш.`,
         "Брифът ти остава на личния ти линк, ако искаш да го погледнеш пак.",
       ],
       { label: "Виж проекта си", href: `${env.siteUrl}/zapitvane/${row.token}` },

@@ -103,12 +103,21 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {switcher("hidden md:flex")}
+            {/* On the phone the other language is one tap away, always visible. */}
+            <button
+              type="button"
+              onClick={() => setLang(lang === "bg" ? "en" : "bg")}
+              aria-label={lang === "bg" ? "Switch to English" : "Превключи на български"}
+              className="text-muted-foreground hover:text-foreground border-border grid h-9 min-w-9 place-items-center rounded-full border px-2 text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors md:hidden"
+            >
+              {lang === "bg" ? "en" : "bg"}
+            </button>
             {onStart ? null : (
-              <RainbowLink to="/zapochni" size="sm" className="hidden md:inline-flex" data-ping="start-header">
+              <RainbowLink to="/zapochni" size="sm" data-ping="start-header">
                 {tr("Започни проект")}
-                <ArrowRight aria-hidden="true" className="size-3.5" />
+                <ArrowRight aria-hidden="true" className="hidden size-3.5 sm:block" />
               </RainbowLink>
             )}
             <button
