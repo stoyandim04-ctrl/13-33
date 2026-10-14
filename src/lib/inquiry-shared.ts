@@ -17,15 +17,15 @@ export type ConcreteTypeId = (typeof CONCRETE_TYPES)[number];
 
 /**
  * The deposit, in euro, by kind of project, for an inquiry without a computed
- * price (the questionnaire). 0 means "not set" - the client then sees the
+ * price (the questionnaire): about 15% of the middle of PRICE_GUIDE. 0 means "not set" - the client then sees the
  * brief without a payment step. Deducted from the final price.
  */
 export const DEPOSITS: Record<ConcreteTypeId, number> = {
-  landing: 60,
-  site: 100,
-  brand: 100,
-  shop: 180,
-  system: 180,
+  landing: 35,
+  site: 75,
+  brand: 40,
+  shop: 150,
+  system: 280,
 };
 
 export const depositFor = (type: string): number => DEPOSITS[type as ConcreteTypeId] ?? 0;
@@ -36,16 +36,16 @@ export const depositFor = (type: string): number => DEPOSITS[type as ConcreteTyp
  * range; the server keeps the total inside [from, 2 × to].
  */
 export const PRICE_GUIDE: Record<ConcreteTypeId, { from: number; to: number }> = {
-  landing: { from: 150, to: 400 },
-  site: { from: 300, to: 900 },
-  brand: { from: 150, to: 500 },
-  shop: { from: 600, to: 1800 },
-  system: { from: 900, to: 3500 },
+  landing: { from: 120, to: 350 },
+  site: { from: 250, to: 750 },
+  brand: { from: 120, to: 400 },
+  shop: { from: 500, to: 1500 },
+  system: { from: 750, to: 3000 },
 };
 
-/** The deposit is this share of the price, rounded to 10 € (at least 30 €). */
-export const DEPOSIT_SHARE = 0.3;
-export const depositFromPrice = (price: number): number => Math.max(30, Math.round((price * DEPOSIT_SHARE) / 10) * 10);
+/** The deposit is this share of the price, rounded to 5 € (at least 20 €). */
+export const DEPOSIT_SHARE = 0.15;
+export const depositFromPrice = (price: number): number => Math.max(20, Math.round((price * DEPOSIT_SHARE) / 5) * 5);
 
 /** What the project costs, as the consultant computed it. */
 export interface Estimate {
