@@ -1,5 +1,5 @@
 // Poster + muted preview for the portfolio projects that are real sites of
-// ours (Obsidian, Strong Muse, Варовик, Black Clove, Цукиби), recorded from the live
+// ours (Obsidian, FERAL, Варовик, Black Clove, Цукиби), recorded from the live
 // pages while they scroll - so the wheel shows each site in action.
 //
 //   node scripts/build-live-media.mjs [slug ...]
@@ -32,10 +32,6 @@ const SITES = {
     url: "https://obsidian-sigma-mocha.vercel.app",
     wait: 2500, speed: 900, scrollFor: 11000, posterAt: 0, lead: 0.6,
   },
-  "strong-muse": {
-    url: "https://strong-muse.vercel.app",
-    wait: 2200, speed: 380, scrollFor: 9500, posterAt: 0, lead: 0.6,
-  },
   varovik: {
     url: "https://varovik.vercel.app",
     wait: 3000, speed: 1300, scrollFor: 13000, posterAt: 0, lead: -2.4,
@@ -43,6 +39,11 @@ const SITES = {
   "black-clove": {
     url: "https://black-clove-rho.vercel.app",
     wait: 2500, speed: 800, scrollFor: 11000, posterAt: 0, lead: 0.6,
+  },
+  // ?shot: a larger spring step, so the 3D cans keep up in a software browser.
+  feral: {
+    url: "https://13-33-zver.vercel.app/?shot",
+    wait: 8000, speed: 1800, scrollFor: 12000, posterAt: 0, lead: 1.0, probe: true,
   },
   tsukibi: {
     url: "https://tsukibi.vercel.app",
@@ -87,6 +88,17 @@ for (const [slug, site] of Object.entries(SITES)) {
     await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
     await page.waitForTimeout(site.wait);
     await page.mouse.move(W / 2, H / 2);
+    // `probe`: the intro locks the scroll for as long as the 3D scene takes to
+    // load, which is longer while recording - wait until a wheel moves the
+    // page, then go back to the top and let it settle.
+    if (site.probe) {
+      for (let i = 0; i < 120 && (await page.evaluate(() => window.scrollY)) < 10; i++) {
+        await page.mouse.wheel(0, 120);
+        await page.waitForTimeout(250);
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(2500);
+    }
     const start = (Date.now() - t0) / 1000;
     await scroll(page, (site.speed * site.scrollFor) / 1000, site.scrollFor);
     const video = page.video();
