@@ -23,6 +23,8 @@ const W = 1160;
 const H = 800;
 const FPS = 30;
 const STEP = 1000 / FPS;
+/** Page time handed to a site's own frame loop (?rec). */
+let pageNow = 0;
 const executablePath = process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium";
 
 /** `intro`: ms of page time before the first frame (loaders, intros).
@@ -101,7 +103,6 @@ await browser.close();
 
 /** Advance the page by `ms`: the fake clock (timers, rAF), then every CSS
     animation and every playing video on the page by the same amount. */
-let pageNow = 0;
 async function step(page, ms, draw = true) {
   await page.clock.runFor(ms);
   pageNow += ms;
