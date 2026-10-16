@@ -6,6 +6,9 @@ import { Analytics, type BeforeSendEvent } from "@vercel/analytics/react";
 import "@/index.css";
 import App from "@/App";
 import { LangProvider } from "@/lib/i18n";
+import { captureSource } from "@/lib/source";
+
+captureSource();
 
 /**
  * Vercel Web Analytics: cookieless page views, no consent banner needed.

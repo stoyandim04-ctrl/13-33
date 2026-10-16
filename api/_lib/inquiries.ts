@@ -36,6 +36,31 @@ export interface NewInquiry {
   projectType?: string;
   /** The consultant's price, item by item. */
   estimate?: unknown;
+  /** Where the client came from (UTM tags, referring site, first page). */
+  source?: unknown;
+}
+
+const SOURCE_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "referrer", "landing"] as const;
+
+/** Only the known keys, as short strings. */
+function cleanSource(raw: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const k of SOURCE_KEYS) {
+    const v = str((raw as Record<string, unknown>)[k], 100);
+    if (v) out[k] = v;
+  }
+  return out;
+}
+
+/** One line for the studio: "instagram / paid · кампания: oct-launch". */
+export function sourceLine(s: Record<string, string>): string {
+  const parts = [
+    s.utm_source ? [s.utm_source, s.utm_medium].filter(Boolean).join(" / ") : s.referrer ? `от ${s.referrer}` : "директно",
+    s.utm_campaign ? `кампания: ${s.utm_campaign}` : "",
+    s.utm_content ? `реклама: ${s.utm_content}` : "",
+  ];
+  return parts.filter(Boolean).join(" · ");
 }
 
 export const isConcreteType = (v: string) => (CONCRETE_TYPES as readonly string[]).includes(v);
@@ -88,6 +113,7 @@ export async function createInquiry(input: NewInquiry): Promise<{ token: string;
     .map((t) => ({ role: t.role === "ai" ? "ai" : "client", text: str(t.text, 3000), files: cleanPaths(t.files, [`drafts/${draftId}/`]) }));
   const estimate = cleanEstimate(input.estimate, projectType);
   const deposit = estimate ? depositFromPrice(estimate.price) : depositFor(projectType);
+  const source = cleanSource(input.source);
 
   // A light brake on repeated sends from one address.
   const hourAgo = new Date(Date.now() - 3600_000).toISOString();
@@ -96,7 +122,7 @@ export async function createInquiry(input: NewInquiry): Promise<{ token: string;
 
   const { data, error } = await db()
     .from("inquiries")
-    .insert({ name, email, phone: phone || null, project_type: projectType, answers, brief, transcript, deposit, offer: estimate })
+    .insert({ name, email, phone: phone || null, project_type: projectType, answers, brief, transcript, deposit, offer: estimate, source })
     .select("id, number, token")
     .single();
   if (error || !data) throw new HttpError(500, "create");
@@ -115,6 +141,7 @@ export async function createInquiry(input: NewInquiry): Promise<{ token: string;
       ...(estimate ? estimate.items.map((i) => `· ${i.name}: ${i.price} €`) : []),
       ...lines,
       files.length ? `Файлове: ${files.length}` : "",
+      `Източник: ${sourceLine(source)}`,
       studioLink(data.number),
     ]
       .filter(Boolean)

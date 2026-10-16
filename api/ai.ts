@@ -156,7 +156,7 @@ export function GET() {
 export function POST(request: Request) {
   return handle(async () => {
     if (!env.anthropicKey) throw new HttpError(503, "ai-not-configured");
-    const input = await body<{ draftId?: string; lang?: string; answers?: Partial<Answers>; conversation?: AiTurn[] }>(request);
+    const input = await body<{ draftId?: string; lang?: string; answers?: Partial<Answers>; conversation?: AiTurn[]; source?: unknown }>(request);
     const draftId = str(input.draftId, 64);
     const lang: "bg" | "en" = input.lang === "en" ? "en" : "bg";
     if (!DRAFT_RE.test(draftId)) throw new HttpError(400, "draft");
@@ -235,7 +235,7 @@ export function POST(request: Request) {
           }
           const call = final.content.find((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use" && b.name === "finish_inquiry");
           if (call) {
-            const r = await finish(call.input as FinishInput, { draftId, answers, turns, said });
+            const r = await finish(call.input as FinishInput, { draftId, answers, turns, said, source: input.source });
             if ("token" in r) say(`${SENT_MARK}${r.token}]]`);
             else say(`\n\n${r.problem}`);
           }
@@ -261,7 +261,7 @@ export function POST(request: Request) {
 /** The consultant's call: check what it gathered, then create the inquiry. */
 async function finish(
   input: FinishInput,
-  ctx: { draftId: string; answers: Answers; turns: AiTurn[]; said: string },
+  ctx: { draftId: string; answers: Answers; turns: AiTurn[]; said: string; source?: unknown },
 ): Promise<{ token: string } | { problem: string }> {
   const name = str(input?.name, 120);
   const email = str(input?.email, 200);
@@ -281,6 +281,7 @@ async function finish(
       phone: str(input?.phone, 40),
       projectType,
       estimate: input.estimate,
+      source: ctx.source,
     });
     return { token: r.token };
   } catch (error) {

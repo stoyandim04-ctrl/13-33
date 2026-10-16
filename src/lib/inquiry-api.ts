@@ -1,5 +1,6 @@
 // Browser side of /api/inquiry, /api/ai, /api/pay and /api/studio. Same origin, no keys.
 import type { AiTurn, Answers, Brief, Room } from "@/lib/inquiry-shared";
+import { getSource } from "@/lib/source";
 
 export class ApiError extends Error {
   constructor(
@@ -77,7 +78,7 @@ export async function streamAi(
     res = await fetch("/api/ai", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/plain" },
-      body: JSON.stringify({ draftId, lang, answers, conversation }),
+      body: JSON.stringify({ draftId, lang, answers, conversation, source: getSource() }),
       signal,
     });
   } catch (e) {
@@ -122,7 +123,7 @@ export const createInquiry = (payload: {
   email: string;
   phone: string;
   consent: boolean;
-}) => call<{ token: string; number: number }>("/api/inquiry", { method: "POST", json: { action: "create", ...payload } });
+}) => call<{ token: string; number: number }>("/api/inquiry", { method: "POST", json: { action: "create", ...payload, source: getSource() } });
 
 export const getRoom = (token: string, paid = false) =>
   call<Room>(`/api/inquiry?token=${encodeURIComponent(token)}${paid ? "&paid" : ""}`);

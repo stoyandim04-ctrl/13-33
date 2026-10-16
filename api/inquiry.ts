@@ -78,6 +78,7 @@ export function POST(request: Request) {
           name: str(input.name, 120),
           email: str(input.email, 200),
           phone: str(input.phone, 40),
+          source: input.source,
         };
         const r = await createInquiry(payload);
         return json({ token: r.token, number: r.number });
