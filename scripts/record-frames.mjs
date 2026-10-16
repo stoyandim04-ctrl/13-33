@@ -29,14 +29,14 @@ const executablePath = process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium";
 
 /** `intro`: ms of page time before the first frame (loaders, intros).
     `hold`: seconds on the first screen before the scroll. `px`: how far the
-    preview scrolls in total; it eases in and out. `length`: seconds. */
+    preview scrolls in total, at an even pace with soft ends. `length`: seconds. */
 const SITES = {
-  obsidian: { url: "https://obsidian-sigma-mocha.vercel.app", intro: 3500, hold: 0.5, px: 7500, length: 9 },
+  obsidian: { url: "https://obsidian-sigma-mocha.vercel.app", intro: 3500, hold: 0.3, px: 7500, length: 9 },
   // ?rec: the site's own frame loop waits for window.__step(now), one render per frame.
-  feral: { url: "https://13-33-zver.vercel.app/?rec", intro: 10000, hold: 0.8, px: 6500, length: 9 },
-  varovik: { url: "https://varovik.vercel.app", intro: 4000, hold: 0.5, px: 9000, length: 9 },
-  "black-clove": { url: "https://black-clove-rho.vercel.app", intro: 3500, hold: 0.5, px: 7000, length: 9 },
-  tsukibi: { url: "https://tsukibi.vercel.app", intro: 5500, hold: 0.5, px: 6500, length: 9 },
+  feral: { url: "https://13-33-zver.vercel.app/?rec", intro: 10000, hold: 0.4, px: 6500, length: 9 },
+  varovik: { url: "https://varovik.vercel.app", intro: 4000, hold: 0.3, px: 9000, length: 9 },
+  "black-clove": { url: "https://black-clove-rho.vercel.app", intro: 3500, hold: 0.3, px: 7000, length: 9 },
+  tsukibi: { url: "https://tsukibi.vercel.app", intro: 5500, hold: 0.3, px: 6500, length: 9 },
 };
 
 const only = process.argv.slice(2);
@@ -135,9 +135,16 @@ async function settle() {
   await new Promise((r) => setTimeout(r, 30));
 }
 
+/** An even scroll with short soft starts and stops (the first and last 10%),
+    so the preview keeps moving the whole time. */
 function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const r = 0.1;
+  const peak = 1 / (1 - r); // speed in the even middle, so the total is 1
+  if (t < r) return (peak * t * t) / (2 * r);
+  if (t > 1 - r) return 1 - (peak * (1 - t) * (1 - t)) / (2 * r);
+  return peak * (t - r / 2);
 }
+
 function ffmpeg(args) {
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...args], { stdio: "inherit" });
 }
