@@ -18,6 +18,16 @@ export function GridHero({ id }: { id?: string }) {
   const aura = React.useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
   const { hero } = useContent();
+  const [onScreen, setOnScreen] = React.useState(true);
+
+  // Off screen, the loops and the video rest (see .hero-rest).
+  React.useEffect(() => {
+    const el = section.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   React.useEffect(() => {
     if (reduced) return;
@@ -47,7 +57,7 @@ export function GridHero({ id }: { id?: string }) {
       ref={section}
       id={id}
       aria-labelledby="hero-title"
-      className="relative isolate flex min-h-svh flex-col overflow-hidden px-5 pt-28 pb-8 sm:px-8 md:pt-32 md:pb-10 lg:px-14"
+      className={`relative isolate flex min-h-svh flex-col overflow-hidden px-5${onScreen ? "" : " hero-rest"} pt-28 pb-8 sm:px-8 md:pt-32 md:pb-10 lg:px-14`}
     >
       <div aria-hidden="true" className="hero-glow absolute inset-0 -z-30" />
       <div ref={aura} aria-hidden="true" className="hero-aura absolute inset-0 -z-20" />
@@ -88,7 +98,7 @@ export function GridHero({ id }: { id?: string }) {
           </div>
         </div>
 
-        <HeroReel className="hero-in hidden lg:col-span-5 lg:block" />
+        <HeroReel className="hero-in hidden lg:col-span-5 lg:block" playing={onScreen} />
       </div>
 
       <dl
@@ -113,17 +123,17 @@ export function GridHero({ id }: { id?: string }) {
  * another, the front one playing its preview, two more stacked behind it.
  * Desktop only; on the phone the wheel right below does this job.
  */
-function HeroReel({ className }: { className?: string }) {
+function HeroReel({ className, playing }: { className?: string; playing: boolean }) {
   const reduced = useReducedMotion();
   const { lang, tr } = useLang();
   const [i, setI] = React.useState(0);
   const count = projects.length;
 
   React.useEffect(() => {
-    if (reduced || count < 2) return;
-    const id = window.setInterval(() => setI((n) => (n + 1) % count), 5200);
+    if (reduced || !playing || count < 2) return;
+    const id = window.setInterval(() => setI((n) => (n + 1) % count), 6500);
     return () => window.clearInterval(id);
-  }, [reduced, count]);
+  }, [reduced, playing, count]);
 
   if (!count) return null;
   const p = projects[i];
@@ -149,10 +159,23 @@ function HeroReel({ className }: { className?: string }) {
               style={{ opacity: n === i ? 1 : 0 }}
             />
           ))}
-          {!reduced && p.video ? (
-            <video key={p.slug} className="hero-reel-video absolute inset-0 size-full object-cover" autoPlay muted loop playsInline poster={p.poster}>
-              {p.video.webm ? <source src={p.video.webm} type="video/webm" /> : null}
+          {!reduced && playing && p.video ? (
+            <video
+              key={p.slug}
+              ref={(v) => {
+                // iOS starts inline video by itself only with the muted attribute.
+                if (v) v.setAttribute("muted", "");
+              }}
+              className="hero-reel-video absolute inset-0 size-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              poster={p.poster}
+            >
               {p.video.mp4 ? <source src={p.video.mp4} type="video/mp4" /> : null}
+              {p.video.webm ? <source src={p.video.webm} type="video/webm" /> : null}
             </video>
           ) : null}
         </div>

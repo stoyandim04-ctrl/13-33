@@ -79,7 +79,7 @@ export function SiteHeader() {
         className={cn(
           "fixed inset-x-0 top-0 z-[200] transition-[background-color,backdrop-filter,border-color] duration-500",
           solid && !open
-            ? "bg-background/70 border-border border-b backdrop-blur-md"
+            ? "bg-background/90 border-border border-b"
             : "border-b border-transparent",
         )}
       >

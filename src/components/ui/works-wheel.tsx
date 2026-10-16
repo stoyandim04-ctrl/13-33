@@ -24,8 +24,10 @@
 //   next item, so momentum never skips a project. Above the ring and past the
 //   last item the gesture is left to the page, so the hero and the sections
 //   after it scroll as usual.
-// - Cards carry a poster and an optional muted, looping video. Every card that
-//   is drawn plays its video while the section is on screen.
+// - Cards carry a poster and an optional muted, looping video. Only the front
+//   card plays, from the start (the top of the site), once the wheel has
+//   settled on it; the rest show their posters. One decoder at a time keeps
+//   tablets and laptops smooth.
 // - Clicking the front card opens the project; a side card or an index entry
 //   turns it to the front; a drag never opens a link.
 import * as React from "react";
@@ -178,8 +180,8 @@ export function WorksWheel({
   const target = React.useRef(0);
   const [active, setActive] = React.useState(0);
   const [open, setOpen] = React.useState(false);
-  /** Cards drawn this frame ("0,1,2,"), whose videos play. Empty off screen. */
-  const [live, setLive] = React.useState("");
+  /** The section is on screen (videos may play). */
+  const [onScreen, setOnScreen] = React.useState(false);
   const [stage, setStage] = React.useState<Stage>({ w: 0, h: 0 });
 
   const reduced = useReducedMotion();
@@ -427,15 +429,16 @@ export function WorksWheel({
     let speed = 0; // smoothed turns per frame
     let lean = { x: 0, y: 0 };
     let prev = turn.current;
-    const t0 = performance.now();
+    // Once nothing moves, the frame does no DOM work at all.
+    let settled = false;
 
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
+      setOnScreen(visible);
       if (visible) {
+        settled = false;
         cancelAnimationFrame(frame);
         frame = requestAnimationFrame(draw);
-      } else {
-        setLive("");
       }
     });
     if (sectionRef.current) io.observe(sectionRef.current);
@@ -446,6 +449,13 @@ export function WorksWheel({
       const gap = target.current - turn.current;
       if (Math.abs(gap) < 0.0005) turn.current = target.current;
       else turn.current += gap * (still ? 1 : EASE);
+      const leanGap = Math.abs(pointer.current.x - lean.x) + Math.abs(pointer.current.y - lean.y);
+      if (gap === 0 && Math.abs(speed) < 1e-5 && leanGap < 1e-3) {
+        if (settled) return;
+        settled = true;
+      } else {
+        settled = false;
+      }
 
       const t = turn.current;
       const m = clamp(t, 0, 1);
@@ -455,7 +465,6 @@ export function WorksWheel({
       speed += (t - prev - speed) * 0.18;
       prev = t;
       if (still) speed = 0;
-      const time = (performance.now() - t0) / 1000;
       lean = {
         x: lean.x + (pointer.current.x - lean.x) * 0.06,
         y: lean.y + (pointer.current.y - lean.y) * 0.06,
@@ -465,7 +474,7 @@ export function WorksWheel({
         : m * (clamp(speed * SPEED_TILT, -MAX_TILT, MAX_TILT) - lean.y * POINTER_TILT.x);
       const tiltY = still
         ? 0
-        : m * (lean.x * POINTER_TILT.y + Math.sin(time * 0.5) * 1.6);
+        : m * lean.x * POINTER_TILT.y;
       const spread = 1 + (still ? 0 : clamp(Math.abs(speed) * SPEED_SPREAD, 0, MAX_SPREAD));
 
       if (wheelRef.current) {
@@ -474,7 +483,6 @@ export function WorksWheel({
           ` rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
       }
 
-      let drawn = "";
       for (let i = 0; i < count; i++) {
         const d = i - pos;
         const card = cardRefs.current[i];
@@ -487,7 +495,6 @@ export function WorksWheel({
         const below = narrow && d > 0.35 ? clamp(1 - (d - 0.35) * 2.2 * m, 0, 1) : 1;
         card.style.opacity = hidden ? "0" : String(below);
         card.style.visibility = hidden ? "hidden" : "visible";
-        if (!hidden) drawn += `${i},`;
         card.style.zIndex = String(Math.round(100 - far * 10));
         const face = card.firstElementChild as HTMLElement | null;
         if (face) {
@@ -509,9 +516,8 @@ export function WorksWheel({
       const shown = clamp((m - 0.55) / 0.45, 0, 1);
       if (frontRef.current) frontRef.current.style.opacity = String(shown);
       if (glowRef.current) {
-        glowRef.current.style.opacity = String(m * (0.75 + 0.25 * Math.sin(time * 1.2)));
+        glowRef.current.style.opacity = String(m * 0.85);
       }
-      setLive((prev) => (prev === drawn ? prev : drawn));
       const near = clamp(Math.round(pos), 0, last);
       setActive((prev) => (prev === near ? prev : near));
       const isOpen = m > 0.85;
@@ -596,7 +602,6 @@ export function WorksWheel({
   if (!count) return null;
 
   const current = items[active];
-  const playing = new Set(live.split(",").filter(Boolean).map(Number));
   const sectionHeight = `calc(100svh + ${(count + TAIL) * unit}px)`;
 
   return (
@@ -701,10 +706,10 @@ export function WorksWheel({
                       className="absolute inset-0 size-full object-cover transition-transform duration-[1200ms] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
                     />
                     {item.video ? (
-                      <CardVideo src={item.video} poster={item.image} playing={playing.has(i)} />
+                      <CardVideo key={i === active ? `on-${active}` : "off"} src={item.video} poster={item.image} playing={onScreen && open && i === active} />
                     ) : null}
                     {item.badge ? (
-                      <span className="bg-background/75 text-foreground/90 absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.625rem] font-semibold tracking-[0.16em] uppercase backdrop-blur-sm">
+                      <span className="bg-background/75 text-foreground/90 absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
                         {item.badge}
                       </span>
                     ) : null}
@@ -716,7 +721,7 @@ export function WorksWheel({
                       className="bg-background pointer-events-none absolute inset-0 opacity-0"
                     />
                     {action && item.href && isFront ? (
-                      <span className="bg-background/80 text-foreground pointer-events-none absolute right-3 bottom-3 flex translate-y-1 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium opacity-0 backdrop-blur-sm transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+                      <span className="bg-background/80 text-foreground pointer-events-none absolute right-3 bottom-3 flex translate-y-1 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
                         {action}
                         <ArrowUpRight aria-hidden="true" className="size-3.5" />
                       </span>
@@ -844,9 +849,11 @@ export function WorksWheel({
   );
 }
 
-/** A card's recording. Mounted only while the card is drawn and the section is
-    on screen, so hidden cards are neither playing nor downloading. The poster stays below and
-    shows through until the first frame is ready - or for good, on an error. */
+/** The front card's recording. Mounted only once the wheel has rested on the
+    card for a moment, so a quick spin through the projects starts no
+    downloads; it always starts from the first frame - the top of the site.
+    The poster stays below and shows through until the first frame is ready,
+    or for good when the device refuses to play (Low Power Mode). */
 function CardVideo({
   src,
   poster,
@@ -857,21 +864,36 @@ function CardVideo({
   playing: boolean;
 }) {
   const ref = React.useRef<HTMLVideoElement>(null);
+  const [mounted, setMounted] = React.useState(false);
   const [ready, setReady] = React.useState(false);
   const reduced = useReducedMotion();
+  const on = playing && !reduced;
+
+  React.useEffect(() => {
+    if (!on) {
+      setMounted(false);
+      setReady(false);
+      return;
+    }
+    const id = window.setTimeout(() => setMounted(true), 220);
+    return () => window.clearTimeout(id);
+  }, [on]);
 
   React.useEffect(() => {
     const v = ref.current;
-    if (!v) return;
-    if (playing && !reduced) {
-      const p = v.play();
-      if (p) p.catch(() => setReady(false));
-    } else {
-      v.pause();
-    }
-  }, [playing, reduced]);
+    if (!v || !mounted) return;
+    // iOS plays inline video on its own only when it is muted as an attribute,
+    // not just as a property - React sets the property only.
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute("muted", "");
+    v.currentTime = 0;
+    const p = v.play();
+    if (p) p.catch(() => setReady(false));
+    return () => v.pause();
+  }, [mounted]);
 
-  if (!playing || reduced) return null;
+  if (!mounted) return null;
   return (
     <video
       ref={ref}
@@ -881,13 +903,14 @@ function CardVideo({
       playsInline
       autoPlay
       preload="auto"
+      disablePictureInPicture
       aria-hidden="true"
       onPlaying={() => setReady(true)}
       onError={(e) => {
         if (e.target === e.currentTarget) setReady(false);
       }}
       className={cn(
-        "absolute inset-0 size-full object-cover transition-opacity duration-700",
+        "absolute inset-0 size-full object-cover transition-opacity duration-500",
         ready ? "opacity-100" : "opacity-0",
       )}
     >

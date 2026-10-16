@@ -1,5 +1,5 @@
 // Poster + muted preview for the portfolio projects that are real sites of
-// ours (Obsidian, Strong Muse, Варовик, Black Clove), recorded from the live
+// ours (Obsidian, Strong Muse, Варовик, Black Clove, Цукиби), recorded from the live
 // pages while they scroll - so the wheel shows each site in action.
 //
 //   node scripts/build-live-media.mjs [slug ...]
@@ -43,6 +43,10 @@ const SITES = {
   "black-clove": {
     url: "https://black-clove-rho.vercel.app",
     wait: 2500, speed: 800, scrollFor: 11000, posterAt: 0, lead: 0.6,
+  },
+  tsukibi: {
+    url: "https://tsukibi.vercel.app",
+    wait: 5000, speed: 700, scrollFor: 11000, posterAt: 0, lead: 0.5,
   },
 };
 
