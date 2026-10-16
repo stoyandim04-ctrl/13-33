@@ -15,7 +15,7 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("max-w-[48rem]", className)}>
+    <header data-reveal className={cn("max-w-[48rem]", className)}>
       <p className="eyebrow mb-5">{label}</p>
       <h2 id={id} className="font-display text-heading font-[500] tracking-[-0.045em] text-balance">
         {title}

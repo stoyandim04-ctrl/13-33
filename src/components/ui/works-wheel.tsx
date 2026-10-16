@@ -19,14 +19,22 @@
 //   touch scroll works natively, and the page simply carries on after the last
 //   project. WHEEL_UNITS / DRAG_UNITS keep their meaning: how much scroll or drag
 //   turns one item.
-// - Cards carry a poster and an optional muted, looping video that only the
-//   front card mounts and plays.
+// - While the stage is pinned, one wheel/trackpad gesture or one swipe turns
+//   exactly one item: the gesture is taken over and the page is scrolled to the
+//   next item, so momentum never skips a project. Above the ring and past the
+//   last item the gesture is left to the page, so the hero and the sections
+//   after it scroll as usual.
+// - Cards carry a poster and an optional muted, looping video. Only the front
+//   card plays, from the start (the top of the site), once the wheel has
+//   settled on it; the rest show their posters. One decoder at a time keeps
+//   tablets and laptops smooth.
 // - Clicking the front card opens the project; a side card or an index entry
 //   turns it to the front; a drag never opens a link.
 import * as React from "react";
 import { ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn, clamp } from "@/lib/utils";
+import { useLang } from "@/lib/i18n";
 import { useCoarseDevice, useReducedMotion } from "@/hooks/use-media";
 
 export interface WorksWheelItem {
@@ -64,8 +72,8 @@ export interface WorksWheelProps extends Omit<
 
 /* Geometry. The card is measured against the stage; everything else is measured
    against the card, so a narrow stage scales the whole wheel down with it. */
-const CARD_H = 0.38; // front card height, of the stage
-const CARD_MAX_W = 0.34; // ... but never wider than this much of the stage
+const CARD_H = 0.45; // front card height, of the stage
+const CARD_MAX_W = 0.42; // ... but never wider than this much of the stage
 const CARD_MAX_W_NARROW = 0.86; // phones: the work has to be legible
 const CARD_RATIO = 1.45; // card width / height
 /* The spiral (helix). Each card sits a step further round a vertical axis and a
@@ -108,6 +116,12 @@ const TAIL = 0.45;
 const COMMIT = 0.12;
 /** Movement that turns a press into a drag (and cancels its click). */
 const DRAG_SLOP = 6;
+/** Wheel distance (px) that counts as a gesture, and the quiet time that ends
+    one - trackpad momentum keeps sending events, all part of the same gesture. */
+const GESTURE_MIN = 24;
+const GESTURE_GAP = 260;
+/** Finger travel (px) that counts as a swipe to the next item. */
+const SWIPE_MIN = 36;
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const rad = (deg: number) => (deg * Math.PI) / 180;
@@ -147,6 +161,7 @@ export function WorksWheel({
   style,
   ...props
 }: WorksWheelProps) {
+  const { tr } = useLang();
   const sectionRef = React.useRef<HTMLElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
   const wheelRef = React.useRef<HTMLDivElement>(null);
@@ -155,7 +170,6 @@ export function WorksWheel({
   const headRef = React.useRef<HTMLDivElement>(null);
   const frontRef = React.useRef<HTMLDivElement>(null);
   const dimRefs = React.useRef<(HTMLSpanElement | null)[]>([]);
-  const numRef = React.useRef<HTMLDivElement>(null);
   const glowRef = React.useRef<HTMLDivElement>(null);
   /** Pointer position over the stage, -1..1, for the lean. */
   const pointer = React.useRef({ x: 0, y: 0 });
@@ -166,6 +180,8 @@ export function WorksWheel({
   const target = React.useRef(0);
   const [active, setActive] = React.useState(0);
   const [open, setOpen] = React.useState(false);
+  /** The section is on screen (videos may play). */
+  const [onScreen, setOnScreen] = React.useState(false);
   const [stage, setStage] = React.useState<Stage>({ w: 0, h: 0 });
 
   const reduced = useReducedMotion();
@@ -173,7 +189,8 @@ export function WorksWheel({
   const count = items.length;
   const last = Math.max(count - 1, 0);
   const unit = coarse ? DRAG_UNITS : WHEEL_UNITS;
-  const narrow = stage.w > 0 && stage.w < 768;
+  // Phones, and tablets held upright: the spiral climbs and the work fills the width.
+  const narrow = stage.w > 0 && (stage.w < 768 || (stage.w < 1024 && stage.h > stage.w));
 
   React.useEffect(() => {
     const el = stageRef.current;
@@ -297,12 +314,80 @@ export function WorksWheel({
     const onInput = () => {
       seek.current = null;
     };
-    const onTouchStart = () => {
+
+    // ---- one gesture, one item ----
+    /** True while the stage is pinned - the stretch of page the wheel owns. */
+    const engaged = () => {
+      const el = sectionRef.current;
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      return r.top <= 1 && r.bottom >= window.innerHeight - 1;
+    };
+    /** The item one step from where the wheel is (or is heading), or null when
+        the gesture belongs to the page: up from the ring, down past the last. */
+    const stepFrom = (dir: number) => {
+      const el = sectionRef.current;
+      // Unclamped, so coming back up from below lands on the last item first.
+      const travelled = el ? -el.getBoundingClientRect().top / unit : target.current;
+      const t = seek.current ? seek.current.turn : Math.max(0, travelled);
+      if (dir > 0 && t >= count - 0.001) return null;
+      if (dir < 0 && t <= 0.001) return null;
+      if (dir < 0 && t > count + 0.01) return count;
+      return dir > 0 ? Math.floor(t + 0.001) + 1 : Math.ceil(t - 0.001) - 1;
+    };
+    const gesture = { acc: 0, locked: false, idle: 0 };
+    const onWheel = (event: WheelEvent) => {
+      const dy = event.deltaY * (event.deltaMode === 1 ? 40 : 1);
+      if (event.ctrlKey || !dy || !engaged()) return onInput();
+      // A fresh gesture that leaves the wheel goes to the page; the rest of a
+      // gesture that already turned it is held, so its momentum stops here.
+      if (!gesture.locked && stepFrom(Math.sign(dy)) === null) return onInput();
+      event.preventDefault();
+      window.clearTimeout(gesture.idle);
+      gesture.idle = window.setTimeout(() => {
+        gesture.locked = false;
+        gesture.acc = 0;
+      }, GESTURE_GAP);
+      if (gesture.locked) return;
+      gesture.acc += dy;
+      if (Math.abs(gesture.acc) < GESTURE_MIN) return;
+      const next = stepFrom(Math.sign(gesture.acc));
+      gesture.locked = true;
+      gesture.acc = 0;
+      if (next !== null) scrollToTurn(next);
+    };
+
+    // Touch: a swipe inside the pinned stretch turns one item. Whether the
+    // wheel or the page owns a touch is decided on its first move - after that
+    // the browser no longer lets the move be cancelled.
+    let touchY = 0;
+    let own: boolean | null = null;
+    const onTouchStart = (event: TouchEvent) => {
       touching = true;
       onInput();
+      touchY = event.touches[0]?.clientY ?? 0;
+      own = null;
     };
-    const onTouchEnd = () => {
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.touches.length > 1) return;
+      const dy = touchY - (event.touches[0]?.clientY ?? touchY);
+      if (own === null) own = engaged() && stepFrom(dy < 0 ? -1 : 1) !== null;
+      if (own && event.cancelable) event.preventDefault();
+    };
+    const onTouchEnd = (event: TouchEvent) => {
       touching = false;
+      const dy = touchY - (event.changedTouches[0]?.clientY ?? touchY);
+      // No move reached us (some browsers coalesce a fast flick): decide now.
+      if (own === null) own = engaged() && stepFrom(dy < 0 ? -1 : 1) !== null;
+      if (own) {
+        if (Math.abs(dy) >= SWIPE_MIN) {
+          const next = stepFrom(Math.sign(dy));
+          if (next !== null) scrollToTurn(next);
+          // Turned out to leave the wheel after all: hand the swipe to the page.
+          else window.scrollBy({ top: dy * 2, behavior: reduced ? "auto" : "smooth" });
+        }
+      }
+      own = null;
       schedule();
     };
 
@@ -312,21 +397,24 @@ export function WorksWheel({
     window.addEventListener("scroll", onScroll, { passive: true });
     if (hasScrollEnd) window.addEventListener("scrollend", schedule);
     window.addEventListener("resize", read);
-    window.addEventListener("wheel", onInput, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     return () => {
       window.clearTimeout(settleTimer);
+      window.clearTimeout(gesture.idle);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("scrollend", schedule);
       window.removeEventListener("resize", read);
-      window.removeEventListener("wheel", onInput);
+      window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [count, unit, scrollToTurn]);
+  }, [count, unit, reduced, scrollToTurn]);
 
   /** Turn to a position by scrolling the page there. */
   const to = scrollToTurn;
@@ -337,16 +425,19 @@ export function WorksWheel({
     if (!stage.h || !count) return;
     let frame = 0;
     let visible = true;
-    const { ringR, ringScale, helixR, pitch, ringShift, cardH } = metrics;
+    const { ringR, ringScale, helixR, pitch, ringShift } = metrics;
     const still = reduced;
     let speed = 0; // smoothed turns per frame
     let lean = { x: 0, y: 0 };
     let prev = turn.current;
-    const t0 = performance.now();
+    // Once nothing moves, the frame does no DOM work at all.
+    let settled = false;
 
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
+      setOnScreen(visible);
       if (visible) {
+        settled = false;
         cancelAnimationFrame(frame);
         frame = requestAnimationFrame(draw);
       }
@@ -359,6 +450,13 @@ export function WorksWheel({
       const gap = target.current - turn.current;
       if (Math.abs(gap) < 0.0005) turn.current = target.current;
       else turn.current += gap * (still ? 1 : EASE);
+      const leanGap = Math.abs(pointer.current.x - lean.x) + Math.abs(pointer.current.y - lean.y);
+      if (gap === 0 && Math.abs(speed) < 1e-5 && leanGap < 1e-3) {
+        if (settled) return;
+        settled = true;
+      } else {
+        settled = false;
+      }
 
       const t = turn.current;
       const m = clamp(t, 0, 1);
@@ -368,7 +466,6 @@ export function WorksWheel({
       speed += (t - prev - speed) * 0.18;
       prev = t;
       if (still) speed = 0;
-      const time = (performance.now() - t0) / 1000;
       lean = {
         x: lean.x + (pointer.current.x - lean.x) * 0.06,
         y: lean.y + (pointer.current.y - lean.y) * 0.06,
@@ -378,7 +475,7 @@ export function WorksWheel({
         : m * (clamp(speed * SPEED_TILT, -MAX_TILT, MAX_TILT) - lean.y * POINTER_TILT.x);
       const tiltY = still
         ? 0
-        : m * (lean.x * POINTER_TILT.y + Math.sin(time * 0.5) * 1.6);
+        : m * lean.x * POINTER_TILT.y;
       const spread = 1 + (still ? 0 : clamp(Math.abs(speed) * SPEED_SPREAD, 0, MAX_SPREAD));
 
       if (wheelRef.current) {
@@ -419,12 +516,8 @@ export function WorksWheel({
       }
       const shown = clamp((m - 0.55) / 0.45, 0, 1);
       if (frontRef.current) frontRef.current.style.opacity = String(shown);
-      if (numRef.current) {
-        numRef.current.style.opacity = String(shown);
-        numRef.current.style.transform = `translate3d(${-lean.x * 18}px, ${-speed * cardH * 30}px, 0)`;
-      }
       if (glowRef.current) {
-        glowRef.current.style.opacity = String(m * (0.75 + 0.25 * Math.sin(time * 1.2)));
+        glowRef.current.style.opacity = String(m * 0.85);
       }
       const near = clamp(Math.round(pos), 0, last);
       setActive((prev) => (prev === near ? prev : near));
@@ -543,8 +636,8 @@ export function WorksWheel({
           ref={stageRef}
           tabIndex={0}
           role="group"
-          aria-roledescription="портфолио"
-          aria-label={`${label}: ${current?.title ?? ""}. Стрелките сменят проекта.`}
+          aria-roledescription={tr("портфолио")}
+          aria-label={`${label}: ${current?.title ?? ""}. ${tr("Стрелките сменят проекта.")}`}
           onKeyDown={onKeyDown}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -561,21 +654,7 @@ export function WorksWheel({
           )}
           style={{ perspective: `${metrics.depth}px` }}
         >
-          {/* Depth layers behind the spiral: the project number, huge and
-              hollow, and a soft light under the front card. */}
-          <div
-            ref={numRef}
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 grid place-items-center opacity-0"
-          >
-            <span
-              key={active}
-              className="ww-num font-display leading-none font-[500] tracking-[-0.06em] text-transparent tabular-nums [-webkit-text-stroke:1px_rgb(168_216_255/0.14)]"
-              style={{ fontSize: metrics.cardH * (narrow ? 1.5 : 2.3) }}
-            >
-              {String(active + 1).padStart(2, "0")}
-            </span>
-          </div>
+          {/* A soft light under the front card. */}
           <div
             ref={glowRef}
             aria-hidden="true"
@@ -600,9 +679,11 @@ export function WorksWheel({
                   key={item.id}
                   id={`works-wheel-${item.id}`}
                   href={item.href ?? "#"}
+                  target={item.href?.startsWith("http") ? "_blank" : undefined}
+                  rel={item.href?.startsWith("http") ? "noreferrer" : undefined}
                   draggable={false}
                   tabIndex={isFront ? 0 : -1}
-                  aria-label={isFront ? `${action}: ${item.title}` : `${item.title} — избери`}
+                  aria-label={isFront ? `${action}: ${item.title}` : `${item.title} — ${tr("избери")}`}
                   aria-current={isFront ? "true" : undefined}
                   onClick={onCardClick(i, item)}
                   ref={(node) => {
@@ -626,10 +707,10 @@ export function WorksWheel({
                       className="absolute inset-0 size-full object-cover transition-transform duration-[1200ms] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
                     />
                     {item.video ? (
-                      <CardVideo src={item.video} poster={item.image} playing={isFront} />
+                      <CardVideo key={i === active ? `on-${active}` : "off"} src={item.video} poster={item.image} playing={onScreen && open && i === active} />
                     ) : null}
                     {item.badge ? (
-                      <span className="bg-background/75 text-foreground/90 absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.625rem] font-semibold tracking-[0.16em] uppercase backdrop-blur-sm">
+                      <span className="bg-background/75 text-foreground/90 absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.625rem] font-semibold tracking-[0.16em] uppercase">
                         {item.badge}
                       </span>
                     ) : null}
@@ -641,7 +722,7 @@ export function WorksWheel({
                       className="bg-background pointer-events-none absolute inset-0 opacity-0"
                     />
                     {action && item.href && isFront ? (
-                      <span className="bg-background/80 text-foreground pointer-events-none absolute right-3 bottom-3 flex translate-y-1 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium opacity-0 backdrop-blur-sm transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+                      <span className="bg-background/80 text-foreground pointer-events-none absolute right-3 bottom-3 flex translate-y-1 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
                         {action}
                         <ArrowUpRight aria-hidden="true" className="size-3.5" />
                       </span>
@@ -697,6 +778,8 @@ export function WorksWheel({
           {current?.href ? (
             <a
               href={current.href}
+              target={current.href.startsWith("http") ? "_blank" : undefined}
+              rel={current.href.startsWith("http") ? "noreferrer" : undefined}
               tabIndex={open ? 0 : -1}
               onClick={(event) => {
                 if (onOpen && current && !event.metaKey && !event.ctrlKey) {
@@ -715,7 +798,7 @@ export function WorksWheel({
         {/* Index - desktop. */}
         {!narrow ? (
           <nav
-            aria-label={`${label} — индекс`}
+            aria-label={`${label} — ${tr("индекс")}`}
             className="text-muted-foreground absolute top-[12%] right-[2.5%] z-[120] text-right leading-[1.9]"
             style={{ fontSize: clamp(metrics.index, 12, 15) }}
           >
@@ -740,12 +823,12 @@ export function WorksWheel({
         ) : (
           <div className="absolute right-5 bottom-6 left-5 z-[120] flex items-center justify-between sm:right-8 sm:left-8">
             <span className="text-label text-muted-foreground tracking-[0.22em] uppercase">
-              {open ? "Плъзни за следващия" : "Плъзни нагоре"}
+              {open ? tr("Плъзни за следващия") : tr("Плъзни нагоре")}
             </span>
             <div className="flex gap-2">
               <button
                 type="button"
-                aria-label="Предишен проект"
+                aria-label={tr("Предишен проект")}
                 onClick={() => to(Math.round(target.current) - 1)}
                 className="border-foreground/20 grid size-11 place-items-center rounded-full border"
               >
@@ -753,7 +836,7 @@ export function WorksWheel({
               </button>
               <button
                 type="button"
-                aria-label="Следващ проект"
+                aria-label={tr("Следващ проект")}
                 onClick={() => to(Math.round(target.current) + 1)}
                 className="border-foreground/20 grid size-11 place-items-center rounded-full border"
               >
@@ -767,9 +850,11 @@ export function WorksWheel({
   );
 }
 
-/** The front card's recording. Mounted only while it is the front card, so the
-    other videos are neither playing nor downloading. The poster stays below and
-    shows through until the first frame is ready - or for good, on an error. */
+/** The front card's recording. Mounted only once the wheel has rested on the
+    card for a moment, so a quick spin through the projects starts no
+    downloads; it always starts from the first frame - the top of the site.
+    The poster stays below and shows through until the first frame is ready,
+    or for good when the device refuses to play (Low Power Mode). */
 function CardVideo({
   src,
   poster,
@@ -780,21 +865,36 @@ function CardVideo({
   playing: boolean;
 }) {
   const ref = React.useRef<HTMLVideoElement>(null);
+  const [mounted, setMounted] = React.useState(false);
   const [ready, setReady] = React.useState(false);
   const reduced = useReducedMotion();
+  const on = playing && !reduced;
+
+  React.useEffect(() => {
+    if (!on) {
+      setMounted(false);
+      setReady(false);
+      return;
+    }
+    const id = window.setTimeout(() => setMounted(true), 220);
+    return () => window.clearTimeout(id);
+  }, [on]);
 
   React.useEffect(() => {
     const v = ref.current;
-    if (!v) return;
-    if (playing && !reduced) {
-      const p = v.play();
-      if (p) p.catch(() => setReady(false));
-    } else {
-      v.pause();
-    }
-  }, [playing, reduced]);
+    if (!v || !mounted) return;
+    // iOS plays inline video on its own only when it is muted as an attribute,
+    // not just as a property - React sets the property only.
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute("muted", "");
+    v.currentTime = 0;
+    const p = v.play();
+    if (p) p.catch(() => setReady(false));
+    return () => v.pause();
+  }, [mounted]);
 
-  if (!playing || reduced) return null;
+  if (!mounted) return null;
   return (
     <video
       ref={ref}
@@ -804,13 +904,14 @@ function CardVideo({
       playsInline
       autoPlay
       preload="auto"
+      disablePictureInPicture
       aria-hidden="true"
       onPlaying={() => setReady(true)}
       onError={(e) => {
         if (e.target === e.currentTarget) setReady(false);
       }}
       className={cn(
-        "absolute inset-0 size-full object-cover transition-opacity duration-700",
+        "absolute inset-0 size-full object-cover transition-opacity duration-500",
         ready ? "opacity-100" : "opacity-0",
       )}
     >

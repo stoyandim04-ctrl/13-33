@@ -1,0 +1,200 @@
+/*
+  VAELO · визуална система
+
+  Светло, редакционно: топъл „костен“ фон, почти черен текст и един акцент —
+  кървавочервено (#6E1423) — само за главното действие, лентата и текущото
+  състояние. Inter Tight за всичко (носи кирилицата), Playfair Display курсив
+  само за отделни думи в заглавията.
+*/
+@import "tailwindcss";
+@import "@fontsource-variable/inter-tight";
+@import "@fontsource-variable/playfair-display/wght-italic.css";
+
+@theme {
+  --color-bone: #edeae4;
+  --color-bone-2: #e4e0d8;
+  --color-paper: #f6f4f0;
+  --color-ink: #141210;
+  --color-ink-2: #2a2622;
+  --color-muted: #7d766d;
+  --color-faint: #b2aba1;
+  --color-blood: #6e1423;
+  --color-blood-2: #8c1d30;
+  --color-line: rgb(20 18 16 / 0.12);
+
+  --font-sans: "Inter Tight Variable", "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display Variable", "Playfair Display", ui-serif, Georgia, serif;
+
+  --text-label: 0.6875rem;
+  --text-label--letter-spacing: 0.18em;
+  --text-label--line-height: 1.4;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+  --text-lead: clamp(1.0625rem, 0.95rem + 0.45vw, 1.3125rem);
+  --text-lead--line-height: 1.5;
+  --text-title: clamp(1.5rem, 1.1rem + 1.4vw, 2.5rem);
+  --text-title--line-height: 1.05;
+  --text-heading: clamp(2.75rem, 1.2rem + 5.6vw, 7rem);
+  --text-heading--line-height: 0.92;
+  --text-display: clamp(5rem, 0.5rem + 21vw, 22rem);
+  --text-display--line-height: 0.8;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    background: var(--color-bone);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-bone);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: var(--color-blood);
+    color: var(--color-paper);
+  }
+  button {
+    cursor: pointer;
+  }
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+}
+
+@layer components {
+  .label {
+    font-size: var(--text-label);
+    letter-spacing: var(--text-label--letter-spacing);
+    line-height: var(--text-label--line-height);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .serif-i {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    text-transform: none;
+  }
+  .link-line {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.5s var(--ease-out-expo);
+  }
+  .link-line:hover,
+  .link-line:focus-visible {
+    background-size: 100% 1px;
+  }
+  /* Главното действие: плътно кървавочервено, при hover светлината минава отляво надясно. */
+  .btn-primary {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-blood);
+    color: var(--color-paper);
+    padding: 1.05rem 1.9rem;
+    font-size: var(--text-label);
+    letter-spacing: var(--text-label--letter-spacing);
+    text-transform: uppercase;
+    font-weight: 600;
+    isolation: isolate;
+    transition: transform 0.5s var(--ease-out-expo), box-shadow 0.5s var(--ease-out-expo);
+  }
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--color-ink);
+    transform: translateX(-101%);
+    transition: transform 0.6s var(--ease-out-expo);
+  }
+  .btn-primary:hover::before,
+  .btn-primary:focus-visible::before {
+    transform: translateX(0);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 18px 40px -18px rgb(110 20 35 / 0.7);
+  }
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    padding: 0.8rem 1.4rem;
+    font-size: var(--text-label);
+    letter-spacing: var(--text-label--letter-spacing);
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: border-color 0.4s, background-color 0.4s, color 0.4s, transform 0.5s var(--ease-out-expo);
+  }
+  .btn-ghost:hover,
+  .btn-ghost:focus-visible {
+    border-color: var(--color-ink);
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

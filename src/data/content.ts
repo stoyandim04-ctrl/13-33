@@ -1,4 +1,6 @@
-// Site copy. Bulgarian first. No invented results, clients, prices or deadlines.
+// Site copy, Bulgarian and English. No invented results, clients or prices;
+// the one promise is the studio's own: the first version within 4 working days. Components read it through useContent() (src/lib/i18n.tsx).
+import { useCopy } from "@/lib/i18n";
 
 export const site = {
   name: "13:33",
@@ -8,194 +10,256 @@ export const site = {
   contactEmail: (import.meta.env.VITE_CONTACT_EMAIL as string | undefined) || undefined,
 };
 
-export const nav = [
-  { label: "Проекти", href: "#proekti" },
-  { label: "Услуги", href: "#uslugi" },
-  { label: "Процес", href: "#proces" },
-  { label: "Контакт", href: "#kontakt" },
-] as const;
-
-export const hero = {
-  title: "13:33",
-  eyebrow: "DIGITAL STUDIO",
-  message: "Дигитално присъствие, което движи бизнеса ти.",
-  description:
-    "Сайтове, онлайн магазини и дигитални системи — от първата идея до работещия продукт.",
-  primary: { label: "Започни проект", href: "#kontakt" },
-  secondary: { label: "Виж проектите", href: "#proekti" },
-  railLabel: "13:33 STUDIO",
-  scrollLabel: "РАЗГЛЕДАЙ РАБОТАТА НИ",
-};
-
-export const works = {
-  heading: "Нашата работа",
-  subheading: "Различни бизнеси. Решения с характер.",
-  label: "ПРОЕКТИ",
-  action: "Виж проекта",
-};
-
 export interface Service {
   id: string;
   name: string;
-  /** The business need, in the client's words. */
-  need: string;
-  /** What we actually build. */
+  /** What we actually build, in one sentence. */
   body: string;
   includes: string[];
 }
 
-// From the master pack's core offers, plus online stores and funnels.
-export const services: Service[] = [
-  {
-    id: "sites",
-    name: "Сайтове",
-    need: "Когато бизнесът ти работи добре, но онлайн не изглежда така.",
-    body: "Сайт, който представя ясно какво предлагаш, изгражда доверие и води посетителя към запитване.",
-    includes: ["структура и текстове", "индивидуален дизайн", "SEO основа", "форми за запитване"],
-  },
-  {
-    id: "stores",
-    name: "Онлайн магазини",
-    need: "Когато искаш да продаваш онлайн без излишни стъпки за клиента.",
-    body: "Магазин с подреден каталог, силни продуктови страници и кратък път до плащане.",
-    includes: ["каталог и колекции", "плащания и доставки", "продуктови страници", "администрация"],
-  },
-  {
-    id: "funnels",
-    name: "Фунии и запитвания",
-    need: "Когато запитванията са малко, случайни или трудни за проследяване.",
-    body: "Лендинг страници, въпросници и записвания, които превръщат интереса в подготвен разговор.",
-    includes: ["лендинг страници", "въпросници", "записване на час", "проследяване"],
-  },
-  {
-    id: "portals",
-    name: "Клиентски портали",
-    need: "Когато клиентите ти търсят информация в имейли и съобщения.",
-    body: "Защитено място, в което клиентът вижда програмата, документите, напредъка или поръчките си.",
-    includes: ["вход и роли", "табла", "документи и съобщения", "абонаменти"],
-  },
-  {
-    id: "apps",
-    name: "Уеб приложения",
-    need: "Когато имаш идея за продукт или вътрешен инструмент и искаш да я провериш.",
-    body: "MVP или специализирано приложение, изградено около реалния процес, с възможност за развитие.",
-    includes: ["прототип", "MVP", "интеграции", "бази данни"],
-  },
-  {
-    id: "automation",
-    name: "Автоматизации",
-    need: "Когато екипът губи часове в повтаряща се ръчна работа.",
-    body: "Свързваме формите, таблиците, имейлите и системите ти, така че информацията да тече сама.",
-    includes: ["обработка на заявки", "известия", "синхронизация", "отчети"],
-  },
-  {
-    id: "ai",
-    name: "AI интерфейси",
-    need: "Когато искаш клиентите ти да получават бърз и подреден първи отговор.",
-    body: "Асистенти и интерфейси, свързани с твоята информация, с ясни граници и човешки контрол.",
-    includes: ["асистенти за запитвания", "структуриране на заявки", "вътрешни инструменти"],
-  },
-];
+export interface Content {
+  nav: { label: string; href: string }[];
+  /** The first screen: the promise in two lines (the second carries the
+      lilac gradient), what we are, and three facts. */
+  hero: {
+    eyebrow: string;
+    title: { before: string; accent: string };
+    description: string;
+    primary: { label: string; href: string };
+    secondary: { label: string; href: string };
+    facts: { value: string; label: string }[];
+  };
+  works: { heading: string; subheading: string; label: string; action: string };
+  /** Three statements instead of paragraphs. Lit word by word by the scroll. */
+  manifest: string[];
+  services: { label: string; title: string; lead: string; items: Service[] };
+  process: { label: string; title: string; steps: { name: string; body: string }[] };
+  contact: {
+    label: string;
+    title: string;
+    lead: string;
+    cta: string;
+    myChat: string;
+    steps: { title: string; body: string }[];
+  };
+  footer: { tagline: string };
+}
 
-export const process = [
-  {
-    name: "Разбиране на бизнеса",
-    body: "Говорим за целите, клиентите и процеса ти. Определяме какво трябва да постигне решението и какво не влиза в обхвата.",
+const bg: Content = {
+  nav: [
+    { label: "Проекти", href: "#proekti" },
+    { label: "Услуги", href: "#uslugi" },
+    { label: "Процес", href: "#proces" },
+    { label: "Контакт", href: "#kontakt" },
+  ],
+  hero: {
+    eyebrow: "Digital Studio · дизайн и разработка",
+    title: { before: "Разказваш идеята.", accent: "До 4 работни дни я виждаш като сайт." },
+    description:
+      "Екип от дизайнери и разработчици. Изслушваме те, разбираме бизнеса ти и превръщаме идеята в сайт, магазин или система, после я изглаждаме с теб до последния детайл.",
+    primary: { label: "Започни проект", href: "/zapochni" },
+    secondary: { label: "Виж проектите", href: "#proekti" },
+    facts: [
+      { value: "4", label: "работни дни до първата версия" },
+      { value: "0", label: "шаблона, всичко от нулата" },
+      { value: "24/7", label: "консултант, който те изслушва" },
+    ],
   },
-  {
-    name: "Структура и дизайн",
-    body: "Подреждаме съдържанието и пътя на потребителя, после изграждаме визуалната концепция. Одобряваш преди разработката.",
+  works: {
+    heading: "Нашата работа",
+    subheading: "Различни бизнеси. Решения с характер.",
+    label: "ПРОЕКТИ",
+    action: "Отвори сайта",
   },
-  {
-    name: "Разработка",
-    body: "Изграждаме решението на етапи, с работеща версия за преглед, вместо изненада в края.",
+  manifest: [
+    "Един разговор и вече знаем какво ти трябва.",
+    "Първата версия идва на имейла ти до 4 работни дни.",
+    "После я изглаждаме, докато стане точно твоя.",
+  ],
+  services: {
+    label: "Услуги",
+    title: "Какво създаваме.",
+    lead: "Сайтове, магазини, брандове, платформи. Според нуждата на бизнеса ти.",
+    items: [
+      {
+        id: "sites",
+        name: "Сайтове",
+        body: "Представя ясно какво предлагаш и води посетителя към запитване.",
+        includes: ["структура и текстове", "индивидуален дизайн", "SEO основа", "форми за запитване"],
+      },
+      {
+        id: "stores",
+        name: "Онлайн магазини",
+        body: "Подреден каталог, силни продуктови страници и кратък път до плащане.",
+        includes: ["каталог и колекции", "плащания и доставки", "продуктови страници", "администрация"],
+      },
+      {
+        id: "funnels",
+        name: "Фунии и запитвания",
+        body: "Лендинги, въпросници и записвания, които превръщат интереса в разговор.",
+        includes: ["лендинг страници", "въпросници", "записване на час", "проследяване"],
+      },
+      {
+        id: "portals",
+        name: "Клиентски портали",
+        body: "Защитено място, в което клиентът вижда програмата, документите или поръчките си.",
+        includes: ["вход и роли", "табла", "документи и съобщения", "абонаменти"],
+      },
+      {
+        id: "apps",
+        name: "Уеб приложения",
+        body: "MVP или вътрешен инструмент, изграден около реалния процес.",
+        includes: ["прототип", "MVP", "интеграции", "бази данни"],
+      },
+      {
+        id: "automation",
+        name: "Автоматизации",
+        body: "Формите, таблиците и имейлите ти, свързани така, че информацията да тече сама.",
+        includes: ["обработка на заявки", "известия", "синхронизация", "отчети"],
+      },
+      {
+        id: "ai",
+        name: "AI интерфейси",
+        body: "Асистенти, свързани с твоята информация, с ясни граници и човешки контрол.",
+        includes: ["асистенти за запитвания", "структуриране на заявки", "вътрешни инструменти"],
+      },
+    ],
   },
-  {
-    name: "Проверка и пускане",
-    body: "Тестваме на телефон и компютър, форми, връзки и интеграции. Пускаме, след като всичко е проверено.",
+  process: {
+    label: "Процес",
+    title: "От идея до пускане.",
+    steps: [
+      { name: "Разговор", body: "Разказваш ни идеята. Разбираме бизнеса, клиентите и целта ти." },
+      { name: "Първа версия", body: "До 4 работни дни: истински сайт на имейла ти, не скица." },
+      { name: "Изглаждане", body: "Променяме всеки детайл по твой вкус, докато стане твой." },
+      { name: "Пускане", body: "Домейн, плащания и форми. Тест на телефон и компютър, после поддръжка." },
+    ],
   },
-  {
-    name: "Поддръжка",
-    body: "След пускането можем да поемем поддръжката, промените и следващите стъпки в развитието.",
+  contact: {
+    label: "Започни проект",
+    title: "Какво искаш да създадем?",
+    lead: "Разкажи го на консултанта. Цената виждаш веднага, първата версия идва до 4 работни дни.",
+    cta: "Започни проект",
+    myChat: "Моят проект",
+    steps: [
+      { title: "Разказваш", body: "Със свои думи, на консултанта. Снимки, лого и примери са добре дошли." },
+      { title: "Цена и капаро", body: "Веднага виждаш цената на проекта на лична страница. Капарото плащаш онлайн и то се приспада от цената." },
+      { title: "Първа версия", body: "До 4 работни дни я получаваш на имейла си. После я изглаждаме заедно и пускаме." },
+    ],
   },
-];
+  footer: {
+    tagline: "Digital Studio · България",
+  },
+};
 
-export const principles = [
-  {
-    name: "Ясна структура",
-    body: "Посетителят разбира какво предлагаш и какво да направи след това. Започваме от съдържанието, не от ефектите.",
+const en: Content = {
+  nav: [
+    { label: "Work", href: "#proekti" },
+    { label: "Services", href: "#uslugi" },
+    { label: "Process", href: "#proces" },
+    { label: "Contact", href: "#kontakt" },
+  ],
+  hero: {
+    eyebrow: "Digital Studio · design and development",
+    title: { before: "You tell us the idea.", accent: "Within 4 working days you see it as a site." },
+    description:
+      "A team of designers and developers. We listen, understand your business and turn the idea into a site, a store or a system, then refine it with you down to the last detail.",
+    primary: { label: "Start a project", href: "/zapochni" },
+    secondary: { label: "See the work", href: "#proekti" },
+    facts: [
+      { value: "4", label: "working days to the first version" },
+      { value: "0", label: "templates, everything from scratch" },
+      { value: "24/7", label: "a consultant who listens" },
+    ],
   },
-  {
-    name: "Индивидуален дизайн",
-    body: "Визията се изгражда около твоя бизнес и клиенти. Не прехвърляме един и същ шаблон от проект на проект.",
+  works: {
+    heading: "Our work",
+    subheading: "Different businesses. Solutions with character.",
+    label: "WORK",
+    action: "Open the site",
   },
-  {
-    name: "Функционалност",
-    body: "Формите, плащанията, записванията и интеграциите трябва да работят надеждно — на телефон и на компютър.",
+  manifest: [
+    "One conversation and we know what you need.",
+    "The first version reaches your inbox within 4 working days.",
+    "Then we refine it until it is exactly yours.",
+  ],
+  services: {
+    label: "Services",
+    title: "What we make.",
+    lead: "Sites, stores, brands, platforms. Whatever your business needs.",
+    items: [
+      {
+        id: "sites",
+        name: "Websites",
+        body: "Shows clearly what you offer and leads the visitor to an inquiry.",
+        includes: ["structure and copy", "custom design", "SEO foundation", "inquiry forms"],
+      },
+      {
+        id: "stores",
+        name: "Online stores",
+        body: "A tidy catalogue, strong product pages and a short path to checkout.",
+        includes: ["catalogue and collections", "payments and shipping", "product pages", "admin"],
+      },
+      {
+        id: "funnels",
+        name: "Funnels and inquiries",
+        body: "Landing pages, questionnaires and bookings that turn interest into a conversation.",
+        includes: ["landing pages", "questionnaires", "booking", "tracking"],
+      },
+      {
+        id: "portals",
+        name: "Client portals",
+        body: "A protected place where the client sees their programme, documents or orders.",
+        includes: ["login and roles", "dashboards", "documents and messages", "subscriptions"],
+      },
+      {
+        id: "apps",
+        name: "Web apps",
+        body: "An MVP or an internal tool, built around the real process.",
+        includes: ["prototype", "MVP", "integrations", "databases"],
+      },
+      {
+        id: "automation",
+        name: "Automations",
+        body: "Your forms, sheets and e-mails connected so the information flows by itself.",
+        includes: ["request handling", "notifications", "sync", "reports"],
+      },
+      {
+        id: "ai",
+        name: "AI interfaces",
+        body: "Assistants connected to your own information, with clear limits and human control.",
+        includes: ["inquiry assistants", "structuring requests", "internal tools"],
+      },
+    ],
   },
-  {
-    name: "Проследим процес",
-    body: "Ясен обхват, етапи и работещи версии за преглед. Винаги знаеш какво е готово и какво предстои.",
+  process: {
+    label: "Process",
+    title: "From idea to launch.",
+    steps: [
+      { name: "Conversation", body: "You tell us the idea. We learn your business, clients and goal." },
+      { name: "First version", body: "Within 4 working days: a real site in your inbox, not a sketch." },
+      { name: "Refining", body: "We adjust every detail to your taste until it is yours." },
+      { name: "Launch", body: "Domain, payments and forms. Tested on phone and desktop, then support." },
+    ],
   },
-  {
-    name: "Възможност за развитие",
-    body: "Изграждаме така, че сайтът да може да прерасне в магазин, портал или система, без да започваш отначало.",
+  contact: {
+    label: "Start a project",
+    title: "What shall we create?",
+    lead: "Tell the consultant. You see the price right away; the first version arrives within 4 working days.",
+    cta: "Start a project",
+    myChat: "My project",
+    steps: [
+      { title: "You tell us", body: "In your own words, to the consultant. Pictures, logo and examples are welcome." },
+      { title: "Price and deposit", body: "You see the project's price right away on a private page. Pay the deposit online; it is deducted from the price." },
+      { title: "First version", body: "It reaches your inbox within 4 working days. Then we refine it together and launch." },
+    ],
   },
-];
+  footer: {
+    tagline: "Digital Studio · Bulgaria",
+  },
+};
 
-export const faq = [
-  {
-    q: "Какво включва един проект?",
-    a: "Обхватът се определя заедно в началото: страници и функции, съдържание, интеграции, брой кръгове с корекции и какво остава извън проекта. Всичко това е записано в предложението, преди да започнем.",
-  },
-  {
-    q: "Колко време отнема?",
-    a: "Зависи от обхвата и от това колко бързо е готово съдържанието. Конкретният срок и етапите се определят след първия разговор и се записват в предложението.",
-  },
-  {
-    q: "Колко струва?",
-    a: "Цената зависи от обхвата, сложността, миграцията на съдържание и интеграциите. Не работим с пакети „на сляпо“ — след разговора получаваш конкретно предложение.",
-  },
-  {
-    q: "Кой подготвя текстовете и снимките?",
-    a: "Можеш да ги подготвиш ти или да помогнем със структурата и текстовете. Отговорностите за съдържанието се договарят предварително, за да няма забавяния в края.",
-  },
-  {
-    q: "Можете ли да свържете сайта с други системи?",
-    a: "Да — плащания, куриери, календари, CRM, имейл маркетинг и други, когато системата предлага API или готова интеграция. Проверяваме възможностите още при оценката.",
-  },
-  {
-    q: "Какво става след пускането?",
-    a: "Можем да поемем поддръжката, обновяванията и новите функции. Условията се договарят отделно, според нуждите на проекта.",
-  },
-  {
-    q: "Използвате ли AI?",
-    a: "Да, като вътрешен инструмент, който ни помага да работим по-бързо и да правим повече итерации. Решенията, кодът и качеството остават наша отговорност.",
-  },
-];
+export const content = { bg, en };
 
-export const solutionOptions = [
-  "Сайт",
-  "Онлайн магазин",
-  "Фуния / запитвания",
-  "Клиентски портал",
-  "Уеб приложение",
-  "Автоматизация",
-  "AI интерфейс",
-  "Още не съм сигурен",
-] as const;
-
-export const budgetOptions = [
-  "Още не знам",
-  "До 2 000 €",
-  "2 000 – 5 000 €",
-  "5 000 – 10 000 €",
-  "Над 10 000 €",
-] as const;
-
-export const timelineOptions = [
-  "Няма конкретен срок",
-  "До 1 месец",
-  "1–3 месеца",
-  "Над 3 месеца",
-] as const;
+export const useContent = () => useCopy(content);

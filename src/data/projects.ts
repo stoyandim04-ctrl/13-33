@@ -3,10 +3,10 @@
 // IMPORTANT - honesty rules (from the 13:33 master pack):
 // - Never present a concept as a finished client project.
 // - Never use another studio's or a client's site as ours without permission.
-// - Every entry below is a CONCEPT created by 13:33 to show range. The posters
-//   and recordings in /public/projects/<slug>/ are rendered from our own
-//   concept mock-ups (scripts/build-concept-media.mjs) or, for Tsukibi, from
-//   our own site in sites/tsukibi - no stock, no third party sites.
+// - Every entry below is a CONCEPT created by 13:33 and built as a real site.
+//   The posters and recordings in /public/projects/<slug>/ are recorded from
+//   those sites (scripts/build-live-media.mjs, scripts/build-tsukibi-media.mjs)
+//   - no stock, no third party sites.
 //
 // To add a real project: copy an entry, set `status`, drop `poster.webp`
 // (1450×1000) and `preview.mp4` + `preview.webm`, ~6–10 s, muted,
@@ -14,8 +14,9 @@
 // is public and the client agreed to be shown.
 //
 // Candidates waiting for confirmation (link, recording, status, permission) -
-// see Notion "Проекти в спиралата": VELION LAB (own product), INTNS / FitCheck,
-// Strong Muse. Not listed here until those are confirmed.
+// see Notion "Проекти в спиралата": VELION LAB (own product), INTNS / FitCheck.
+// Not listed here until those are confirmed. The older mock-up concepts
+// (scripts/concept-mocks.mjs) are no longer in the wheel.
 
 export type ProjectStatus =
   | "concept" // our own exploration, no client
@@ -49,10 +50,13 @@ export interface ProjectVideo {
 export interface Project {
   /** Display name. */
   name: string;
+  /** English display name, when it differs. */
+  nameEn?: string;
   /** URL segment: /proekti/<slug>. */
   slug: string;
   /** What kind of solution it is. */
   category: string;
+  categoryEn?: string;
   /** Sector / type of business it is for. */
   sector: string;
   /** One or two sentences. */
@@ -84,12 +88,107 @@ const media = (slug: string) => ({
 
 export const projects: Project[] = [
   {
+    // Real site of ours (separate repo/Vercel project). Brand, notes and the
+    // demo prices on it are invented; nothing is sold.
+    name: "Obsidian",
+    slug: "obsidian",
+    category: "Кинематографична продуктова страница",
+    categoryEn: "Cinematic product page",
+    sector: "Парфюмен бранд",
+    summary:
+      "Сайт за измислен парфюм в тъмно стъкло: флаконът се разглежда при скрол — стъклото, месинговият пръстен, пулверизаторът — до избор на размер.",
+    role: ["Бранд и визуална концепция", "3D рендери и анимация при скрол", "Продуктова страница", "Работещ прототип"],
+    status: "concept",
+    ...media("obsidian"),
+    liveUrl: "https://obsidian-sigma-mocha.vercel.app",
+    need:
+      "Парфюмът се купува с усещане, а онлайн обикновено е снимка и цена. Страницата трябва да предаде материала и характера на продукта, преди посетителят да го е помирисал.",
+    approach: [
+      "Флаконът води разказа: при скрол се приближават стъклото, капачката с месинговия пръстен и пулверизаторът.",
+      "Ароматът е разказан в три акта — начало, сърце и база — вместо като списък със съставки.",
+      "Избор на размер и количка в края на разказа; на сайта ясно пише, че е демо и нищо не се продава.",
+    ],
+    year: 2026,
+  },
+  {
+    // Real site of ours (sites/zver, 13-33-zver.vercel.app). Brand, flavours,
+    // ingredients and prices are invented; nothing is sold.
+    name: "FERAL",
+    slug: "feral",
+    category: "3D сайт за енергийна напитка",
+    categoryEn: "3D energy drink website",
+    sector: "Напитки",
+    summary:
+      "Сайт за измислена енергийна напитка: 3D кенчета водят през страницата при скрол, всеки вкус оцветява целия сайт, магазинът е в края.",
+    role: ["Бранд и визуална концепция", "3D кенчета в браузъра", "Анимация при скрол", "Магазин (демо)"],
+    status: "concept",
+    ...media("feral"),
+    liveUrl: "https://13-33-zver.vercel.app",
+    need:
+      "Енергийната напитка се продава с характер. Страницата трябва да е толкова шумна и бърза, колкото самият продукт, и пак да води спокойно до покупка.",
+    approach: [
+      "Кенчетата са истинска 3D геометрия в браузъра и следват скрола от секция в секция.",
+      "Изборът на вкус сменя цвета на целия сайт; гърбът на кенчето показва състава и предупреждението за кофеина.",
+      "Магазин с вкус, кашон и количка в края; на сайта ясно пише, че е концепция и нищо не се продава.",
+    ],
+    year: 2026,
+  },
+  {
+    // Real site of ours (branch `varovik`, varovik.vercel.app). Building, homes and areas are
+    // invented; frames and photos generated for the concept.
+    name: "Варовик",
+    nameEn: "Varovik",
+    slug: "varovik",
+    category: "Сайт с филм при скрол",
+    categoryEn: "Scroll-driven film website",
+    sector: "Жилищна сграда",
+    summary:
+      "Концепция за жилищна сграда, в която скролът ви разхожда: от басейна пред сградата през входа и лобито до вътрешния двор.",
+    role: ["Визуална концепция", "Генерирани кадри и филм", "Филм, рисуван според скрола", "Работещ прототип"],
+    status: "concept",
+    ...media("varovik"),
+    liveUrl: "https://varovik.vercel.app",
+    need:
+      "Жилище в строеж се продава с усещане за място, което още не съществува. Посетителят трябва да „пристигне“ там, преди да види планове и площи.",
+    approach: [
+      "Филм, разрязан на кадри и рисуван според скрола — пристигане, алея, вход, лоби, двор, с надписи за всяка спирка.",
+      "Три вида жилища — градински, терасов и пентхаус — със снимка и план, който се рисува сам.",
+      "Материалите на сградата и заявка за оглед в края; формата е демо и не изпраща данни.",
+    ],
+    year: 2026,
+  },
+  {
+    // Real site of ours (separate repo/Vercel project). Visuals made for the
+    // presentation; the product and the order form are a concept.
+    name: "Black Clove",
+    slug: "black-clove",
+    category: "Продуктова страница",
+    categoryEn: "Product page",
+    sector: "Храна — черен чесън",
+    summary:
+      "Сайт за черен чесън в крафт кутия: при скрол кутията се отваря, скилидките се изсипват и страницата разказва процеса, вкуса и как се готви с него.",
+    role: ["Бранд и опаковка", "Визуална концепция", "Анимация при скрол", "Работещ прототип"],
+    status: "concept",
+    ...media("black-clove"),
+    liveUrl: "https://black-clove-rho.vercel.app",
+    need:
+      "Черният чесън е непознат за повечето хора. Преди да го поръчат, те трябва да разберат какво е, какъв вкус има и какво да правят с него.",
+    approach: [
+      "Кутията води разказа: отвори, изсипи, намажи — три стъпки при скрол.",
+      "Процесът, вкусът и четири начина да се използва в кухнята, всяко в своя част.",
+      "Поръчка в края, с количество и бележка, без излишни стъпки.",
+    ],
+    year: 2026,
+  },
+  {
     // Built as a real site in sites/tsukibi; poster and preview are recorded
     // from it (scripts/build-tsukibi-media.mjs). Restaurant, menu and prices
     // are invented for the concept.
     name: "Цукиби 月火",
+    nameEn: "Tsukibi 月火",
     slug: "tsukibi",
     category: "Сайт с интерактивно меню",
+    categoryEn: "Interactive menu website",
     sector: "Азиатски ресторант",
     summary:
       "Анимиран сайт за измислен азиатски ресторант: кинематографично начало и меню, в което всяко ястие се разглежда отблизо — с натискане чинията се накланя и показва съставките си в 3D.",
@@ -103,120 +202,6 @@ export const projects: Project[] = [
       "Начало с огън, искри и чиния, която се завърта при скрол — усещането за мястото идва преди текста.",
       "Меню в пет части — салати, предястия, робата, риби, суши — чиния по чиния; един скрол сменя едно ястие.",
       "С натискане чинията ляга в 3D и над всяка съставка се изправя табелка с името ѝ.",
-    ],
-    year: 2026,
-  },
-  {
-    name: "Линия Архитекти",
-    slug: "liniya-arhitekti",
-    category: "Сайт-портфолио",
-    sector: "Архитектурно студио",
-    summary:
-      "Сайт за архитектурно студио, в който обектите водят разказа, а запитването е на един клик от всеки проект.",
-    role: ["Информационна архитектура", "Визуална концепция", "Прототип"],
-    status: "concept",
-    ...media("liniya-arhitekti"),
-    need:
-      "Студиото продава с доверие и усещане за качество. Посетителят трябва бързо да види подходящи обекти и да разбере как започва работата с тях.",
-    approach: [
-      "Обектите са организирани по тип и мащаб, с големи кадри и кратки технически данни.",
-      "Всеки обект завършва с ясна стъпка към запитване, без да прекъсва разглеждането.",
-      "Спокойна типография и много въздух — сайтът не спори с архитектурата.",
-    ],
-    year: 2026,
-  },
-  {
-    name: "Глина & Огън",
-    slug: "glina-i-ogan",
-    category: "Онлайн магазин",
-    sector: "Ръчно изработена керамика",
-    summary:
-      "Онлайн магазин за малка керамична работилница: продуктите се виждат отблизо, а поръчката минава без излишни стъпки.",
-    role: ["Структура на каталога", "Продуктови страници", "Поток на поръчката"],
-    status: "concept",
-    ...media("glina-i-ogan"),
-    need:
-      "Ръчно изработените продукти губят стойност, когато изглеждат като в обикновен каталог. Магазинът трябва да предаде материала и да улесни покупката.",
-    approach: [
-      "Продуктова страница с близки кадри, размери и грижа за изделието на едно място.",
-      "Колекции вместо безкрайни филтри — по-лесен избор за подарък или комплект.",
-      "Кратък път до плащане и ясни срокове за изработка и доставка.",
-    ],
-    year: 2026,
-  },
-  {
-    name: "Ритъм",
-    slug: "ritam-kouching",
-    category: "Фуния за записвания",
-    sector: "Онлайн коучинг",
-    summary:
-      "Фуния за онлайн коуч: от рекламата до кратък въпросник и записване за първи разговор.",
-    role: ["Стратегия на фунията", "Лендинг страница", "Въпросник и записване"],
-    status: "concept",
-    ...media("ritam-kouching"),
-    need:
-      "Запитванията идват разпръснато в съобщения и са трудни за проследяване. Нужен е един път, който подготвя клиента още преди разговора.",
-    approach: [
-      "Една страница с ясно обещание, програма и отговори на най-честите възражения.",
-      "Въпросник, който подрежда целите и опита на клиента преди разговора.",
-      "Записване в свободен час и автоматично потвърждение.",
-    ],
-    year: 2026,
-  },
-  {
-    name: "Сфера",
-    slug: "sfera-portal",
-    category: "Клиентски портал",
-    sector: "Консултантска практика",
-    summary:
-      "Портал, в който клиентите на консултантска практика виждат етапите, документите и съобщенията си на едно място.",
-    role: ["UX на портала", "Интерфейс", "Прототип на основните екрани"],
-    status: "concept",
-    ...media("sfera-portal"),
-    need:
-      "Информацията за всеки клиент е пръсната в имейли и папки. Клиентите питат едно и също, а екипът губи време в търсене.",
-    approach: [
-      "Табло с текущия етап, следващата стъпка и отговорния човек.",
-      "Документи и съобщения, вързани към конкретния проект, а не към пощата.",
-      "Достъп по роли — клиентът вижда само своето.",
-    ],
-    year: 2026,
-  },
-  {
-    name: "Обсидиан",
-    slug: "obsidian-lampa",
-    category: "Продуктова страница",
-    sector: "Продуктов бранд",
-    summary:
-      "Кинематографично представяне на един продукт — настолна лампа — с детайли, материали и директна поръчка.",
-    role: ["Визуална концепция", "Сценарий на страницата", "Анимация и прототип"],
-    status: "concept",
-    ...media("obsidian-lampa"),
-    need:
-      "Един продукт с висока цена трябва да се усети, преди да се купи. Страницата замества витрината.",
-    approach: [
-      "Сцени, които показват формата, светлината и материала един по един.",
-      "Технически данни и комплектация без да се губи атмосферата.",
-      "Поръчка от всяка точка на страницата.",
-    ],
-    year: 2026,
-  },
-  {
-    name: "Поток",
-    slug: "potok-zayavki",
-    category: "Система и автоматизация",
-    sector: "Сервизна фирма",
-    summary:
-      "Вътрешна система за заявки: заявката влиза, разпределя се към техник и клиентът получава известие на всяка стъпка.",
-    role: ["Анализ на процеса", "Интерфейс", "Автоматизации"],
-    status: "concept",
-    ...media("potok-zayavki"),
-    need:
-      "Заявките идват по телефон, имейл и съобщения. Част от тях се губят, а клиентите не знаят кога ще бъдат обслужени.",
-    approach: [
-      "Една входна точка за всички заявки, с приоритет и статус.",
-      "Автоматично разпределение според района и натовареността.",
-      "Известия към клиента при приемане, насрочване и приключване.",
     ],
     year: 2026,
   },

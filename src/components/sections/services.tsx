@@ -8,7 +8,8 @@ import {
   Workflow,
 } from "lucide-react";
 
-import { process, services, type Service } from "@/data/content";
+import { useContent, type Service } from "@/data/content";
+import { useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -20,6 +21,7 @@ export function Services() {
   const ref = React.useRef<HTMLElement>(null);
   const [live, setLive] = React.useState(false);
   const [seen, setSeen] = React.useState(false);
+  const { services } = useContent();
 
   React.useEffect(() => {
     const el = ref.current;
@@ -47,21 +49,20 @@ export function Services() {
       <div aria-hidden="true" className="svc-backdrop" />
       <div className="container-wide relative">
         <header className="svc-head mx-auto max-w-[46rem] text-center">
-          <p className="svc-pill">Услуги</p>
+          <p className="svc-pill">{services.label}</p>
           <h2
             id="uslugi-title"
             className="font-display text-heading mt-6 font-[500] tracking-[-0.045em] text-balance"
           >
-            Решения според това, от което бизнесът ти има нужда.
+            {services.title}
           </h2>
           <p className="text-lead text-muted-foreground mx-auto mt-6 max-w-[44ch] text-pretty">
-            Не продаваме инструменти, а работещ резултат — по-силно представяне,
-            повече запитвания, по-лесни продажби или по-подредени процеси.
+            {services.lead}
           </p>
         </header>
 
         <ul className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-24 lg:grid-cols-12 lg:gap-5">
-          {services.map((s, i) => (
+          {services.items.map((s, i) => (
             <ServiceCard key={s.id} service={s} index={i} large={i < 3} live={live} />
           ))}
         </ul>
@@ -122,7 +123,7 @@ type VisualProps = { live: boolean };
 
 /** Sites: the build moving through our own process steps. */
 function VisualSteps({ live }: VisualProps) {
-  const steps = process.slice(0, 4).map((p) => p.name.split(" ")[0]);
+  const steps = useContent().process.steps.slice(0, 4).map((p) => p.name.split(" ")[0]);
   const [active, setActive] = React.useState(0);
   React.useEffect(() => {
     if (!live || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -167,7 +168,7 @@ function VisualStore() {
         <div className="mt-3 h-2 w-3/4 rounded-full bg-white/15" />
         <div className="mt-2 h-2 w-1/2 rounded-full bg-white/8" />
         <div className="svc-add mt-4">
-          <ShoppingBag className="size-3.5" /> Добави
+          <ShoppingBag className="size-3.5" /> {useLang().tr("Добави")}
         </div>
         <span className="svc-bag">
           <ShoppingBag className="size-4" />
