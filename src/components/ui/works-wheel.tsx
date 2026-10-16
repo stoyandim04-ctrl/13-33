@@ -72,8 +72,8 @@ export interface WorksWheelProps extends Omit<
 
 /* Geometry. The card is measured against the stage; everything else is measured
    against the card, so a narrow stage scales the whole wheel down with it. */
-const CARD_H = 0.38; // front card height, of the stage
-const CARD_MAX_W = 0.34; // ... but never wider than this much of the stage
+const CARD_H = 0.45; // front card height, of the stage
+const CARD_MAX_W = 0.42; // ... but never wider than this much of the stage
 const CARD_MAX_W_NARROW = 0.86; // phones: the work has to be legible
 const CARD_RATIO = 1.45; // card width / height
 /* The spiral (helix). Each card sits a step further round a vertical axis and a
@@ -189,7 +189,8 @@ export function WorksWheel({
   const count = items.length;
   const last = Math.max(count - 1, 0);
   const unit = coarse ? DRAG_UNITS : WHEEL_UNITS;
-  const narrow = stage.w > 0 && stage.w < 768;
+  // Phones, and tablets held upright: the spiral climbs and the work fills the width.
+  const narrow = stage.w > 0 && (stage.w < 768 || (stage.w < 1024 && stage.h > stage.w));
 
   React.useEffect(() => {
     const el = stageRef.current;

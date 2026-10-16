@@ -91,7 +91,7 @@ export function SiteHeader() {
             </span>
           </Link>
 
-          <nav aria-label={tr("Основна навигация")} className="hidden md:block">
+          <nav aria-label={tr("Основна навигация")} className="hidden lg:block">
             <ul className="flex items-center gap-9">
               {nav.map((item) => (
                 <li key={item.href}>
@@ -104,13 +104,13 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-3">
-            {switcher("hidden md:flex")}
+            {switcher("hidden lg:flex")}
             {/* On the phone the other language is one tap away, always visible. */}
             <button
               type="button"
               onClick={() => setLang(lang === "bg" ? "en" : "bg")}
               aria-label={lang === "bg" ? "Switch to English" : "Превключи на български"}
-              className="text-muted-foreground hover:text-foreground border-border grid h-9 min-w-9 place-items-center rounded-full border px-2 text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors md:hidden"
+              className="text-muted-foreground hover:text-foreground border-border grid h-9 min-w-9 place-items-center rounded-full border px-2 text-[0.75rem] font-semibold tracking-[0.1em] uppercase transition-colors lg:hidden"
             >
               {lang === "bg" ? "en" : "bg"}
             </button>
@@ -127,7 +127,7 @@ export function SiteHeader() {
               aria-controls="mobile-menu"
               aria-label={open ? tr("Затвори менюто") : tr("Отвори менюто")}
               onClick={() => setOpen((v) => !v)}
-              className="-mr-2 grid size-11 place-items-center rounded-full md:hidden"
+              className="-mr-2 grid size-11 place-items-center rounded-full lg:hidden"
             >
               {open ? <X aria-hidden="true" className="size-5" /> : <Menu aria-hidden="true" className="size-5" />}
             </button>
@@ -139,7 +139,7 @@ export function SiteHeader() {
       <div
         id="mobile-menu"
         hidden={!open}
-        className="bg-background fixed inset-0 z-[190] flex flex-col px-5 pt-24 pb-10 sm:px-8 md:hidden"
+        className="bg-background fixed inset-0 z-[190] flex flex-col px-5 pt-24 pb-10 sm:px-8 lg:hidden"
       >
         <nav aria-label={tr("Мобилна навигация")}>
           <ul>
