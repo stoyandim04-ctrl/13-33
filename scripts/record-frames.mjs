@@ -30,7 +30,8 @@ const executablePath = process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium";
     preview scrolls in total; it eases in and out. `length`: seconds. */
 const SITES = {
   obsidian: { url: "https://obsidian-sigma-mocha.vercel.app", intro: 3500, hold: 0.5, px: 7500, length: 9 },
-  feral: { url: "https://13-33-zver.vercel.app", intro: 9000, hold: 0.8, px: 6500, length: 9 },
+  // ?rec: the site's own frame loop waits for window.__step(now), one render per frame.
+  feral: { url: "https://13-33-zver.vercel.app/?rec", intro: 10000, hold: 0.8, px: 6500, length: 9 },
   varovik: { url: "https://varovik.vercel.app", intro: 4000, hold: 0.5, px: 9000, length: 9 },
   "black-clove": { url: "https://black-clove-rho.vercel.app", intro: 3500, hold: 0.5, px: 7000, length: 9 },
   tsukibi: { url: "https://tsukibi.vercel.app", intro: 5500, hold: 0.5, px: 6500, length: 9 },
@@ -49,15 +50,12 @@ for (const [slug, site] of Object.entries(SITES)) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await page.clock.install();
-  await page.goto(url, { waitUntil: "load", timeout: 90000 });
-  await page.waitForLoadState("networkidle").catch(() => {});
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90000 });
+  await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 3000)); // images and models, real time
   await page.mouse.move(W / 2, H / 2);
-  // Let the intro play on page time, in small steps so loaders that count
-  // frames get them.
-  for (let t = 0; t < site.intro; t += 100) {
-    await page.clock.runFor(100);
-    await settle();
-  }
+  // Let the intro play on page time, frame by frame.
+  for (let t = 0; t < site.intro; t += STEP) await step(page, STEP, false);
 
   const frames = Math.round(site.length * FPS);
   const holdFrames = Math.round(site.hold * FPS);
@@ -83,11 +81,11 @@ for (const [slug, site] of Object.entries(SITES)) {
   const vf = "scale=1160:-2:flags=lanczos";
   ffmpeg(["-i", path.join(work, "poster.png"), "-c:v", "libwebp", "-quality", "82", path.join(out, "poster.webp")]);
   ffmpeg([
-    ...input, "-vf", vf, "-c:v", "libx264", "-preset", "slow", "-crf", "24", "-pix_fmt", "yuv420p",
+    ...input, "-vf", vf, "-c:v", "libx264", "-preset", "slow", "-crf", "25", "-pix_fmt", "yuv420p",
     "-g", "60", "-movflags", "+faststart", "-an", path.join(out, "preview.mp4"),
   ]);
   ffmpeg([
-    ...input, "-vf", vf, "-c:v", "libvpx-vp9", "-crf", "36", "-b:v", "0", "-row-mt", "1", "-deadline", "good",
+    ...input, "-vf", vf, "-c:v", "libvpx-vp9", "-crf", "42", "-b:v", "0", "-row-mt", "1", "-deadline", "good",
     "-g", "60", "-an", path.join(out, "preview.webm"),
   ]);
   const sizes = await Promise.all(
@@ -103,9 +101,12 @@ await browser.close();
 
 /** Advance the page by `ms`: the fake clock (timers, rAF), then every CSS
     animation and every playing video on the page by the same amount. */
-async function step(page, ms) {
+let pageNow = 0;
+async function step(page, ms, draw = true) {
   await page.clock.runFor(ms);
-  await page.evaluate(async (ms) => {
+  pageNow += ms;
+  await page.evaluate(async ([ms, now]) => {
+    window.__step?.(now);
     for (const a of document.getAnimations()) {
       if (a.playState === "finished") continue;
       if (a.__vt === undefined) {
@@ -124,8 +125,8 @@ async function step(page, ms) {
       v.currentTime = next;
     }
     await Promise.all(seeks);
-  }, ms);
-  await settle();
+  }, [ms, pageNow]);
+  if (draw) await settle();
 }
 
 /** A moment of real time, so the compositor draws what the step changed. */
