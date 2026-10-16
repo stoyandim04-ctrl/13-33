@@ -155,7 +155,7 @@ export default function Menu() {
       </div>
 
       {/* категории */}
-      <nav aria-label="Категории" data-scroll-own className="relative z-10 mx-auto mt-2 flex max-w-full gap-1 overflow-x-auto px-5 [scrollbar-width:none] lg:absolute lg:inset-x-0 lg:top-[5.25rem] lg:mt-0 lg:justify-center">
+      <nav aria-label="Категории" data-scroll-own className="relative z-30 mx-auto mt-2 flex max-w-full gap-1 overflow-x-auto px-5 [scrollbar-width:none] lg:absolute lg:inset-x-0 lg:top-[5.25rem] lg:mt-0 lg:justify-center">
         {categories.map((c) => (
           <button
             key={c.id}
