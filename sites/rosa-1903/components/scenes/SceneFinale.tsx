@@ -8,7 +8,7 @@ import BottleLine from "../ui/BottleLine";
 import { useSceneTimeline } from "@/lib/timeline";
 import { revealWords } from "@/lib/reveal";
 
-export const STUDIO_URL = "https://13-33.vercel.app";
+export const STUDIO_URL = "https://digistudio13.com";
 
 /**
  * VII — Финал. Darkness; one line of light crosses left to right and leaves
