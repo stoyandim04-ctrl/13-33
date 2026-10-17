@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { sampleBottle } from "@/lib/bottle";
 import { deviceTier, maxDpr, petalCount, type Tier } from "@/lib/gpu";
+import { filmClock, filmMode } from "@/lib/film";
 
 /**
  * Scene II's petals, all on the GPU: they fall and shy away from the cursor
@@ -129,6 +130,8 @@ function Field({ count, state, pointer }: { count: number; state: PetalState; po
     return g;
   }, [count]);
 
+  const tick = useMemo(() => filmClock(), []);
+  const film = useMemo(() => filmMode(), []);
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -155,8 +158,9 @@ function Field({ count, state, pointer }: { count: number; state: PetalState; po
 
   useFrame((_, dt) => {
     const u = material.uniforms;
-    u.uTime.value += Math.min(dt, 0.05);
-    u.uP.value += (state.progress - u.uP.value) * 0.12;
+    const d = tick(dt);
+    u.uTime.value += d;
+    u.uP.value = film ? state.progress : u.uP.value + (state.progress - u.uP.value) * 0.12;
     u.uPR.value = Math.min(window.devicePixelRatio, 2);
     // petals read ~1.2 % of the screen height on any device
     u.uSize.value = size.height * 0.1;

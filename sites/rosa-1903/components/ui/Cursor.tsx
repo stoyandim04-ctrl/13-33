@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
-import { isTouch } from "@/lib/film";
+import { filmMode, isTouch } from "@/lib/film";
 
 /**
  * A small dot. Over anything with `data-cursor="…"` it opens into a ring
@@ -15,7 +15,7 @@ export default function Cursor() {
   const [on, setOn] = useState(false);
 
   useEffect(() => {
-    if (isTouch()) return;
+    if (isTouch() || filmMode()) return;
     setOn(true);
     document.documentElement.classList.add("has-cursor");
     const xd = gsap.quickTo(dot.current, "x", { duration: 0.15, ease: "power3.out" });

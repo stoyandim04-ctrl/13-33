@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { deviceTier, type Tier } from "@/lib/gpu";
+import { filmClock } from "@/lib/film";
 
 /**
  * Scene I's fog: fbm noise drifting low over the field. The cursor (or a
@@ -73,6 +74,7 @@ function Layer({ state }: { state: FogState }) {
   const trail = useRef(Array.from({ length: TRAIL }, () => new THREE.Vector3(-9, -9, -99)));
   const head = useRef(0);
   const last = useRef({ x: -1, y: -1 });
+  const tick = useMemo(() => filmClock(), []);
 
   const material = useMemo(
     () =>
@@ -112,7 +114,7 @@ function Layer({ state }: { state: FogState }) {
 
   useFrame((_, dt) => {
     const u = material.uniforms;
-    u.uTime.value += Math.min(dt, 0.05);
+    u.uTime.value += tick(dt);
     u.uP.value += (state.progress - u.uP.value) * 0.1;
     u.uAspect.value = size.width / size.height;
   });

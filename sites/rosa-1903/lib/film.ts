@@ -57,3 +57,29 @@ export function preload(urls: string[], onProgress: (p: number) => void) {
   ];
   return Promise.all(jobs);
 }
+
+/**
+ * Film mode (`?film`): for recording reels. Animations that run on their own
+ * (fog, petals, the bottle's easing) follow `window.__filmClock`, which the
+ * recorder advances by exactly one frame per screenshot, instead of real time.
+ */
+declare global {
+  interface Window {
+    __filmClock?: number;
+  }
+}
+
+export const filmMode = () => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("film");
+
+/** A per-component clock: real delta normally, recorder delta in film mode. */
+export function filmClock() {
+  const film = filmMode();
+  let last = film ? (window.__filmClock ?? 0) : 0;
+  return (dt: number) => {
+    if (!film) return Math.min(dt, 0.05);
+    const now = window.__filmClock ?? 0;
+    const d = now - last;
+    last = now;
+    return d;
+  };
+}

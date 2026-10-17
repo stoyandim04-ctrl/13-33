@@ -6,6 +6,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
 import { bodyGeometry, capGeometry, labelGeometry, liquidGeometry, stopperGeometry } from "@/lib/bottle";
 import { deviceTier, type Tier } from "@/lib/gpu";
+import { filmClock } from "@/lib/film";
 
 /**
  * The flacon in glass: transmission + IOR 1.5 + a hint of iridescence, a
@@ -176,13 +177,17 @@ function Flacon({ state, tier, drag }: { state: BottleState; tier: Tier; drag: R
   const key = useRef<THREE.SpotLight>(null);
   const sweep = useRef<THREE.PointLight>(null);
   const now = useRef({ light: 0, explode: 0, spin: 0, shake: 0, lift: 0 });
+  const tick = useMemo(() => filmClock(), []);
+  const clock = useRef(0);
 
   useFrame(({ camera, size }, dt) => {
     const n = now.current;
     // portrait screens see less width: step back so the flacon keeps its air
     const aspect = size.width / size.height;
     const back = aspect < 0.9 ? Math.min(1.9, 0.95 / aspect) : 1;
-    const k = 1 - Math.pow(0.001, Math.min(dt, 0.05)); // frame-rate independent ease
+    const step = tick(dt);
+    clock.current += step;
+    const k = 1 - Math.pow(0.001, step); // frame-rate independent ease
     n.light = ease(n.light, state.light, k);
     n.explode = ease(n.explode, state.explode, k);
     n.spin = ease(n.spin, state.spin, k);
@@ -191,7 +196,7 @@ function Flacon({ state, tier, drag }: { state: BottleState; tier: Tier; drag: R
     const d = drag.current!;
     d.x += d.v;
     d.v *= 0.92;
-    const t = performance.now() / 1000;
+    const t = clock.current;
 
     turn.current!.rotation.y = n.spin * Math.PI * 2 + d.x + Math.sin(t * 0.3) * 0.08;
     root.current!.position.y = -n.lift;
