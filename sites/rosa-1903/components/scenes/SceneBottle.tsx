@@ -4,8 +4,8 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import Stage, { Eyebrow } from "../ui/Stage";
 import Words from "../ui/Words";
-import BottleLine from "../ui/BottleLine";
-import { useSceneTimeline } from "@/lib/timeline";
+import Bottle, { bottleState } from "../gl/Bottle";
+import { useSceneActive, useSceneTimeline } from "@/lib/timeline";
 import { dissolveWords, revealWords } from "@/lib/reveal";
 
 const PARTS = [
@@ -25,28 +25,32 @@ const PARTS = [
 export default function SceneBottle() {
   const root = useRef<HTMLDivElement>(null);
   const head = useRef<HTMLHeadingElement>(null);
+  const bottle = useRef(bottleState());
+  const active = useSceneActive("bottle");
+  const near = useSceneActive("bottle", 140);
 
   useSceneTimeline("bottle", (tl, at) => {
     const q = gsap.utils.selector(root.current);
-    tl.fromTo(q("[data-eyebrow]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: at(0.06) }, at(0.04))
-      .fromTo(q("[data-bottle] [data-draw]"), { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: at(0.14), stagger: at(0.015), ease: "power2.inOut" }, at(0.02))
-      .fromTo(q("[data-bottle]"), { opacity: 0.2, scale: 0.92 }, { opacity: 1, scale: 1, duration: at(0.18), ease: "power2.out" }, 0);
+    const b = bottle.current;
+    // 0–20 %: out of the dark, rims first
+    tl.fromTo(b, { light: 0 }, { light: 1, duration: at(0.2), ease: "power2.inOut" }, 0)
+      .fromTo(q("[data-eyebrow]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: at(0.06) }, at(0.04));
     revealWords(tl, head.current, at(0.06), at(0.08));
     dissolveWords(tl, head.current, at(0.18), at(0.05));
-    // exploded view
-    tl.to(q("[data-bottle]"), { scale: 0.82, opacity: 0.35, duration: at(0.1), ease: "power2.inOut" }, at(0.2));
+    // 20–60 %: the exploded view, each part annotated
+    tl.fromTo(b, { explode: 0 }, { explode: 1, duration: at(0.12), ease: "expo.out" }, at(0.2));
     q("[data-part]").forEach((el, i) => {
       tl.fromTo(el, { opacity: 0, y: 0 }, { opacity: 1, y: `${PARTS[i].y}vh`, duration: at(0.14), ease: "expo.out" }, at(0.22 + i * 0.035));
       tl.fromTo(el.querySelector("[data-tick]"), { scaleX: 0 }, { scaleX: 1, duration: at(0.06), ease: "power2.out" }, at(0.27 + i * 0.035));
     });
-    // the click
-    tl.to(q("[data-part]"), { y: 0, opacity: 0, duration: at(0.12), ease: "power4.in", stagger: at(0.01) }, at(0.6))
-      .to(q("[data-bottle]"), { scale: 1, opacity: 1, duration: at(0.12), ease: "power4.in" }, at(0.6))
-      .fromTo(q("[data-shake]"), { x: 0 }, { keyframes: { x: [0, -4, 3, -2, 1, 0] }, duration: at(0.04) }, at(0.72))
-      .fromTo(q("[data-snap]"), { opacity: 0 }, { opacity: 0.5, duration: at(0.01), yoyo: true, repeat: 1 }, at(0.72))
-      // the turn and the line of light
-      .fromTo(q("[data-bottle]"), { rotateY: 0 }, { rotateY: 360, duration: at(0.2), ease: "power1.inOut" }, at(0.8))
-      .fromTo(q("[data-sweep]"), { xPercent: -150, opacity: 0 }, { xPercent: 150, opacity: 1, duration: at(0.16), ease: "power2.inOut" }, at(0.82))
+    // 60–80 %: back together, with a click
+    tl.to(q("[data-part]"), { y: 0, opacity: 0, duration: at(0.1), ease: "power4.in", stagger: at(0.008) }, at(0.6))
+      .to(b, { explode: 0, duration: at(0.12), ease: "power4.in" }, at(0.6))
+      .fromTo(b, { shake: 0 }, { keyframes: { shake: [0, 1, 0] }, duration: at(0.03) }, at(0.72))
+      .fromTo(q("[data-snap]"), { opacity: 0 }, { opacity: 0.35, duration: at(0.01), yoyo: true, repeat: 1 }, at(0.72))
+      // 80–100 %: a slow turn and a line of light across the glass
+      .fromTo(b, { spin: 0 }, { spin: 1, duration: at(0.2), ease: "power1.inOut" }, at(0.8))
+      .fromTo(b, { sweep: 0 }, { sweep: 1, duration: at(0.16), ease: "power2.inOut" }, at(0.82))
       .to(q("[data-eyebrow]"), { opacity: 0, duration: at(0.05) }, at(0.92));
   });
 
@@ -55,17 +59,9 @@ export default function SceneBottle() {
       <div ref={root} className="absolute inset-0 [perspective:1200px]">
         <div data-shake className="absolute inset-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_30%_45%_at_50%_50%,rgba(201,145,122,0.12),transparent_70%)]" />
-          <div data-bottle className="absolute inset-0 flex items-center justify-center text-petal/80">
-            <div className="relative overflow-hidden">
-              <BottleLine className="h-[58vh] w-auto" strokeWidth={0.6} />
-              <div
-                data-sweep
-                className="absolute inset-y-0 left-1/4 w-1/2 -skew-x-[18deg] opacity-0 bg-[linear-gradient(90deg,transparent,rgba(242,230,220,0.55),transparent)] mix-blend-screen"
-              />
-            </div>
-          </div>
+          {near && <Bottle state={bottle.current} active={active} interactive />}
 
-          <ul className="absolute inset-0">
+          <ul className="pointer-events-none absolute inset-0">
             {PARTS.map((p) => (
               <li
                 key={p.name}

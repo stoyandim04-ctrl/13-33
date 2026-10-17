@@ -3,9 +3,10 @@
 import { useRef } from "react";
 import { gsap } from "gsap";
 import Stage, { Eyebrow } from "../ui/Stage";
-import BottleLine from "../ui/BottleLine";
+import Bottle, { bottleState } from "../gl/Bottle";
 import Plate from "../ui/Plate";
-import { NOTE_ATMOS, useSceneTimeline } from "@/lib/timeline";
+import { NOTE_ATMOS, useSceneActive, useSceneTimeline } from "@/lib/timeline";
+import { useEffect, useState } from "react";
 
 const NOTES = [
   { word: "Роза", order: "Първа нота", line: "Росата още не е изсъхнала.", tint: "text-rosegold" },
@@ -20,6 +21,14 @@ const NOTES = [
  */
 export default function SceneNotes() {
   const root = useRef<HTMLDivElement>(null);
+  const bottle = useRef({ ...bottleState(), light: 1 });
+  const active = useSceneActive("notes");
+  const near = useSceneActive("notes", 140);
+  const [backdrops, setBackdrops] = useState<string[]>([]);
+  useEffect(() => {
+    const m = window.matchMedia("(max-width: 767px)").matches ? "-m" : "";
+    setBackdrops(["rose", "patchouli", "amber"].map((n) => `/img/note-${n}${m}.webp`));
+  }, []);
 
   useSceneTimeline("notes", (tl, at) => {
     const q = gsap.utils.selector(root.current);
@@ -50,7 +59,10 @@ export default function SceneNotes() {
         );
       }
     });
-    tl.to(q("[data-bottle]"), { rotate: 6, duration: at(1) }, 0);
+    // the bottle turns slowly and refracts each note in turn
+    tl.fromTo(bottle.current, { spin: 0 }, { spin: 0.6, duration: at(1) }, 0)
+      .fromTo(bottle.current, { backdrop: 0 }, { backdrop: 1, duration: at(0.08), ease: "power1.inOut" }, at(1 / 3 - 0.04))
+      .to(bottle.current, { backdrop: 2, duration: at(0.08), ease: "power1.inOut" }, at(2 / 3 - 0.04));
   });
 
   return (
@@ -64,8 +76,8 @@ export default function SceneNotes() {
           </div>
         ))}
 
-        <div data-bottle className="absolute inset-0 flex items-center justify-center text-petal/70">
-          <BottleLine className="h-[44vh] w-auto" strokeWidth={0.6} />
+        <div data-bottle className="absolute inset-0">
+          {near && backdrops.length > 0 && <Bottle state={bottle.current} active={active} backdrops={backdrops} />}
         </div>
 
         {NOTES.map((n) => (
