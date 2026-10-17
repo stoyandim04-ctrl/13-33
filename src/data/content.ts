@@ -20,15 +20,14 @@ export interface Service {
 
 export interface Content {
   nav: { label: string; href: string }[];
-  /** The first screen: the promise in two lines (the second carries the
-      lilac gradient), one paragraph, and the running line of what we make. */
+  /** The first screen: two enormous words (the second line in stone), one
+      paragraph with the promise, two actions. */
   hero: {
     eyebrow: string;
     title: { before: string; accent: string };
     description: string;
     primary: { label: string; href: string };
     secondary: { label: string; href: string };
-    ticker: string[];
   };
   works: { heading: string; subheading: string; label: string; action: string };
   /** Three statements instead of paragraphs. Lit word by word by the scroll. */
@@ -54,29 +53,28 @@ const bg: Content = {
     { label: "Контакт", href: "#kontakt" },
   ],
   hero: {
-    eyebrow: "Приемаме нови проекти",
-    title: { before: "Твоята идея.", accent: "Сайт до 4 работни дни." },
+    eyebrow: "Digital Studio · България",
+    title: { before: "Сайтове", accent: "с характер." },
     description:
-      "Разказваш ни я, ние разбираме бизнеса ти и ти пращаме първата версия на имейл. После я изглаждаме заедно, докато стане точно твоя.",
+      "Екип от дизайнери и разработчици. Изслушваме те, разбираме бизнеса ти и до 4 работни дни ти показваме първата версия.",
     primary: { label: "Започни проект", href: "/zapochni" },
     secondary: { label: "Виж проектите", href: "#proekti" },
-    ticker: ["Сайтове", "Онлайн магазини", "Брандове", "Клиентски портали", "Уеб приложения", "Автоматизации", "AI асистенти"],
   },
   works: {
-    heading: "Нашата работа",
-    subheading: "Различни бизнеси. Решения с характер.",
+    heading: "Избрани проекти",
+    subheading: "Концепции на студиото. Истински сайтове, които можеш да отвориш.",
     label: "ПРОЕКТИ",
     action: "Отвори сайта",
   },
   manifest: [
-    "Един разговор и вече знаем какво ти трябва.",
-    "Първата версия идва на имейла ти до 4 работни дни.",
-    "После я изглаждаме, докато стане точно твоя.",
+    "Слушаме повече, отколкото говорим.",
+    "Първата версия е при теб до 4 работни дни.",
+    "После изглаждаме всеки детайл, докато стане твой.",
   ],
   services: {
     label: "Услуги",
-    title: "Какво създаваме.",
-    lead: "Сайтове, магазини, брандове, платформи. Според нуждата на бизнеса ти.",
+    title: "Какво правим.",
+    lead: "Всеки проект се прави на ръка, от нулата.",
     items: [
       {
         id: "sites",
@@ -134,7 +132,7 @@ const bg: Content = {
   },
   contact: {
     label: "Започни проект",
-    title: "Какво искаш да създадем?",
+    title: "Да направим нещо красиво.",
     lead: "Разкажи го на консултанта. Цената виждаш веднага, първата версия идва до 4 работни дни.",
     cta: "Започни проект",
     myChat: "Моят проект",
@@ -157,29 +155,28 @@ const en: Content = {
     { label: "Contact", href: "#kontakt" },
   ],
   hero: {
-    eyebrow: "Taking new projects",
-    title: { before: "Your idea.", accent: "A site in 4 working days." },
+    eyebrow: "Digital Studio · Bulgaria",
+    title: { before: "Websites", accent: "with character." },
     description:
-      "Tell us about it: we get to know your business and send the first version to your inbox. Then we refine it together until it is exactly yours.",
+      "A team of designers and developers. We listen, get to know your business and show you the first version within 4 working days.",
     primary: { label: "Start a project", href: "/zapochni" },
     secondary: { label: "See the work", href: "#proekti" },
-    ticker: ["Websites", "Online stores", "Brands", "Client portals", "Web apps", "Automations", "AI assistants"],
   },
   works: {
-    heading: "Our work",
-    subheading: "Different businesses. Solutions with character.",
+    heading: "Selected work",
+    subheading: "The studio's concepts. Real sites you can open.",
     label: "WORK",
     action: "Open the site",
   },
   manifest: [
-    "One conversation and we know what you need.",
-    "The first version reaches your inbox within 4 working days.",
-    "Then we refine it until it is exactly yours.",
+    "We listen more than we talk.",
+    "The first version is with you within 4 working days.",
+    "Then we refine every detail until it is yours.",
   ],
   services: {
     label: "Services",
-    title: "What we make.",
-    lead: "Sites, stores, brands, platforms. Whatever your business needs.",
+    title: "What we do.",
+    lead: "Every project is made by hand, from scratch.",
     items: [
       {
         id: "sites",
@@ -237,7 +234,7 @@ const en: Content = {
   },
   contact: {
     label: "Start a project",
-    title: "What shall we create?",
+    title: "Let's make something beautiful.",
     lead: "Tell the consultant. You see the price right away; the first version arrives within 4 working days.",
     cta: "Start a project",
     myChat: "My project",

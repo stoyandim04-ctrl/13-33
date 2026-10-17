@@ -201,7 +201,7 @@ export default function RoomPage() {
                   >
                     {s.done ? <Check aria-hidden="true" className="size-3.5" /> : i + 1}
                   </span>
-                  <span className={s.done ? "text-muted-foreground line-through decoration-white/20" : "text-pretty"}>{s.text}</span>
+                  <span className={s.done ? "text-muted-foreground line-through decoration-foreground/25" : "text-pretty"}>{s.text}</span>
                 </li>
               ))}
             </ol>

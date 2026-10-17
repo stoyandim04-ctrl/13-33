@@ -660,7 +660,7 @@ export function WorksWheel({
             aria-hidden="true"
             className={cn(
               "pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0",
-              "bg-[radial-gradient(closest-side,rgb(91_124_250/0.22),rgb(168_216_255/0.06)_55%,transparent)]",
+              "bg-[radial-gradient(closest-side,rgb(18_17_16/0.07),transparent)]",
               narrow ? "top-[44%]" : "top-1/2",
             )}
             style={{ width: metrics.cardW * 1.9, height: metrics.cardH * 2.1 }}

@@ -15,8 +15,8 @@ npm run media      # прерисува постерите/видеата на �
 
 | Път | Какво е |
 | --- | --- |
-| `src/components/ui/grid-hero.tsx` | Hero — обещанието (бяло→лилаво), светещият бутон, наклонена „стена“ от нашите сайтове в три плъзгащи се колони и лента с услугите |
-| `src/components/ui/rainbow-button.tsx` | Основният бутон навсякъде (въртящ се светлинен ръб) — `RainbowLink` / `RainbowButton` |
+| `src/components/ui/grid-hero.tsx` | Hero — две огромни думи, кратък абзац с обещанието, мастиленият бутон и широка рамка, в която нашите сайтове се въртят един след друг (видео от началото на всеки) |
+| `src/components/ui/rainbow-button.tsx` | Основният бутон навсякъде (мастилено хапче) — `RainbowLink` / `RainbowButton` |
 | `src/components/ui/horizon-hero-section.tsx`, `horizon-scene.ts` | Старият 3D hero (Horizon). Не се ползва; пазим го, ако поискаме да го върнем |
 | `src/components/ui/works-wheel.tsx` | Портфолиото — адаптираният WorksWheel (пръстен → спирала, видео) |
 | `src/components/sections/*` | Манифест (три изречения, светват при скрол), Услуги, Процес, Започни проект |
