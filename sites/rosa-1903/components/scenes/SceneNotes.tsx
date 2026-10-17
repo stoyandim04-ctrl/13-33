@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import Stage, { Eyebrow } from "../ui/Stage";
 import BottleLine from "../ui/BottleLine";
+import Plate from "../ui/Plate";
 import { NOTE_ATMOS, useSceneTimeline } from "@/lib/timeline";
 
 const NOTES = [
@@ -56,9 +57,12 @@ export default function SceneNotes() {
     <Stage id="notes">
       <div ref={root} className="absolute inset-0">
         {/* per-note plates */}
-        <div data-noteplate className="absolute inset-0 opacity-0 bg-[radial-gradient(ellipse_45%_40%_at_50%_45%,rgba(201,145,122,0.28),transparent_70%)]" />
-        <div data-noteplate className="absolute inset-0 opacity-0 bg-[radial-gradient(ellipse_60%_35%_at_50%_80%,rgba(94,107,60,0.35),transparent_70%),radial-gradient(ellipse_30%_50%_at_40%_40%,rgba(242,230,220,0.06),transparent_70%)]" />
-        <div data-noteplate className="absolute inset-0 opacity-0 bg-[radial-gradient(ellipse_40%_60%_at_62%_35%,rgba(217,138,61,0.35),transparent_70%)]" />
+        {(["rose", "patchouli", "amber"] as const).map((n) => (
+          <div key={n} data-noteplate className="absolute inset-0 opacity-0">
+            <Plate name={`note-${n}`} className="brightness-[0.75]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,rgba(10,9,8,0.35),rgba(10,9,8,0.85))]" />
+          </div>
+        ))}
 
         <div data-bottle className="absolute inset-0 flex items-center justify-center text-petal/70">
           <BottleLine className="h-[44vh] w-auto" strokeWidth={0.6} />

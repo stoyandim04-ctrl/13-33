@@ -30,8 +30,11 @@ export function isTouch() {
   return typeof window !== "undefined" && window.matchMedia("(hover: none), (pointer: coarse)").matches;
 }
 
-/** Assets the preloader waits for. Posters are added scene by scene. */
-export const PRELOAD: string[] = [];
+/** Assets the preloader waits for: the first frame of the film. */
+export function preloadList() {
+  const m = window.matchMedia("(max-width: 767px)").matches ? "-m" : "";
+  return [`/img/dawn${m}.webp`];
+}
 
 export function preload(urls: string[], onProgress: (p: number) => void) {
   const fonts = typeof document !== "undefined" && document.fonts ? document.fonts.ready : Promise.resolve();

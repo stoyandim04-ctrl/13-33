@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import Stage, { Eyebrow } from "../ui/Stage";
 import Words from "../ui/Words";
 import BottleLine from "../ui/BottleLine";
+import Plate from "../ui/Plate";
 import { useSceneTimeline } from "@/lib/timeline";
 import { dissolveWords, revealWords } from "@/lib/reveal";
 
@@ -27,7 +28,7 @@ export default function SceneHarvest() {
       .fromTo(q("[data-kg]"), { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: at(0.3), ease: "power2.out" }, at(0.1))
       .to(q("[data-kg]"), { scale: 0.92, duration: at(0.5) }, at(0.4))
       // vortex: the macro plate rotates and pulls in
-      .to(q("[data-macro]"), { rotate: 28, scale: 0.6, opacity: 0.25, duration: at(0.4), ease: "power2.inOut" }, at(0.3))
+      .to(q("[data-macro]"), { rotate: 8, scale: 1.25, opacity: 0.12, filter: "blur(14px)", duration: at(0.4), ease: "power2.inOut" }, at(0.3))
       .to(q("[data-kg]"), { opacity: 0.1, duration: at(0.2) }, at(0.62))
       .to(q("[data-eyebrow]"), { opacity: 0, duration: at(0.1) }, at(0.62));
     revealWords(tl, a.current, at(0.18), at(0.12));
@@ -43,10 +44,10 @@ export default function SceneHarvest() {
   return (
     <Stage id="harvest">
       <div ref={root} className="absolute inset-0">
-        <div
-          data-macro
-          className="absolute inset-[-15%] bg-[radial-gradient(ellipse_40%_35%_at_42%_48%,rgba(201,145,122,0.55),transparent_70%),radial-gradient(ellipse_30%_25%_at_60%_40%,rgba(242,230,220,0.18),transparent_70%),radial-gradient(ellipse_70%_60%_at_50%_60%,#2a0e12,transparent_75%)]"
-        />
+        <div data-macro className="absolute inset-0">
+          <Plate name="harvest" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_60%_40%,transparent_30%,rgba(10,9,8,0.75)_100%)]" />
+        </div>
 
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
           <span
@@ -62,6 +63,7 @@ export default function SceneHarvest() {
           <BottleLine className="h-[46vh] w-auto" strokeWidth={0.8} />
         </div>
 
+        <div className="absolute inset-x-0 bottom-0 h-[55%] bg-[linear-gradient(0deg,rgba(10,9,8,0.8),transparent)]" />
         <div className="absolute inset-0 flex flex-col justify-end px-5 pb-28 md:px-10 md:pb-32">
           <div data-eyebrow className="mb-8 opacity-0">
             <Eyebrow id="harvest">Май · ръчна беритба</Eyebrow>

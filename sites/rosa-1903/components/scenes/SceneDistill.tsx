@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import Stage, { Eyebrow } from "../ui/Stage";
 import Words from "../ui/Words";
+import Plate from "../ui/Plate";
 import { useSceneTimeline } from "@/lib/timeline";
 import { dissolveWords, revealWords } from "@/lib/reveal";
 
@@ -37,10 +38,10 @@ export default function SceneDistill() {
     <Stage id="distill">
       <div ref={root} className="absolute inset-0">
         <div data-quake className="absolute inset-0">
-          <div
-            data-plate
-            className="absolute inset-[-10%] bg-[radial-gradient(ellipse_35%_45%_at_30%_25%,rgba(242,230,220,0.12),transparent_70%),radial-gradient(ellipse_50%_40%_at_55%_70%,rgba(184,115,63,0.45),transparent_70%),radial-gradient(circle_at_55%_70%,rgba(42,14,18,0.6),transparent_60%)]"
-          />
+          <div data-plate className="absolute inset-0">
+            <Plate name="distill" className="brightness-[0.6] saturate-[0.9]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.85)_0%,rgba(10,9,8,0.2)_45%,rgba(10,9,8,0.55)_100%)]" />
+          </div>
           {[0, 1, 2].map((i) => (
             <div
               key={i}

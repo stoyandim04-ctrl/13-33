@@ -6,10 +6,10 @@ import Stage, { Eyebrow } from "../ui/Stage";
 import { useSceneTimeline } from "@/lib/timeline";
 
 const YEARS = [
-  { year: "1903", line: "Първият меден казан. Първата беритба на семейството.", plate: "Беритба край Казанлък" },
-  { year: "1944", line: "Полетата оцеляват. Казанът — също.", plate: "Дестилерията" },
-  { year: "1989", line: "Третото поколение връща старата рецепта.", plate: "Флакони на рафта" },
-  { year: "Днес", line: "Същото поле. Същият огън. Същото търпение.", plate: "Къщата и полето" },
+  { year: "1903", line: "Първият меден казан. Първата беритба на семейството.", plate: "Беритба край Казанлък", img: "1903" },
+  { year: "1944", line: "Полетата оцеляват. Казанът — също.", plate: "Дестилерията", img: "1944" },
+  { year: "1989", line: "Третото поколение връща старата рецепта.", plate: "Флакони на рафта", img: "1989" },
+  { year: "Днес", line: "Същото поле. Същият огън. Същото търпение.", plate: "Къщата и полето", img: "dnes" },
 ] as const;
 
 /**
@@ -29,6 +29,7 @@ export default function SceneArchive() {
       // depth: frames lag, numerals lead
       .fromTo(q("[data-depth='far']"), { xPercent: 12 }, { xPercent: -12, duration: at(0.84) }, at(0.08))
       .fromTo(q("[data-depth='near']"), { xPercent: -10 }, { xPercent: 10, duration: at(0.84) }, at(0.08))
+      .fromTo(q("[data-depth='mid']"), { xPercent: -4 }, { xPercent: 4, duration: at(0.84) }, at(0.08))
       .to(q("[data-eyebrow]"), { opacity: 0, duration: at(0.06) }, at(0.92));
   });
 
@@ -52,9 +53,17 @@ export default function SceneArchive() {
               <figure
                 className="relative ml-[12%] h-[52vh] w-[70%] overflow-hidden bg-[linear-gradient(160deg,#3b2d22,#1a130e)] shadow-[0_40px_80px_rgba(0,0,0,0.5)]"
               >
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_40%_45%,rgba(201,160,122,0.25),transparent_75%)]" />
+                <img
+                  src={`/img/archive-${y.img}.webp`}
+                  alt={y.plate}
+                  loading="lazy"
+                  decoding="async"
+                  data-depth="mid"
+                  className="absolute inset-[-6%] h-[112%] w-[112%] max-w-none object-cover sepia-[0.35] brightness-[0.85]"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(10,9,8,0.7),transparent_40%)]" />
                 <div className="absolute inset-3 border border-petal/10" />
-                <figcaption className="label absolute bottom-5 left-5 text-petal/40">{y.plate}</figcaption>
+                <figcaption className="label absolute bottom-5 left-5 text-petal/60">{y.plate}</figcaption>
               </figure>
               <div data-depth="near" className="absolute bottom-[2vh] right-0 max-w-[24ch] text-right">
                 <p className="numeral text-[clamp(2.5rem,5vw,4.5rem)] text-rosegold">{y.year}</p>

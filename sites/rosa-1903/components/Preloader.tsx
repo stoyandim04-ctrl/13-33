@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
-import { PRELOAD, markReady, preload, prefersReducedMotion } from "@/lib/film";
+import { markReady, preload, preloadList, prefersReducedMotion } from "@/lib/film";
 
 const MIN_SECONDS = 2.6;
 
@@ -23,7 +23,7 @@ export default function Preloader({ onOpen }: { onOpen: () => void }) {
     let finished = false;
     const start = performance.now();
 
-    preload(PRELOAD, (p) => (target = p)).then(() => (loaded = true));
+    preload(preloadList(), (p) => (target = p)).then(() => (loaded = true));
 
     gsap.set(q("[data-slit]"), { yPercent: -50, scaleX: 144 / window.innerWidth });
     gsap.fromTo(q("[data-in]"), { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power2.out" });
