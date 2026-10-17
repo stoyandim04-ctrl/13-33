@@ -21,14 +21,14 @@ export interface Service {
 export interface Content {
   nav: { label: string; href: string }[];
   /** The first screen: the promise in two lines (the second carries the
-      lilac gradient), what we are, and three facts. */
+      lilac gradient), one paragraph, and the running line of what we make. */
   hero: {
     eyebrow: string;
     title: { before: string; accent: string };
     description: string;
     primary: { label: string; href: string };
     secondary: { label: string; href: string };
-    facts: { value: string; label: string }[];
+    ticker: string[];
   };
   works: { heading: string; subheading: string; label: string; action: string };
   /** Three statements instead of paragraphs. Lit word by word by the scroll. */
@@ -54,17 +54,13 @@ const bg: Content = {
     { label: "Контакт", href: "#kontakt" },
   ],
   hero: {
-    eyebrow: "Digital Studio · дизайн и разработка",
-    title: { before: "Разказваш идеята.", accent: "До 4 работни дни я виждаш като сайт." },
+    eyebrow: "Приемаме нови проекти",
+    title: { before: "Твоята идея.", accent: "Сайт до 4 работни дни." },
     description:
-      "Екип от дизайнери и разработчици. Изслушваме те, разбираме бизнеса ти и превръщаме идеята в сайт, магазин или система, после я изглаждаме с теб до последния детайл.",
+      "Разказваш ни я, ние разбираме бизнеса ти и ти пращаме първата версия на имейл. После я изглаждаме заедно, докато стане точно твоя.",
     primary: { label: "Започни проект", href: "/zapochni" },
     secondary: { label: "Виж проектите", href: "#proekti" },
-    facts: [
-      { value: "4", label: "работни дни до първата версия" },
-      { value: "0", label: "шаблона, всичко от нулата" },
-      { value: "24/7", label: "консултант, който те изслушва" },
-    ],
+    ticker: ["Сайтове", "Онлайн магазини", "Брандове", "Клиентски портали", "Уеб приложения", "Автоматизации", "AI асистенти"],
   },
   works: {
     heading: "Нашата работа",
@@ -161,17 +157,13 @@ const en: Content = {
     { label: "Contact", href: "#kontakt" },
   ],
   hero: {
-    eyebrow: "Digital Studio · design and development",
-    title: { before: "You tell us the idea.", accent: "Within 4 working days you see it as a site." },
+    eyebrow: "Taking new projects",
+    title: { before: "Your idea.", accent: "A site in 4 working days." },
     description:
-      "A team of designers and developers. We listen, understand your business and turn the idea into a site, a store or a system, then refine it with you down to the last detail.",
+      "Tell us about it: we get to know your business and send the first version to your inbox. Then we refine it together until it is exactly yours.",
     primary: { label: "Start a project", href: "/zapochni" },
     secondary: { label: "See the work", href: "#proekti" },
-    facts: [
-      { value: "4", label: "working days to the first version" },
-      { value: "0", label: "templates, everything from scratch" },
-      { value: "24/7", label: "a consultant who listens" },
-    ],
+    ticker: ["Websites", "Online stores", "Brands", "Client portals", "Web apps", "Automations", "AI assistants"],
   },
   works: {
     heading: "Our work",

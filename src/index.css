@@ -213,55 +213,87 @@
 /* ---------- Hero ---------- */
 .hero-glow {
   background:
-    radial-gradient(70% 55% at 50% -12%, rgb(120 96 230 / 0.32), transparent 70%),
+    radial-gradient(60% 50% at 75% 20%, rgb(120 96 230 / 0.28), transparent 70%),
     linear-gradient(180deg, #0a0814, #07060f 70%);
 }
-/* Two slow lilac lights. Only opacity and transform move. */
-.hero-aura::before,
-.hero-aura::after {
-  content: "";
+
+/* The wall of work: three columns of our sites, tilted, sliding past each
+   other. Each column holds its list twice and moves by half its height, so
+   the loop has no seam (spacing is a margin, not a gap, for the same reason). */
+.hero-wall {
+  --gap: clamp(0.75rem, 1.3vw, 1.5rem);
   position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
+  top: -30%;
+  right: -10%;
+  width: min(74vw, 72rem);
+  height: 170%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap);
+  transform: perspective(110rem) translate3d(0, var(--sy, 0px), 0)
+    rotateX(calc(14deg - var(--ly, 0) * 5deg)) rotateY(calc(-16deg + var(--lx, 0) * 7deg)) rotateZ(7deg);
+  transform-origin: 60% 40%;
+}
+.hero-wall-col {
   will-change: transform;
+  animation: hero-wall 64s linear infinite;
 }
-.hero-aura::before {
-  width: min(48rem, 90vw);
-  aspect-ratio: 1;
-  right: -14%;
-  top: -18%;
-  background: radial-gradient(closest-side, rgb(143 123 255 / 0.34), transparent);
-  animation: hero-drift 18s ease-in-out infinite alternate;
+.hero-wall-col.is-down {
+  animation-duration: 72s;
+  animation-direction: reverse;
 }
-.hero-aura::after {
-  width: min(30rem, 70vw);
-  aspect-ratio: 1;
-  left: -10%;
-  bottom: 4%;
-  background: radial-gradient(closest-side, rgb(200 182 255 / 0.12), transparent);
-  animation: hero-drift 22s ease-in-out -6s infinite alternate-reverse;
+.hero-wall-col.is-slow {
+  animation-duration: 84s;
 }
-@keyframes hero-drift {
+.hero-wall-col img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.45;
+  object-fit: cover;
+  margin-bottom: var(--gap);
+  border-radius: 0.85rem;
+  outline: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: 0 40px 70px -40px rgb(0 0 0 / 0.9);
+}
+@keyframes hero-wall {
   to {
-    transform: translate3d(-6%, 8%, 0) scale(1.08);
+    transform: translate3d(0, -50%, 0);
   }
 }
-/* The work beside the promise: a slight lean, the video fades in over the poster. */
-.hero-reel {
-  transform: perspective(80rem) rotateY(-9deg) rotateX(3deg);
-  transition: transform 1.2s var(--ease-out-expo);
+/* The text side stays dark; the wall shows through on the right. */
+.hero-shade {
+  background:
+    linear-gradient(90deg, #07060f 0%, rgb(7 6 15 / 0.94) 32%, rgb(7 6 15 / 0.55) 58%, rgb(7 6 15 / 0.12) 85%),
+    linear-gradient(180deg, rgb(7 6 15 / 0.92) 0%, rgb(7 6 15 / 0.4) 14%, transparent 28%, transparent 72%, #07060f 100%);
 }
-a:hover > .hero-reel {
-  transform: perspective(80rem) rotateY(-4deg) rotateX(1deg) translateY(-0.4rem);
-}
-.hero-reel-video {
-  animation: reel-in 1.2s ease both;
-}
-@keyframes reel-in {
-  from {
-    opacity: 0;
+@media (max-width: 767px) {
+  .hero-wall {
+    width: 150vw;
+    right: -62%;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .hero-wall-col:nth-child(3) {
+    display: none;
+  }
+  .hero-shade {
+    background:
+      linear-gradient(180deg, rgb(7 6 15 / 0.9) 0%, rgb(7 6 15 / 0.72) 40%, rgb(7 6 15 / 0.82) 75%, #07060f 100%);
   }
 }
+
+/* What we make, running along the bottom of the hero. */
+.hero-ticker {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: hero-ticker 48s linear infinite;
+}
+@keyframes hero-ticker {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
 .hero-dot {
   width: 0.4rem;
   height: 0.4rem;
@@ -276,38 +308,9 @@ a:hover > .hero-reel {
     box-shadow: 0 0 0 0.6rem rgb(143 123 255 / 0);
   }
 }
-.hero-floor {
-  --cell: clamp(3rem, 7vw, 7rem);
-  left: -20%;
-  right: -20%;
-  bottom: -8%;
-  height: 56%;
-  overflow: hidden;
-  transform: perspective(60rem) rotateX(62deg);
-  transform-origin: 50% 100%;
-  mask-image: linear-gradient(180deg, transparent, #000 45%, rgb(0 0 0 / 0.6));
-}
-/* The grid drifts by moving a layer one cell (a composited transform), not
-   by repainting its background every frame. */
-.hero-floor::before {
-  content: "";
-  position: absolute;
-  inset: calc(var(--cell) * -1) 0 0;
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 0.07) 1px, transparent 1px) 0 0 / var(--cell) 100%,
-    linear-gradient(0deg, rgb(255 255 255 / 0.07) 1px, transparent 1px) 0 0 / 100% var(--cell);
-  animation: hero-floor 9s linear infinite;
-  will-change: transform;
-}
-@keyframes hero-floor {
-  to {
-    transform: translateY(var(--cell));
-  }
-}
 /* Off screen, the hero's loops rest. */
-.hero-rest .hero-floor::before,
-.hero-rest .hero-aura::before,
-.hero-rest .hero-aura::after,
+.hero-rest .hero-wall-col,
+.hero-rest .hero-ticker,
 .hero-rest .hero-dot {
   animation-play-state: paused;
 }
