@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@theme {
+  --color-obsidian: #0a0908;
+  --color-bordeaux: #2a0e12;
+  --color-rosegold: #c9917a;
+  --color-petal: #f2e6dc;
+  --color-copper: #b8733f;
+  --color-dawn: #8a9ba8;
+
+  --font-serif: "Cormorant Garamond", "Times New Roman", serif;
+  --font-sans: "Manrope Variable", system-ui, sans-serif;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-silk: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+:root {
+  /* one screen, fixed at load and on width changes only (no URL-bar jumps) */
+  --u: 1vh;
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-obsidian);
+  color: var(--color-petal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  background: var(--color-obsidian);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-rosegold);
+  color: var(--color-obsidian);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.has-cursor,
+  html.has-cursor * {
+    cursor: none !important;
+  }
+}
+
+/* Type */
+.display {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
+}
+.label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+.numeral {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 0.8;
+}
+
+/* Scenes: fixed stages, the page is only the runway */
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Word mask reveal */
+.w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.w > span {
+  display: inline-block;
+  will-change: transform, filter, opacity;
+}
+
+/* Film */
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+  100% { transform: translate(0, 0); }
+}
+.grain {
+  animation: grain 1s steps(10) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain { animation: none; }
+}
+
+@keyframes bars {
+  from { transform: scaleY(0.2); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes chapter {
+  from { opacity: 0; filter: blur(6px); transform: translateY(6px); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+@keyframes drip {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(200%); }
+}
+
+@keyframes fog {
+  from { transform: translateX(-6%); }
+  to { transform: translateX(6%); }
+}
+
+@keyframes steam {
+  0% { transform: translateY(10%) scaleX(1); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-40%) scaleX(1.6); opacity: 0; }
+}
