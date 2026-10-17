@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { gsap } from "gsap";
 
 /**
@@ -124,4 +124,22 @@ export function useSceneTimeline(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
+}
+
+/** True while a scene is on screen (including its dissolves) — gate GPU work on it. */
+export function useSceneActive(id: SceneId, margin = DISSOLVE) {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const from = OFFSETS[id] - margin;
+    const to = OFFSETS[id] + scene(id).vh + margin;
+    let last: boolean | null = null;
+    return onTime((t) => {
+      const on = t >= from && t <= to;
+      if (on !== last) {
+        last = on;
+        setActive(on);
+      }
+    });
+  }, [id, margin]);
+  return active;
 }

@@ -5,7 +5,9 @@ import { gsap } from "gsap";
 import Stage, { Eyebrow } from "../ui/Stage";
 import Words from "../ui/Words";
 import Plate from "../ui/Plate";
-import { useSceneTimeline } from "@/lib/timeline";
+import { useSceneActive, useSceneTimeline } from "@/lib/timeline";
+import SeqCanvas, { type SeqHandle } from "../ui/SeqCanvas";
+import Fog, { type FogState } from "../gl/Fog";
 import { useReady } from "@/lib/film";
 import { dissolveWords, playWords, revealWords } from "@/lib/reveal";
 
@@ -19,6 +21,9 @@ export default function SceneDawn() {
   const line = useRef<HTMLHeadingElement>(null);
   const sub = useRef<HTMLParagraphElement>(null);
   const ready = useReady();
+  const seq = useRef<SeqHandle>(null);
+  const fog = useRef<FogState>({ progress: 0 });
+  const active = useSceneActive("dawn");
 
   useEffect(() => {
     if (!ready) return;
@@ -36,11 +41,24 @@ export default function SceneDawn() {
   useSceneTimeline("dawn", (tl, at) => {
     const q = gsap.utils.selector(root.current);
     // the dolly: everything drifts toward the lens
-    tl.fromTo(q("[data-dolly]"), { scale: 1 }, { scale: 1.35, duration: at(1) }, 0)
+    const film = { p: 0 };
+    tl.fromTo(
+      film,
+      { p: 0 },
+      {
+        p: 1,
+        duration: at(0.9),
+        onUpdate: () => {
+          seq.current?.seek(film.p);
+          fog.current.progress = film.p;
+        },
+      },
+      0,
+    )
+      .fromTo(q("[data-dolly]"), { scale: 1 }, { scale: 1.18, duration: at(1) }, 0)
       .fromTo(q("[data-cool]"), { opacity: 0.6 }, { opacity: 0.1, duration: at(0.75), ease: "power1.inOut" }, at(0.1))
       .fromTo(q("[data-warm]"), { opacity: 0 }, { opacity: 1, duration: at(0.75), ease: "power1.inOut" }, at(0.1))
       .fromTo(q("[data-sun]"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1.4, duration: at(0.7), ease: "power2.in" }, at(0.25))
-      .fromTo(q("[data-fog]"), { opacity: 0.9 }, { opacity: 0.15, duration: at(0.8), stagger: at(0.06) }, at(0.05))
       .to(q("[data-eyebrow]"), { opacity: 0, y: -10, duration: at(0.12) }, at(0.2));
     dissolveWords(tl, line.current, at(0.3), at(0.14));
     revealWords(tl, sub.current, at(0.48), at(0.12));
@@ -56,6 +74,7 @@ export default function SceneDawn() {
         <div data-plate className="absolute inset-0">
           <div data-dolly className="absolute inset-0 origin-[50%_70%]">
             <Plate name="dawn" priority />
+            <SeqCanvas ref={seq} scene="dawn" count={121} />
             {/* grade: blue hour, then the sky warms toward rose-gold */}
             <div className="absolute inset-0 bg-[#3d5566] opacity-60 mix-blend-color" data-cool />
             <div
@@ -66,18 +85,10 @@ export default function SceneDawn() {
               data-sun
               className="absolute left-1/2 top-[20%] h-[36vmin] w-[90vmin] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(242,230,220,0.7),rgba(201,145,122,0.3)_45%,transparent)] opacity-0 mix-blend-screen blur-2xl"
             />
-            {/* fog */}
-            {[58, 68, 78].map((top, i) => (
-              <div
-                key={top}
-                data-fog
-                className="absolute left-[-20%] h-[18%] w-[140%] rounded-[50%] bg-[#aab4bb]/20 blur-3xl"
-                style={{ top: `${top}%`, animation: `fog ${38 + i * 9}s ease-in-out ${-i * 7}s infinite alternate` }}
-              />
-            ))}
           </div>
         </div>
 
+        <Fog state={fog.current} active={active} />
         <div className="absolute inset-x-0 bottom-0 h-[60%] bg-[linear-gradient(0deg,rgba(10,9,8,0.85),transparent)]" />
         <div
           data-ray

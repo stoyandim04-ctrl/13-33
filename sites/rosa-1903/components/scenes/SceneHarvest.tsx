@@ -4,9 +4,10 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import Stage, { Eyebrow } from "../ui/Stage";
 import Words from "../ui/Words";
-import BottleLine from "../ui/BottleLine";
 import Plate from "../ui/Plate";
-import { useSceneTimeline } from "@/lib/timeline";
+import { useSceneActive, useSceneTimeline } from "@/lib/timeline";
+import SeqCanvas, { type SeqHandle } from "../ui/SeqCanvas";
+import Petals, { type PetalState } from "../gl/Petals";
 import { dissolveWords, revealWords } from "@/lib/reveal";
 
 /**
@@ -18,6 +19,10 @@ export default function SceneHarvest() {
   const root = useRef<HTMLDivElement>(null);
   const a = useRef<HTMLParagraphElement>(null);
   const b = useRef<HTMLParagraphElement>(null);
+  const seq = useRef<SeqHandle>(null);
+  const petals = useRef<PetalState>({ progress: 0 });
+  const active = useSceneActive("harvest");
+  const near = useSceneActive("harvest", 160);
 
   useSceneTimeline("harvest", (tl, at) => {
     const q = gsap.utils.selector(root.current);
@@ -35,10 +40,23 @@ export default function SceneHarvest() {
     revealWords(tl, b.current, at(0.34), at(0.12));
     dissolveWords(tl, a.current, at(0.6), at(0.08));
     dissolveWords(tl, b.current, at(0.63), at(0.08));
-    // the bottle forms (70–100 %), glows rose-gold, then drops fall away
-    tl.fromTo(q("[data-bottle] [data-draw]"), { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: at(0.18), stagger: at(0.02), ease: "power2.inOut" }, at(0.68))
-      .fromTo(q("[data-bottle]"), { filter: "drop-shadow(0 0 0 rgba(201,145,122,0))" }, { filter: "drop-shadow(0 0 18px rgba(201,145,122,0.8))", duration: at(0.08) }, at(0.84))
-      .to(q("[data-bottle]"), { y: "40vh", opacity: 0, filter: "blur(10px)", duration: at(0.1), ease: "power2.in" }, at(0.92));
+    // the petals: fall → vortex → the bottle → drops (Petals reads this)
+    const film = { p: 0 };
+    tl.fromTo(
+      film,
+      { p: 0 },
+      {
+        p: 1,
+        duration: at(1),
+        onUpdate: () => {
+          petals.current.progress = film.p;
+          seq.current?.seek(Math.min(1, film.p / 0.35));
+        },
+      },
+      0,
+    )
+      .fromTo(q("[data-glow]"), { opacity: 0 }, { opacity: 1, duration: at(0.12), ease: "power2.out" }, at(0.74))
+      .to(q("[data-glow]"), { opacity: 0, duration: at(0.06) }, at(0.9));
   });
 
   return (
@@ -46,6 +64,7 @@ export default function SceneHarvest() {
       <div ref={root} className="absolute inset-0">
         <div data-macro className="absolute inset-0">
           <Plate name="harvest" />
+          <SeqCanvas ref={seq} scene="harvest" count={116} />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_60%_40%,transparent_30%,rgba(10,9,8,0.75)_100%)]" />
         </div>
 
@@ -59,9 +78,8 @@ export default function SceneHarvest() {
           </span>
         </div>
 
-        <div data-bottle className="absolute inset-0 flex items-center justify-center text-rosegold">
-          <BottleLine className="h-[46vh] w-auto" strokeWidth={0.8} />
-        </div>
+        <div data-glow className="absolute left-1/2 top-1/2 h-[70vh] w-[50vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(201,145,122,0.35),transparent)] opacity-0 blur-2xl" />
+        {near && <Petals state={petals.current} active={active} />}
 
         <div className="absolute inset-x-0 bottom-0 h-[55%] bg-[linear-gradient(0deg,rgba(10,9,8,0.8),transparent)]" />
         <div className="absolute inset-0 flex flex-col justify-end px-5 pb-28 md:px-10 md:pb-32">
