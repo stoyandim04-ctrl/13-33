@@ -99,22 +99,23 @@ body {
 }
 .w > span {
   display: inline-block;
-  will-change: transform, filter, opacity;
 }
 
 /* Film */
+/* grain moves its background, not a layer: a moving layer 4× the screen
+   is enough to get the tab killed on iPhone */
 @keyframes grain {
-  0% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -10%); }
-  20% { transform: translate(-15%, 5%); }
-  30% { transform: translate(7%, -25%); }
-  40% { transform: translate(-5%, 25%); }
-  50% { transform: translate(-15%, 10%); }
-  60% { transform: translate(15%, 0%); }
-  70% { transform: translate(0%, 15%); }
-  80% { transform: translate(3%, 35%); }
-  90% { transform: translate(-10%, 10%); }
-  100% { transform: translate(0, 0); }
+  0% { background-position: 0 0; }
+  10% { background-position: -40px -80px; }
+  20% { background-position: -120px 40px; }
+  30% { background-position: 56px -100px; }
+  40% { background-position: -40px 100px; }
+  50% { background-position: -120px 80px; }
+  60% { background-position: 120px 0; }
+  70% { background-position: 0 120px; }
+  80% { background-position: 24px 60px; }
+  90% { background-position: -80px 80px; }
+  100% { background-position: 0 0; }
 }
 .grain {
   animation: grain 1s steps(10) infinite;

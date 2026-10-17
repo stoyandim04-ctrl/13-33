@@ -32,7 +32,7 @@ export default function Film() {
       />
       <div
         ref={grain}
-        className="grain absolute -inset-[50%] opacity-[0.07] mix-blend-overlay"
+        className="grain absolute inset-0 opacity-[0.07] mix-blend-overlay"
         style={{ backgroundSize: "160px 160px" }}
       />
     </div>

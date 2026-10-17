@@ -64,7 +64,7 @@ export default function SceneHarvest() {
       <div ref={root} className="absolute inset-0">
         <div data-macro className="absolute inset-0">
           <Plate name="harvest" />
-          <SeqCanvas ref={seq} scene="harvest" count={116} />
+          <SeqCanvas ref={seq} scene="harvest" count={116} near={near} />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_60%_40%,transparent_30%,rgba(10,9,8,0.75)_100%)]" />
         </div>
 

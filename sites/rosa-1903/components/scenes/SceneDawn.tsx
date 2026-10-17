@@ -24,6 +24,7 @@ export default function SceneDawn() {
   const seq = useRef<SeqHandle>(null);
   const fog = useRef<FogState>({ progress: 0 });
   const active = useSceneActive("dawn");
+  const near = useSceneActive("dawn", 120);
 
   useEffect(() => {
     if (!ready) return;
@@ -74,7 +75,7 @@ export default function SceneDawn() {
         <div data-plate className="absolute inset-0">
           <div data-dolly className="absolute inset-0 origin-[50%_70%]">
             <Plate name="dawn" priority />
-            <SeqCanvas ref={seq} scene="dawn" count={121} />
+            <SeqCanvas ref={seq} scene="dawn" count={121} near={near} />
             {/* grade: blue hour, then the sky warms toward rose-gold */}
             <div className="absolute inset-0 bg-[#3d5566] opacity-60 mix-blend-color" data-cool />
             <div

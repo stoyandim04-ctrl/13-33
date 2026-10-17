@@ -9,9 +9,10 @@ export type SeqHandle = { seek: (progress: number) => void };
 /**
  * A canvas that shows frame `progress` of a scene's image sequence. Until
  * frames arrive (or with reduced motion) the poster underneath carries it.
+ * Frames are only held while `near` is true (the scene is about to play).
  */
-const SeqCanvas = forwardRef<SeqHandle, { scene: string; count: number; className?: string }>(
-  function SeqCanvas({ scene, count, className = "" }, ref) {
+const SeqCanvas = forwardRef<SeqHandle, { scene: string; count: number; near: boolean; className?: string }>(
+  function SeqCanvas({ scene, count, near, className = "" }, ref) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const seq = useRef<Sequence | null>(null);
     const progress = useRef(0);
@@ -31,7 +32,7 @@ const SeqCanvas = forwardRef<SeqHandle, { scene: string; count: number; classNam
     }));
 
     useEffect(() => {
-      if (prefersReducedMotion()) return;
+      if (!near || prefersReducedMotion()) return;
       const c = canvas.current!;
       const mobile = window.matchMedia("(max-width: 767px)").matches;
       const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
@@ -41,27 +42,22 @@ const SeqCanvas = forwardRef<SeqHandle, { scene: string; count: number; classNam
         seq.current?.reset();
         paint();
       };
-      // start loading only when the film gets near this scene
-      let started = false;
-      const start = () => {
-        if (started) return;
-        started = true;
-        seq.current = createSequence(scene, count, mobile ? "m" : "d", () => {
-          c.style.opacity = "1";
-          paint();
-        });
-      };
-      const t = window.setTimeout(start, scene === "dawn" ? 0 : 2500);
+      seq.current = createSequence(scene, count, mobile ? "m" : "d", () => {
+        c.style.opacity = "1";
+        paint();
+      });
       size();
       window.addEventListener("resize", size);
       return () => {
-        window.clearTimeout(t);
         window.removeEventListener("resize", size);
         seq.current?.dispose();
         seq.current = null;
+        c.style.opacity = "0";
+        // release the canvas backing store too
+        c.width = c.height = 1;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [scene, count]);
+    }, [scene, count, near]);
 
     return (
       <canvas
