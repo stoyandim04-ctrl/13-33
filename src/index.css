@@ -11,8 +11,8 @@
   4. Type — Manrope for everything (it carries the Bulgarian Cyrillic forms;
      lang="bg" switches them on). Very large and light (200–300) for the
      statements, regular body. Fixed scale below.
-  5. Signature — the hero: two enormous words, then a browser window and a
-     phone rising out of a tilt, our site running on both with the scroll.
+  5. Signature — the hero: two enormous lines of type rising out of their
+     own lines; the work itself lives in the portfolio wheel below.
 */
 @import "tailwindcss";
 @import "@fontsource-variable/manrope";
@@ -182,7 +182,9 @@
 .hero-line {
   display: block;
   overflow: hidden;
-  padding-bottom: 0.06em;
+  /* Room for the descenders (д, у, щ) inside the mask. */
+  padding-bottom: 0.16em;
+  margin-bottom: -0.1em;
 }
 .hero-line > span {
   display: block;
@@ -192,100 +194,6 @@
 @keyframes hero-line {
   from {
     transform: translateY(105%);
-  }
-}
-/* The devices: a browser window and a phone, rising out of a tilt. */
-.hero-devices {
-  perspective: 1600px;
-}
-.hero-stage {
-  width: min(84vw, calc(62svh * 1.5), 64rem);
-  transform-style: preserve-3d;
-  transform-origin: 50% 100%;
-  will-change: transform;
-}
-.hero-desk {
-  overflow: hidden;
-  border-radius: 12px;
-  background: #121110;
-  box-shadow:
-    0 0 0 1px rgb(18 17 16 / 0.12),
-    0 60px 120px -60px rgb(18 17 16 / 0.6);
-}
-.hero-desk canvas {
-  aspect-ratio: 16 / 10;
-  height: auto;
-}
-.hero-desk-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 14px;
-  background: #ebe7e0;
-  border-bottom: 1px solid rgb(18 17 16 / 0.1);
-}
-.hero-desk-bar span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgb(18 17 16 / 0.16);
-}
-.hero-desk-bar em {
-  flex: 1;
-  margin-right: 33px;
-  text-align: center;
-  font-style: normal;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--color-muted-foreground);
-}
-.hero-phone {
-  position: absolute;
-  right: -5%;
-  bottom: -9%;
-  width: 22%;
-  aspect-ratio: 390 / 844;
-  padding: 0.7%;
-  border-radius: 14% / 6.5%;
-  background: #121110;
-  box-shadow: 0 50px 90px -40px rgb(18 17 16 / 0.7);
-  transform: translateZ(60px);
-}
-.hero-phone canvas {
-  border-radius: 12% / 5.6%;
-  height: 100%;
-}
-.hero-phone-island {
-  position: absolute;
-  top: 3%;
-  left: 50%;
-  width: 30%;
-  height: 2.6%;
-  border-radius: 999px;
-  background: #121110;
-  transform: translateX(-50%);
-}
-@media (max-width: 767px) {
-  .hero-stage {
-    width: 80vw;
-  }
-  .hero-desk-bar {
-    height: 18px;
-    padding: 0 8px;
-    gap: 4px;
-  }
-  .hero-desk-bar span {
-    width: 5px;
-    height: 5px;
-  }
-  .hero-desk-bar em {
-    display: none;
-  }
-  .hero-phone {
-    width: 42%;
-    right: -6%;
-    bottom: -30%;
   }
 }
 /* "Scroll": a hairline that keeps drawing itself downwards. */

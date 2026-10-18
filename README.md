@@ -15,7 +15,7 @@ npm run media      # прерисува постерите/видеата на �
 
 | Път | Какво е |
 | --- | --- |
-| `src/components/ui/grid-hero.tsx` | Hero — закачен за два екрана скрол: заглавието се отдръпва, браузър прозорец и телефон изплуват от наклон и на двата се превърта Obsidian, кадър по кадър според скрола (`public/hero/`, записани с `scripts/record-hero-frames.mjs`); накрая обещанието за 4 работни дни |
+| `src/components/ui/grid-hero.tsx` | Hero — само типография: „Дигитални услуги / на следващо ниво.“, абзац с обещанието за 4 работни дни и мастиленият бутон |
 | `src/components/ui/rainbow-button.tsx` | Основният бутон навсякъде (мастилено хапче) — `RainbowLink` / `RainbowButton` |
 | `src/components/ui/horizon-hero-section.tsx`, `horizon-scene.ts` | Старият 3D hero (Horizon). Не се ползва; пазим го, ако поискаме да го върнем |
 | `src/components/ui/works-wheel.tsx` | Портфолиото — адаптираният WorksWheel (пръстен → спирала, видео), без видим текст; последната карта е стъклена папка „Твоят проект“ към `/zapochni` |
