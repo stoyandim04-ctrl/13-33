@@ -1,14 +1,14 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { site, useContent } from "@/data/content";
 import { store } from "@/lib/inquiry-api";
 import { RainbowLink } from "@/components/ui/rainbow-button";
 
+/** One line, as large as the page, and the way in. */
 export function Contact() {
   const { contact } = useContent();
-  const STEPS = contact.steps;
   // Someone who already sent an inquiry gets back to their page in one tap.
   const [room, setRoom] = React.useState<string | null>(null);
   React.useEffect(() => {
@@ -17,43 +17,33 @@ export function Contact() {
 
   return (
     <section id="kontakt" aria-labelledby="kontakt-title" className="section">
-      <div className="container-wide grid gap-16 lg:grid-cols-12 lg:gap-10">
-        <header data-reveal className="lg:col-span-5">
-          <p className="eyebrow mb-5">{contact.label}</p>
-          <h2 id="kontakt-title" className="font-display text-heading font-[300] tracking-[-0.045em] text-balance">
-            {contact.title}
-          </h2>
-          <p className="text-lead text-muted-foreground mt-6 max-w-[32ch] text-pretty">
-            {contact.lead}
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4">
-            <RainbowLink to="/zapochni" data-ping="start-contact">
-              {contact.cta}
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </RainbowLink>
-            {room ? (
-              <Link to={`/zapitvane/${room}`} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-[0.9375rem] transition-colors">
-                <MessageCircle aria-hidden="true" className="size-4" /> {contact.myChat}
-              </Link>
-            ) : site.contactEmail ? (
-              <a href={`mailto:${site.contactEmail}`} className="text-muted-foreground hover:text-foreground text-[0.9375rem] transition-colors">
+      <div className="container-wide">
+        <p data-reveal className="eyebrow">{contact.label}</p>
+        <h2
+          id="kontakt-title"
+          data-reveal
+          className="font-display mt-6 text-[clamp(3.5rem,1rem+11vw,12rem)] leading-[0.9] font-[300] tracking-[-0.065em]"
+        >
+          {contact.title}
+        </h2>
+        <div data-reveal style={{ "--d": 2 } as React.CSSProperties} className="hairline mt-12 flex flex-wrap items-center justify-between gap-6 pt-8">
+          <div className="text-muted-foreground flex flex-wrap gap-x-8 gap-y-2 text-[0.9375rem]">
+            {site.contactEmail ? (
+              <a href={`mailto:${site.contactEmail}`} className="nav-link">
                 {site.contactEmail}
               </a>
             ) : null}
+            {room ? (
+              <Link to={`/zapitvane/${room}`} className="nav-link">
+                {contact.myChat}
+              </Link>
+            ) : null}
           </div>
-        </header>
-
-        <ol data-reveal style={{ "--d": 2 } as React.CSSProperties} className="lg:col-span-6 lg:col-start-7">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="hairline grid grid-cols-[3rem_1fr] gap-4 py-7">
-              <span className="text-ice font-display text-title tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-              <span>
-                <span className="font-display text-title block font-[500] tracking-[-0.02em]">{s.title}</span>
-                <span className="text-muted-foreground mt-2 block text-pretty">{s.body}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
+          <RainbowLink to="/zapochni" size="lg" data-ping="start-contact">
+            {contact.cta}
+            <ArrowRight aria-hidden="true" className="size-4" />
+          </RainbowLink>
+        </div>
       </div>
     </section>
   );

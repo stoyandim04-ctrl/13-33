@@ -6,7 +6,6 @@ import { projects, STATUS_LABEL } from "@/data/projects";
 import { useLang } from "@/lib/i18n";
 import { GridHero } from "@/components/ui/grid-hero";
 import { WorksWheel, type WorksWheelItem } from "@/components/ui/works-wheel";
-import { Manifest } from "@/components/sections/manifest";
 import { Services } from "@/components/sections/services";
 import { Process } from "@/components/sections/process";
 import { Contact } from "@/components/sections/contact";
@@ -56,7 +55,6 @@ export default function Home() {
   return (
     <>
       <GridHero id="nachalo" />
-      <Manifest />
       <WorksWheel
         id="proekti"
         className="scroll-mt-0"

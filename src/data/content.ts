@@ -20,8 +20,8 @@ export interface Service {
 
 export interface Content {
   nav: { label: string; href: string }[];
-  /** The first screen: two enormous lines (the second in stone), one
-      paragraph with the promise, two actions. */
+  /** The first screen: the name as large as the page (`title.before`), one
+      line (`title.accent`), the place (`eyebrow`), two actions. */
   hero: {
     eyebrow: string;
     title: { before: string; accent: string };
@@ -53,8 +53,8 @@ const bg: Content = {
     { label: "Контакт", href: "#kontakt" },
   ],
   hero: {
-    eyebrow: "Digital Studio · България",
-    title: { before: "Дигитални услуги", accent: "на следващо ниво." },
+    eyebrow: "Digital Studio — България",
+    title: { before: "13:33", accent: "Дигитални услуги на следващо ниво." },
     description:
       "Екип от дизайнери и разработчици. Изслушваме те, разбираме бизнеса ти и до 4 работни дни ти показваме първата версия.",
     primary: { label: "Започни проект", href: "/zapochni" },
@@ -132,7 +132,7 @@ const bg: Content = {
   },
   contact: {
     label: "Започни проект",
-    title: "Да направим нещо красиво.",
+    title: "Да започнем.",
     lead: "Разкажи го на консултанта. Цената виждаш веднага, първата версия идва до 4 работни дни.",
     cta: "Започни проект",
     myChat: "Моят проект",
@@ -155,8 +155,8 @@ const en: Content = {
     { label: "Contact", href: "#kontakt" },
   ],
   hero: {
-    eyebrow: "Digital Studio · Bulgaria",
-    title: { before: "Digital services", accent: "at the next level." },
+    eyebrow: "Digital Studio — Bulgaria",
+    title: { before: "13:33", accent: "Digital services at the next level." },
     description:
       "A team of designers and developers. We listen, get to know your business and show you the first version within 4 working days.",
     primary: { label: "Start a project", href: "/zapochni" },
@@ -234,7 +234,7 @@ const en: Content = {
   },
   contact: {
     label: "Start a project",
-    title: "Let's make something beautiful.",
+    title: "Let's begin.",
     lead: "Tell the consultant. You see the price right away; the first version arrives within 4 working days.",
     cta: "Start a project",
     myChat: "My project",

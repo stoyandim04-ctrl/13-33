@@ -50,7 +50,6 @@ export function Process() {
               <li key={s.name}>
                 <span className="text-muted-foreground text-sm tabular-nums">{String(i + 1).padStart(2, "0")}</span>
                 <h3 className="font-display text-title mt-2 font-[300]">{s.name}</h3>
-                <p className="text-muted-foreground mt-2 text-[0.9375rem]">{s.body}</p>
               </li>
             ))}
           </ol>
@@ -80,8 +79,7 @@ export function Process() {
               {String(step + 1).padStart(2, "0")}
             </p>
             <div key={`t${step}`} className="step-in pb-4 md:col-span-5 md:pb-10" style={{ animationDelay: "80ms" }}>
-              <h3 className="font-display text-[clamp(2rem,1.2rem+2.6vw,3.75rem)] leading-[1] font-[300] tracking-[-0.045em]">{current.name}</h3>
-              <p className="text-muted-foreground text-lead mt-5 max-w-[30ch] text-pretty">{current.body}</p>
+              <h3 className="font-display text-[clamp(2.5rem,1.2rem+4vw,5.5rem)] leading-[1] font-[300] tracking-[-0.05em]">{current.name}</h3>
             </div>
           </div>
 

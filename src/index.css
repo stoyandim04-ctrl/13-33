@@ -178,6 +178,29 @@
     transform: translateY(1.6rem);
   }
 }
+/* The name: as wide as the page, each figure rising out of its own line. */
+.hero-mark {
+  overflow: hidden;
+  padding-top: 0.02em;
+}
+.hero-char {
+  display: inline-block;
+  animation: hero-char 1.4s var(--ease-out-expo) both;
+}
+@keyframes hero-char {
+  from {
+    transform: translateY(105%);
+  }
+}
+/* The intro curtain: counts to 100, then lifts away. */
+.hero-curtain {
+  animation: hero-curtain 0.9s var(--ease-out-expo) 1.55s forwards;
+}
+@keyframes hero-curtain {
+  to {
+    transform: translateY(-100%);
+  }
+}
 /* The big words rise out of their own line. */
 .hero-line {
   display: block;
@@ -230,6 +253,22 @@
   from {
     opacity: 0;
     transform: translateY(1.5rem);
+  }
+}
+
+/* Services: on hover the line slides a little and the others quiet down. */
+.svc-name {
+  transition:
+    transform 0.8s var(--ease-out-expo),
+    color 0.6s;
+}
+@media (hover: hover) {
+  .svc-list:hover .svc-name {
+    color: rgb(18 17 16 / 0.22);
+  }
+  .svc-list li:hover .svc-name {
+    color: var(--color-foreground);
+    transform: translateX(1.25rem);
   }
 }
 
