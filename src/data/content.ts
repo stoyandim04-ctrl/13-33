@@ -22,7 +22,7 @@ export interface Content {
   nav: { label: string; href: string }[];
   /** The first screen: two enormous words (the second line in stone), one
       paragraph with the promise, two actions; then two more beats as the
-      promise under the drop of ink, with the scroll. */
+      promise under the two screens, with the scroll. */
   hero: {
     eyebrow: string;
     title: { before: string; accent: string };
@@ -62,7 +62,7 @@ const bg: Content = {
     primary: { label: "Започни проект", href: "/zapochni" },
     secondary: { label: "Виж проектите", href: "#proekti" },
     beat: {
-      title: "Първата версия — до 4 работни дни.",
+      title: "На всеки екран. Първата версия — до 4 работни дни.",
       body: "Истински сайт, не скица. После го изглаждаме заедно, докато стане точно твой.",
     },
   },
@@ -168,7 +168,7 @@ const en: Content = {
     primary: { label: "Start a project", href: "/zapochni" },
     secondary: { label: "See the work", href: "#proekti" },
     beat: {
-      title: "The first version — within 4 working days.",
+      title: "On every screen. The first version within 4 working days.",
       body: "A real site, not a sketch. Then we refine it together until it is exactly yours.",
     },
   },

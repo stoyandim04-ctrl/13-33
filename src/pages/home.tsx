@@ -20,7 +20,7 @@ export default function Home() {
   // without a public address stay in the wheel, without a link.
   const wheelItems = React.useMemo<WorksWheelItem[]>(
     () =>
-      projects.map((p) => ({
+      projects.map<WorksWheelItem>((p) => ({
         id: p.slug,
         title: lang === "en" && p.nameEn ? p.nameEn : p.name,
         image: p.poster,
@@ -28,7 +28,14 @@ export default function Home() {
         meta: lang === "en" && p.categoryEn ? p.categoryEn : p.category,
         badge: tr(STATUS_LABEL[p.status]),
         href: p.liveUrl,
-      })),
+      })).concat({
+        // The last card: what comes next. It leads to the start of a project.
+        id: "next",
+        title: tr("Твоят проект"),
+        image: projects[0]?.poster ?? "",
+        href: "/zapochni",
+        folder: { title: tr("Твоят проект"), note: tr("Следва"), images: projects.slice(0, 3).map((p) => p.poster) },
+      }),
     [lang, tr],
   );
 

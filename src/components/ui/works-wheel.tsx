@@ -52,6 +52,8 @@ export interface WorksWheelItem {
   badge?: string;
   /** Where the front card links to. */
   href?: string;
+  /** Draw the card as a folder holding these frames (the last card: what comes next). */
+  folder?: { title: string; note: string; images: string[] };
 }
 
 export interface WorksWheelProps extends Omit<
@@ -619,17 +621,8 @@ export function WorksWheel({
           ref={headRef}
           className="pointer-events-none absolute inset-x-0 top-0 z-[120] px-5 pt-24 sm:px-8 md:pt-28 lg:px-14"
         >
-          <div className="container-wide">
-            <p className="eyebrow mb-4">{label}</p>
-            {heading ? (
-              <h2 className="font-display text-heading font-[500] tracking-[-0.045em]">
-                {heading}
-              </h2>
-            ) : null}
-            {subheading ? (
-              <p className="text-lead text-muted-foreground mt-4 max-w-[34ch]">{subheading}</p>
-            ) : null}
-          </div>
+          {/* The work speaks for itself: no visible words in the portfolio. */}
+          {heading ? <h2 className="sr-only">{heading}</h2> : null}
         </div>
 
         <div
@@ -697,6 +690,9 @@ export function WorksWheel({
                     marginTop: -metrics.cardH / 2,
                   }}
                 >
+                  {item.folder ? (
+                    <FolderFace folder={item.folder} />
+                  ) : (
                   <span className="bg-surface-2 ring-foreground/10 group-focus-visible:ring-ice relative block size-full overflow-hidden rounded-[6px] shadow-[0_30px_60px_-30px_rgb(0_0_0/0.9)] ring-1 group-focus-visible:ring-2">
                     <img
                       src={item.image}
@@ -721,110 +717,22 @@ export function WorksWheel({
                       }}
                       className="bg-background pointer-events-none absolute inset-0 opacity-0"
                     />
-                    {action && item.href && isFront ? (
-                      <span className="bg-background/80 text-foreground pointer-events-none absolute right-3 bottom-3 flex translate-y-1 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-                        {action}
-                        <ArrowUpRight aria-hidden="true" className="size-3.5" />
+                    {item.href && isFront && !item.folder ? (
+                      <span className="bg-foreground text-background pointer-events-none absolute right-3 bottom-3 grid size-9 translate-y-1 place-items-center rounded-full opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+                        <ArrowUpRight aria-hidden="true" className="size-4" />
                       </span>
                     ) : null}
                   </span>
+                  )}
                 </a>
               );
             })}
           </div>
         </div>
 
-        {/* Ring label */}
-        <div
-          ref={labelRef}
-          aria-hidden="true"
-          className={cn(
-            "font-display text-muted-foreground pointer-events-none absolute inset-x-0 grid place-items-center font-[500] tracking-[0.18em]",
-            narrow ? "top-0 h-[88%]" : "inset-y-0",
-          )}
-          style={{ fontSize: Math.max(14, metrics.title * 0.6) }}
-        >
-          {label}
-        </div>
-
-        {/* Front card caption. Desktop: left of the drum. Phones: below it. */}
-        <div
-          ref={frontRef}
-          className={cn(
-            "absolute z-[110] opacity-0",
-            narrow
-              ? "from-background via-background/90 inset-x-0 bottom-0 bg-gradient-to-t to-transparent px-5 pt-20 pb-24 sm:px-8"
-              : "bottom-[11%] left-[6%]",
-            !open && "pointer-events-none",
-          )}
-          style={
-            narrow
-              ? undefined
-              : { width: `calc(50% - ${metrics.cardW / 2}px - 9%)` }
-          }
-          aria-live="polite"
-        >
-          <p key={`e${active}`} className="ww-rise eyebrow mb-3">
-            {String(active + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
-            {current?.meta ? <span className="text-muted-foreground/80"> · {current.meta}</span> : null}
-          </p>
-          <p
-            key={`t${active}`}
-            className="ww-rise ww-d1 font-display font-[500] tracking-[-0.03em] text-balance"
-            style={{ fontSize: narrow ? "2rem" : clamp(metrics.title, 28, 56), lineHeight: 1.02 }}
-          >
-            {current?.title}
-          </p>
-          {current?.href ? (
-            <a
-              href={current.href}
-              target={current.href.startsWith("http") ? "_blank" : undefined}
-              rel={current.href.startsWith("http") ? "noreferrer" : undefined}
-              tabIndex={open ? 0 : -1}
-              onClick={(event) => {
-                if (onOpen && current && !event.metaKey && !event.ctrlKey) {
-                  event.preventDefault();
-                  onOpen(current, event);
-                }
-              }}
-              className="text-foreground hover:text-ice mt-5 inline-flex items-center gap-1.5 border-b border-current pb-0.5 text-sm font-medium transition-colors"
-            >
-              {action}
-              <ArrowUpRight aria-hidden="true" className="size-4" />
-            </a>
-          ) : null}
-        </div>
-
-        {/* Index - desktop. */}
-        {!narrow ? (
-          <nav
-            aria-label={`${label} — ${tr("индекс")}`}
-            className="text-muted-foreground absolute top-[12%] right-[2.5%] z-[120] text-right leading-[1.9]"
-            style={{ fontSize: clamp(metrics.index, 12, 15) }}
-          >
-            <ol>
-              {items.map((item, i) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => select(i)}
-                    aria-current={open && i === active ? "true" : undefined}
-                    className={cn(
-                      "hover:text-foreground cursor-pointer rounded-sm px-1 transition-colors",
-                      open && i === active && "text-foreground font-medium",
-                    )}
-                  >
-                    {item.title}
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        ) : (
-          <div className="absolute right-5 bottom-6 left-5 z-[120] flex items-center justify-between sm:right-8 sm:left-8">
-            <span className="text-label text-muted-foreground tracking-[0.22em] uppercase">
-              {open ? tr("Плъзни за следващия") : tr("Плъзни нагоре")}
-            </span>
+        {/* Phones: arrows only. */}
+        {narrow ? (
+          <div className="absolute right-5 bottom-6 left-5 z-[120] flex items-center justify-end sm:right-8 sm:left-8">
             <div className="flex gap-2">
               <button
                 type="button"
@@ -844,9 +752,39 @@ export function WorksWheel({
               </button>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </section>
+  );
+}
+
+/** The last card: a folder of frosted glass with our work peeking out of it,
+    for what comes next. The front panel leans back and the frames rise on hover. */
+function FolderFace({ folder }: { folder: NonNullable<WorksWheelItem["folder"]> }) {
+  return (
+    <span className="ww-folder relative block size-full">
+      <span aria-hidden="true" className="ww-folder-back" />
+      {folder.images.slice(0, 3).map((src, i) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          draggable={false}
+          loading="lazy"
+          decoding="async"
+          className="ww-folder-paper"
+          style={{ "--k": i } as React.CSSProperties}
+        />
+      ))}
+      <span className="ww-folder-front">
+        <span aria-hidden="true" className="ww-folder-tab" />
+        <span aria-hidden="true" className="ww-folder-body" />
+        <span className="absolute right-[7%] bottom-[12%] text-right">
+          <span className="font-display block text-[clamp(1.1rem,2.2vw,1.75rem)] leading-none font-[400] tracking-[-0.03em]">{folder.title}</span>
+          <span className="text-muted-foreground mt-2 block text-[0.75rem] tracking-[0.14em] uppercase">{folder.note}</span>
+        </span>
+      </span>
+    </span>
   );
 }
 

@@ -11,8 +11,8 @@
   4. Type — Manrope for everything (it carries the Bulgarian Cyrillic forms;
      lang="bg" switches them on). Very large and light (200–300) for the
      statements, regular body. Fixed scale below.
-  5. Signature — the hero: two enormous words and, under them, one wide frame
-     where our sites play one after another.
+  5. Signature — the hero: two enormous words, then a browser window and a
+     phone rising out of a tilt, our site running on both with the scroll.
 */
 @import "tailwindcss";
 @import "@fontsource-variable/manrope";
@@ -194,27 +194,99 @@
     transform: translateY(105%);
   }
 }
-/* The drop arrives once three.js has drawn its first frame. */
-.ink-canvas {
-  opacity: 0;
-  transform: scale(0.94);
-  transition:
-    opacity 1.4s var(--ease-out-expo),
-    transform 1.8s var(--ease-out-expo);
+/* The devices: a browser window and a phone, rising out of a tilt. */
+.hero-devices {
+  perspective: 1600px;
 }
-.ink-canvas.is-ready {
-  opacity: 1;
-  transform: none;
+.hero-stage {
+  width: min(84vw, calc(62svh * 1.5), 64rem);
+  transform-style: preserve-3d;
+  transform-origin: 50% 100%;
+  will-change: transform;
 }
-/* Without WebGL: the drop as a still, lit sphere. */
-.ink-fallback {
-  width: min(60vmin, 26rem);
-  aspect-ratio: 1;
-  margin: auto;
-  position: absolute;
-  inset: 0;
+.hero-desk {
+  overflow: hidden;
+  border-radius: 12px;
+  background: #121110;
+  box-shadow:
+    0 0 0 1px rgb(18 17 16 / 0.12),
+    0 60px 120px -60px rgb(18 17 16 / 0.6);
+}
+.hero-desk canvas {
+  aspect-ratio: 16 / 10;
+  height: auto;
+}
+.hero-desk-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 14px;
+  background: #ebe7e0;
+  border-bottom: 1px solid rgb(18 17 16 / 0.1);
+}
+.hero-desk-bar span {
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #4a4643 0%, #121110 45%, #050505 100%);
+  background: rgb(18 17 16 / 0.16);
+}
+.hero-desk-bar em {
+  flex: 1;
+  margin-right: 33px;
+  text-align: center;
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-muted-foreground);
+}
+.hero-phone {
+  position: absolute;
+  right: -5%;
+  bottom: -9%;
+  width: 22%;
+  aspect-ratio: 390 / 844;
+  padding: 0.7%;
+  border-radius: 14% / 6.5%;
+  background: #121110;
+  box-shadow: 0 50px 90px -40px rgb(18 17 16 / 0.7);
+  transform: translateZ(60px);
+}
+.hero-phone canvas {
+  border-radius: 12% / 5.6%;
+  height: 100%;
+}
+.hero-phone-island {
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  width: 30%;
+  height: 2.6%;
+  border-radius: 999px;
+  background: #121110;
+  transform: translateX(-50%);
+}
+@media (max-width: 767px) {
+  .hero-stage {
+    width: 80vw;
+  }
+  .hero-desk-bar {
+    height: 18px;
+    padding: 0 8px;
+    gap: 4px;
+  }
+  .hero-desk-bar span {
+    width: 5px;
+    height: 5px;
+  }
+  .hero-desk-bar em {
+    display: none;
+  }
+  .hero-phone {
+    width: 42%;
+    right: -6%;
+    bottom: -30%;
+  }
 }
 /* "Scroll": a hairline that keeps drawing itself downwards. */
 .hero-scroll-line {
@@ -278,6 +350,79 @@
 }
 .ww-d1 {
   animation-delay: 0.06s;
+}
+
+/* Portfolio: the last card, a folder of frosted glass with our work inside. */
+.ww-folder {
+  perspective: 900px;
+}
+.ww-folder-back {
+  position: absolute;
+  inset: 8% 0 0 0;
+  border-radius: 6% / 8.7%;
+  background: #1b1a18;
+  box-shadow: 0 40px 70px -40px rgb(18 17 16 / 0.7);
+}
+.ww-folder-back::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -9%;
+  width: 46%;
+  height: 20%;
+  border-radius: 14% 14% 0 0 / 40% 40% 0 0;
+  background: inherit;
+}
+.ww-folder-paper {
+  position: absolute;
+  z-index: 1;
+  width: 76%;
+  aspect-ratio: 1.45;
+  left: calc(8% + var(--k) * 7%);
+  top: calc(2% + var(--k) * 5%);
+  object-fit: cover;
+  border-radius: 3%;
+  rotate: calc(-4deg + var(--k) * 4deg);
+  box-shadow: 0 20px 40px -20px rgb(0 0 0 / 0.6);
+  transition: translate 0.9s var(--ease-out-expo);
+}
+.group:hover .ww-folder-paper,
+.group:focus-visible .ww-folder-paper {
+  translate: 0 calc(-14% - var(--k) * 3%);
+}
+.ww-folder-front {
+  position: absolute;
+  z-index: 2;
+  inset: 30% 0 0 0;
+  transform-origin: 50% 100%;
+  transition: transform 0.9s var(--ease-out-expo);
+}
+.group:hover .ww-folder-front,
+.group:focus-visible .ww-folder-front {
+  transform: rotateX(-16deg);
+}
+.ww-folder-body,
+.ww-folder-tab {
+  position: absolute;
+  background: rgb(240 236 229 / 0.72);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid rgb(255 255 255 / 0.75);
+}
+.ww-folder-body {
+  inset: 11% 0 0 0;
+  border-radius: 6% / 9%;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 30px 60px -34px rgb(18 17 16 / 0.55);
+}
+.ww-folder-tab {
+  left: 0;
+  top: 0;
+  width: 40%;
+  height: 14%;
+  border-bottom: 0;
+  border-radius: 14% 14% 0 0 / 50% 50% 0 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

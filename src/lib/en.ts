@@ -233,4 +233,7 @@ export const EN: Record<string, string> = {
   "Плащането онлайн още не е включено. Екипът ще ти пише на {email}.": "Online payment is not enabled yet. The team will e-mail you at {email}.",
   "Капарото е получено": "Deposit received",
   "Брифът, цената и капарото ти са тук. Отвори го по всяко време, от телефон или компютър.": "Your brief, price and deposit live here. Open it any time, from a phone or a computer.",
+  "Твоят проект": "Your project",
+  "Следва": "Next",
+  "obsidian · концепция на 13:33": "obsidian · a 13:33 concept",
 };
