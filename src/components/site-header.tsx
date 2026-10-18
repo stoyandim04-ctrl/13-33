@@ -115,10 +115,14 @@ export function SiteHeader() {
               {lang === "bg" ? "en" : "bg"}
             </button>
             {onStart ? null : (
-              <RainbowLink to="/zapochni" size="sm" data-ping="start-header">
+              <Link
+                to="/zapochni"
+                data-ping="start-header"
+                className="border-foreground/25 hover:border-foreground hover:bg-foreground hover:text-background inline-flex h-9 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors duration-500"
+              >
                 {tr("Започни проект")}
                 <ArrowRight aria-hidden="true" className="hidden size-3.5 sm:block" />
-              </RainbowLink>
+              </Link>
             )}
             <button
               ref={menuButton}

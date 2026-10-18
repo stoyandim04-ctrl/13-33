@@ -194,15 +194,62 @@
     transform: translateY(105%);
   }
 }
-/* The work, one site after another, in a wide frame. */
-.hero-frame {
-  clip-path: inset(0 0 0 0 round 1.25rem);
-  animation: hero-frame 1.6s var(--ease-out-expo) 0.35s both;
+/* The drop arrives once three.js has drawn its first frame. */
+.ink-canvas {
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity 1.4s var(--ease-out-expo),
+    transform 1.8s var(--ease-out-expo);
 }
-@keyframes hero-frame {
+.ink-canvas.is-ready {
+  opacity: 1;
+  transform: none;
+}
+/* Without WebGL: the drop as a still, lit sphere. */
+.ink-fallback {
+  width: min(60vmin, 26rem);
+  aspect-ratio: 1;
+  margin: auto;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a4643 0%, #121110 45%, #050505 100%);
+}
+/* "Scroll": a hairline that keeps drawing itself downwards. */
+.hero-scroll-line {
+  width: 1px;
+  height: 3rem;
+  background: currentColor;
+  transform-origin: top;
+  animation: hero-scroll 2.2s var(--ease-out-expo) infinite;
+}
+@keyframes hero-scroll {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  51% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* Process: each step's numeral and words rise in as it takes its turn. */
+.step-in {
+  animation: step-in 0.9s var(--ease-out-expo) both;
+}
+@keyframes step-in {
   from {
-    clip-path: inset(12% 6% 0 6% round 1.25rem);
-    transform: translateY(2rem);
+    opacity: 0;
+    transform: translateY(1.5rem);
   }
 }
 

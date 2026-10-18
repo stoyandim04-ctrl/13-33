@@ -49,6 +49,7 @@ export default function Home() {
   return (
     <>
       <GridHero id="nachalo" />
+      <Manifest />
       <WorksWheel
         id="proekti"
         className="scroll-mt-0"
@@ -58,7 +59,6 @@ export default function Home() {
         heading={works.heading}
         subheading={works.subheading}
       />
-      <Manifest />
       <Services />
       <Process />
       <Contact />

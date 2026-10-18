@@ -21,13 +21,15 @@ export interface Service {
 export interface Content {
   nav: { label: string; href: string }[];
   /** The first screen: two enormous words (the second line in stone), one
-      paragraph with the promise, two actions. */
+      paragraph with the promise, two actions; then two more beats as the
+      promise under the drop of ink, with the scroll. */
   hero: {
     eyebrow: string;
     title: { before: string; accent: string };
     description: string;
     primary: { label: string; href: string };
     secondary: { label: string; href: string };
+    beat: { title: string; body: string };
   };
   works: { heading: string; subheading: string; label: string; action: string };
   /** Three statements instead of paragraphs. Lit word by word by the scroll. */
@@ -59,6 +61,10 @@ const bg: Content = {
       "Екип от дизайнери и разработчици. Изслушваме те, разбираме бизнеса ти и до 4 работни дни ти показваме първата версия.",
     primary: { label: "Започни проект", href: "/zapochni" },
     secondary: { label: "Виж проектите", href: "#proekti" },
+    beat: {
+      title: "Първата версия — до 4 работни дни.",
+      body: "Истински сайт, не скица. После го изглаждаме заедно, докато стане точно твой.",
+    },
   },
   works: {
     heading: "Избрани проекти",
@@ -161,6 +167,10 @@ const en: Content = {
       "A team of designers and developers. We listen, get to know your business and show you the first version within 4 working days.",
     primary: { label: "Start a project", href: "/zapochni" },
     secondary: { label: "See the work", href: "#proekti" },
+    beat: {
+      title: "The first version — within 4 working days.",
+      body: "A real site, not a sketch. Then we refine it together until it is exactly yours.",
+    },
   },
   works: {
     heading: "Selected work",
