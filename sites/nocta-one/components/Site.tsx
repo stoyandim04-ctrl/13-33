@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { setUI, type Lang } from "@/lib/store";
+import { activeView } from "@/lib/views";
 import { ScrollController } from "./ScrollController";
 import { Cursor } from "./ui/Cursor";
 import { Hud } from "./ui/Hud";
@@ -22,6 +23,11 @@ export function Site() {
       });
     }
   }, []);
+
+  const [studio, setStudio] = useState(false);
+  useEffect(() => setStudio(!!activeView()), []);
+
+  if (studio) return <Experience />;
 
   return (
     <>

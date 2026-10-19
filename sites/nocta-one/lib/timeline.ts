@@ -185,8 +185,8 @@ export const channels = {
     [0.5, [0.05, 0.25, 0.0], "expo.inOut"],
     [0.58, [0.0, 0.45, 0.0], "power1.inOut"],
     // scene 5: side-on, the explode axis runs across the frame
-    [0.64, [0.0, 1.57, 0.0], "expo.inOut"],
-    [0.74, [0.0, 1.62, 0.0]],
+    [0.64, [0.22, 1.0, 0.08], "expo.inOut"],
+    [0.74, [0.24, 1.08, 0.08]],
     [0.8, [0.2, 3.4, 0.1], "expo.inOut"],
     [0.87, [0, 2 * PI, 0], "expo.inOut"],
     [0.875, UP],

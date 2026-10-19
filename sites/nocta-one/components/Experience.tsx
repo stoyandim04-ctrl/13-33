@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { anchors, live, setUI, type Tier } from "@/lib/store";
 import { frame, sample } from "@/lib/timeline";
+import { activeView, applyView } from "@/lib/views";
 import { anchorObjects } from "./three/Anchor";
 import { Case } from "./three/Case";
 import { Earbud } from "./three/Earbud";
@@ -33,6 +34,8 @@ function Rig() {
 
   useFrame((state) => {
     sample(live.progress);
+    const view = activeView();
+    if (view) applyView(view);
 
     const portrait = size.height > size.width;
     live.portrait = portrait;
@@ -46,8 +49,10 @@ function Rig() {
       tmpV.sub(tmpT).multiplyScalar(k).add(tmpT);
     }
     // a whisper of mouse parallax
-    tmpV.x += live.pointer.x * 0.06;
-    tmpV.y += live.pointer.y * 0.04;
+    if (!view) {
+      tmpV.x += live.pointer.x * 0.06;
+      tmpV.y += live.pointer.y * 0.04;
+    }
 
     // shake (never with reduced motion)
     const s = live.reduced ? 0 : frame.shake;
@@ -145,7 +150,9 @@ function Studio() {
       <color attach="background" args={["#02040A"]} />
       <Lightformer form="rect" intensity={6} color="#4FE3FF" position={[-4, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} scale={[8, 0.25, 1]} />
       <Lightformer form="rect" intensity={4} color="#1E7BFF" position={[4, -1, 1.5]} rotation={[0, -Math.PI / 2, 0]} scale={[8, 0.2, 1]} />
-      <Lightformer form="rect" intensity={2.2} color="#FFF3E6" position={[0, 4, 3]} rotation={[-Math.PI / 2.4, 0, 0]} scale={[4, 3, 1]} />
+      <Lightformer form="rect" intensity={3.2} color="#FFF3E6" position={[0, 4, 3]} rotation={[-Math.PI / 2.4, 0, 0]} scale={[4, 3, 1]} />
+      <Lightformer form="rect" intensity={1.6} color="#EAF8FF" position={[2.5, 1, 4]} rotation={[0, -0.5, 0]} scale={[1.2, 4, 1]} />
+      <Lightformer form="rect" intensity={3} color="#4FE3FF" position={[-1, 2, -4]} rotation={[0, Math.PI, 0]} scale={[6, 0.4, 1]} />
       <Lightformer form="ring" intensity={1.5} color="#4FE3FF" position={[0, 0, -5]} scale={3} />
     </Environment>
   );
@@ -155,7 +162,8 @@ function Lights() {
   return (
     <>
       <ambientLight intensity={0.15} color="#1E7BFF" />
-      <directionalLight position={[3, 4, 5]} intensity={1.4} color="#EAF8FF" />
+      <directionalLight position={[3, 4, 5]} intensity={2.2} color="#EAF8FF" />
+      <directionalLight position={[-2, 3, -3]} intensity={1.2} color="#4FE3FF" />
       <pointLight position={[-3, 1, 2]} intensity={6} distance={10} color="#4FE3FF" />
       <pointLight position={[2.5, -1.5, -1]} intensity={8} distance={8} color="#1E7BFF" />
     </>
