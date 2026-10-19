@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@fontsource-variable/manrope";
 @import "@fontsource-variable/jetbrains-mono";
+@source "../components";
+@source "../lib";
 
 @theme {
   --color-abyss: #03060d;
