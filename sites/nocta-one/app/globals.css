@@ -1,0 +1,350 @@
+@import "tailwindcss";
+@import "@fontsource-variable/manrope";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  --color-abyss: #03060d;
+  --color-navy: #071426;
+  --color-deep: #0b3a66;
+  --color-electric: #1e7bff;
+  --color-cyan: #4fe3ff;
+  --color-glow: #eaf8ff;
+  --color-ink: #f2f6fa;
+  --color-ink-60: rgb(242 246 250 / 0.6);
+  --color-ink-35: rgb(242 246 250 / 0.35);
+  --color-ink-12: rgb(242 246 250 / 0.12);
+  --font-sans: "Manrope Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+:root {
+  --gutter: clamp(16px, 4vw, 56px);
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-abyss);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+::selection {
+  background: var(--color-cyan);
+  color: var(--color-abyss);
+}
+
+button {
+  cursor: pointer;
+}
+html.has-cursor,
+html.has-cursor * {
+  cursor: none !important;
+}
+
+/* -------------------------------------------------------------- type --- */
+
+.headline {
+  font-weight: 600;
+  font-size: clamp(44px, 6.2vw, 108px);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.sub {
+  font-weight: 400;
+  font-size: clamp(14px, 1.05vw, 17px);
+  line-height: 1.55;
+  color: var(--color-ink-60);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.wordmark {
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.32em;
+}
+
+/* ------------------------------------------------------------- glass --- */
+
+.glass {
+  background: rgb(10 22 40 / 0.38);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgb(242 246 250 / 0.12);
+  color: var(--color-ink);
+  transition: border-color 0.4s, background 0.4s, box-shadow 0.4s;
+}
+.glass:hover {
+  border-color: rgb(79 227 255 / 0.45);
+  box-shadow: 0 0 24px -6px rgb(79 227 255 / 0.35);
+}
+
+.hud-link {
+  transition: color 0.3s;
+}
+.hud-link:hover {
+  color: var(--color-ink);
+}
+
+/* sound toggle: four little bars */
+.sound-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 10px;
+}
+.sound-line i {
+  width: 2px;
+  height: 2px;
+  background: currentColor;
+  transition: height 0.4s;
+}
+.sound-line.is-on i {
+  animation: eq 1.1s ease-in-out infinite;
+  background: var(--color-cyan);
+}
+.sound-line.is-on i:nth-child(2) { animation-delay: -0.3s; }
+.sound-line.is-on i:nth-child(3) { animation-delay: -0.6s; }
+.sound-line.is-on i:nth-child(4) { animation-delay: -0.9s; }
+
+@keyframes eq {
+  0%, 100% { height: 2px; }
+  50% { height: 10px; }
+}
+
+/* scroll hint with equaliser */
+.scroll-hint {
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+.scroll-hint.is-on {
+  opacity: 1;
+}
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
+}
+.eq i {
+  width: 1px;
+  height: 4px;
+  background: var(--color-cyan);
+  animation: eq2 1.4s ease-in-out infinite;
+}
+.eq i:nth-child(2) { animation-delay: -0.2s; }
+.eq i:nth-child(3) { animation-delay: -0.5s; }
+.eq i:nth-child(4) { animation-delay: -0.8s; }
+.eq i:nth-child(5) { animation-delay: -1.1s; }
+@keyframes eq2 {
+  0%, 100% { height: 3px; }
+  50% { height: 18px; }
+}
+
+/* -------------------------------------------------------------- menu --- */
+
+.menu-overlay {
+  background: rgb(3 6 13 / 0.55);
+}
+.menu-item {
+  font-weight: 600;
+  font-size: clamp(48px, 8vw, 128px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--color-ink-60);
+  transition: color 0.4s;
+}
+.menu-item:hover {
+  color: var(--color-ink);
+}
+.menu-item:hover span:last-child {
+  text-shadow: 0 0 40px rgb(79 227 255 / 0.35);
+}
+
+/* --------------------------------------------------------------- ask --- */
+
+.pill {
+  font-size: 10.5px;
+}
+.ask-q {
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-ink-12);
+  color: var(--color-ink);
+  transition: color 0.3s, padding 0.3s;
+}
+.ask-q:hover {
+  color: var(--color-cyan);
+  padding-left: 6px;
+}
+.ask-a {
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------- annotations --- */
+
+.ann {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0 10px;
+  white-space: nowrap;
+  opacity: 0;
+  filter: blur(6px);
+  transition: opacity 0.5s 0.35s, filter 0.5s 0.35s;
+}
+.ann.is-on {
+  opacity: 1;
+  filter: blur(0);
+}
+.ann-line {
+  stroke: rgb(79 227 255 / 0.7);
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.7, 0, 0.2, 1), opacity 0.3s;
+}
+.ann-line.is-on {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+.ann-dot {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--color-cyan);
+  opacity: 0;
+  scale: 0.2;
+  transition: opacity 0.4s, scale 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ann-dot.is-on {
+  opacity: 1;
+  scale: 1;
+}
+.ann-dot::after {
+  content: "";
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 50%;
+  background: var(--color-cyan);
+}
+
+/* ------------------------------------------------------------ cursor --- */
+
+.cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.cursor.is-on {
+  opacity: 1;
+}
+.cursor-ring {
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--color-cyan);
+  box-shadow: 0 0 12px rgb(79 227 255 / 0.4);
+  transition: scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+}
+.cursor.is-down .cursor-ring {
+  scale: 0.7;
+}
+.cursor-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  translate: -50% -50%;
+  color: var(--color-cyan);
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 0.3s;
+}
+.cursor.is-drag .cursor-ring {
+  scale: 0;
+  opacity: 0;
+}
+.cursor.is-drag .cursor-label {
+  opacity: 1;
+}
+
+/* -------------------------------------------------------- preloader --- */
+
+.preloader {
+  background: var(--color-abyss);
+}
+.pre-track,
+.pre-ring {
+  fill: none;
+  stroke-width: 0.6;
+}
+.pre-track {
+  stroke: var(--color-ink-12);
+}
+.pre-ring {
+  stroke: var(--color-cyan);
+  filter: drop-shadow(0 0 3px rgb(79 227 255 / 0.8));
+}
+.pre-num {
+  font-size: 13px;
+  letter-spacing: 0.2em;
+}
+
+.flash {
+  background: radial-gradient(circle at 50% 50%, #eaf8ff 0%, rgb(79 227 255 / 0.6) 45%, rgb(3 6 13 / 0) 80%);
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+
+.concept {
+  letter-spacing: 0.08em;
+  text-transform: none;
+  font-size: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq i,
+  .sound-line.is-on i {
+    animation: none;
+    height: 6px;
+  }
+}
