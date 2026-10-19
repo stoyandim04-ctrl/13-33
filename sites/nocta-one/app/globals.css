@@ -33,22 +33,14 @@ body {
   overscroll-behavior: none;
 }
 
+/* the page never scrolls natively; ScrollController drives a virtual scroll */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
 html {
-  scrollbar-width: none;
-}
-html::-webkit-scrollbar {
-  display: none;
-}
-
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-.lenis.lenis-stopped {
-  overflow: clip;
+  touch-action: none;
 }
 
 ::selection {
