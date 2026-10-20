@@ -38,7 +38,7 @@ const ease = (t) => {
 };
 const t0 = Date.now();
 // a part starting mid-film warms up for a second so headline animations are in step
-const start = Math.max(0, +from - 30);
+const start = Math.max(0, +from - (+process.env.WARM || 30));
 await page.evaluate((ms) => window.__vt.advance(ms), start * DT);
 for (let f = start; f < last; f++) {
   const p = ease(f / (N - 1)) % 1;
