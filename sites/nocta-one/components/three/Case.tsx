@@ -25,16 +25,20 @@ export function Case() {
 
   const mats = useMemo(() => {
     const glass = new THREE.MeshPhysicalMaterial({
-      color: "#CFEFFF",
+      // frosted, smoked glass: reads as a premium shell instead of a blue block
+      color: "#E8F4FF",
       transmission: 1,
-      thickness: 0.6,
-      roughness: 0.08,
-      ior: 1.45,
-      attenuationColor: new THREE.Color("#7FC8FF"),
-      attenuationDistance: 1.6,
+      thickness: 0.32,
+      roughness: 0.22,
+      ior: 1.5,
+      attenuationColor: new THREE.Color("#B8DCFF"),
+      attenuationDistance: 4,
       clearcoat: 1,
-      clearcoatRoughness: 0.05,
+      clearcoatRoughness: 0.04,
+      iridescence: 0.25,
+      iridescenceIOR: 1.3,
       specularIntensity: 1,
+      envMapIntensity: 1.6,
       clippingPlanes: [clip],
     });
     const tray = darkMatte();

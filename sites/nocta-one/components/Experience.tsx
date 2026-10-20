@@ -196,6 +196,12 @@ export default function Experience() {
 
   useEffect(() => {
     let alive = true;
+    // ?tier=high|mid|low forces a quality level (recordings)
+    const forced = new URLSearchParams(location.search).get("tier") as Tier | null;
+    if (forced && forced in TIER) {
+      setTier(forced);
+      return;
+    }
     import("detect-gpu")
       .then(({ getGPUTier }) => getGPUTier())
       .then((r) => {
