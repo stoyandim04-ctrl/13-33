@@ -7,3 +7,6 @@
 3. Put it on the laptop: `python3 social/composite.py social/laptop.png <frames-dir> reel.mp4 30`
    → 1080×1920, H.264. `laptop.png` is a Higgsfield photo with a chroma-green screen; the
    script finds the screen, swaps in the frames and rebuilds the reflections on the desk.
+
+Cover: `python3 social/cover.py social/cover-photo.png cover.png` (run next to TTF copies of the
+Manrope/JetBrains Mono subsets, see the script). The photo is a Higgsfield generation.
