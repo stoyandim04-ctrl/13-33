@@ -18,6 +18,7 @@ export interface GalleryWindow {
   poster: string;
   poster4k: string;
   mp4: string;
+  webm: string;
 }
 
 /** One line of the title: parts in the sans and in the display serif. */
@@ -261,6 +262,8 @@ export class GalleryScene {
   private hi = new Map<number, { tex: THREE.Texture | null; used: number }>();
   private useHi: boolean;
   private bgColor = new THREE.Color();
+  /** H.264 where the browser has it (Safari, Chrome); VP9 elsewhere. */
+  private h264 = document.createElement("video").canPlayType('video/mp4; codecs="avc1.42E01E"') !== "";
 
   private target = 0;
   private p = 0;
@@ -846,10 +849,10 @@ export class GalleryScene {
     const n = this.o.windows.length;
     const { vw, vh } = this.view();
     const aspect = this.camera.aspect;
-    const cols = aspect < 0.9 ? 2 : aspect < 1.3 ? 4 : Math.min(6, Math.ceil(Math.sqrt(n * 1.6)));
+    const cols = aspect < 0.9 ? 3 : aspect < 1.3 ? 4 : Math.min(6, Math.ceil(Math.sqrt(n * 1.6)));
     const rows = Math.ceil(n / cols);
     const areaW = aspect < 0.9 ? vw * 0.9 : vw * 0.7;
-    const areaH = vh * (aspect < 0.9 ? 0.56 : 0.66);
+    const areaH = vh * (aspect < 0.9 ? 0.6 : 0.66);
     const gap = 0.1 * this.cs;
     let cw = (areaW - gap * (cols - 1)) / cols;
     let ch = cw / 1.6;
@@ -902,6 +905,7 @@ export class GalleryScene {
     this.camera.position.x += (px * 0.25 - this.camera.position.x) * 0.05;
     this.camera.position.y += (py * 0.15 - this.camera.position.y) * 0.05;
     this.camera.lookAt(0, 0, 0);
+    this.camera.updateMatrixWorld();
 
     const mood = moodAt(p);
     const bgu = this.bg.material.uniforms;
@@ -1151,7 +1155,8 @@ export class GalleryScene {
     if (want && s.card !== want) {
       s.card = want;
       s.ready = false;
-      s.video.src = this.o.windows[want.win].mp4;
+      const win = this.o.windows[want.win];
+      s.video.src = this.h264 ? win.mp4 : win.webm;
       s.video.currentTime = 0;
       void s.video.play().catch(() => {});
     }
@@ -1169,7 +1174,6 @@ export class GalleryScene {
     const d = 4;
     const vh = 2 * d * Math.tan(THREE.MathUtils.degToRad(FOV / 2));
     const upp = vh / this.h;
-    const cam = this.camera.position;
     let rx = 0;
     let ry = 0;
     let rs = 0.3;
@@ -1184,18 +1188,24 @@ export class GalleryScene {
     const x = THREE.MathUtils.lerp(rx, 0, bump);
     const y = THREE.MathUtils.lerp(ry, 0, bump);
     const scale = THREE.MathUtils.lerp(rs, big, bump);
-    this.logo.position.set(cam.x + x, cam.y + y, CAM_Z - d);
+    // Held in front of the camera, so it stays on its slot however the
+    // camera moves.
+    this.logo.position.set(x, y, -d);
+    this.camera.localToWorld(this.logo.position);
     this.logo.scale.setScalar(scale);
     const appear = easeOut(clamp01((time - 0.2) / 1.2));
     this.logo.visible = appear > 0.01;
-    this.logo.rotation.set(
-      Math.sin(time * 0.9) * 0.12 * (1 - bump) + bump * 0.15,
-      // A full turn on the way in and one on the way back: at the centre it
-      // faces you.
-      (easeInOut(clamp01(s / 0.4)) + easeInOut(clamp01((s - 0.6) / 0.4))) * Math.PI * 2 +
-        Math.sin(time * 0.7) * 0.35 * (1 - bump),
-      0,
+    const spin = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(
+        Math.sin(time * 0.9) * 0.12 * (1 - bump) + bump * 0.15,
+        // A full turn on the way in and one on the way back: at the centre
+        // it faces you.
+        (easeInOut(clamp01(s / 0.4)) + easeInOut(clamp01((s - 0.6) / 0.4))) * Math.PI * 2 +
+          Math.sin(time * 0.7) * 0.35 * (1 - bump),
+        0,
+      ),
     );
+    this.logo.quaternion.copy(this.camera.quaternion).multiply(spin);
     this.logo.scale.multiplyScalar(appear);
   }
 }
