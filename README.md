@@ -17,8 +17,8 @@ npm run media      # прерисува постерите/видеата на �
 | --- | --- |
 | `src/components/gallery/*` | **Началото: 3D галерията.** `scene.ts` (three.js: лентата, стената, глобусът, 3D логото, видео пулът), `timeline.ts` (участъците на скрола), `gallery.tsx` (сцената + HTML слоевете), `gallery-lite.tsx` (вариант без 3D), `windows.ts` |
 | `src/components/brand/*` | Знакът „33“ — един контур за SVG, favicon (`npm run favicon`) и 3D логото |
-| `src/lib/display-font.ts` | Шрифтът на големите думи: A Playfair / B Cormorant (`?font=a` / `?font=b`) |
-| `public/gallery/` | Прозорците на галерията: по 4 клипа на сайт (3 от компютър + телефон), записани с `npm run media:gallery` |
+| `src/lib/display-font.ts` | Шрифтът на заглавието: дума в Manrope + дума в Playfair, с българските форми |
+| `public/gallery/` | Прозорците на галерията: за всеки сайт най-хубавите места от страницата — кадър 1280 и 4K + 7-секунден клип (пуска се при клик). `npm run media:gallery [slug]` записва 5 кандидата, `node scripts/pick-gallery-media.mjs <slug> 1 2 3` оставя избраните |
 | `src/components/ui/grid-hero.tsx` | Hero — името „13:33“ на цялата ширина, един ред и бутонът; при първо влизане завеса с брояч до 100 |
 | `src/components/ui/rainbow-button.tsx` | Основният бутон навсякъде (мастилено хапче) — `RainbowLink` / `RainbowButton` |
 | `src/components/ui/horizon-hero-section.tsx`, `horizon-scene.ts` | Старият 3D hero (Horizon). Не се ползва; пазим го, ако поискаме да го върнем |

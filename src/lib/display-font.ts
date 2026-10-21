@@ -43,3 +43,6 @@ export async function setupDisplayFont() {
 /** A canvas `font` string in the display face. */
 export const displayCanvasFont = (px: number) =>
   `${DISPLAY.weight} ${DISPLAY.stretch} ${px}px ${DISPLAY.family}`;
+
+/** A canvas `font` string in the text face (the first word of a title line). */
+export const sansCanvasFont = (px: number) => `500 ${px}px "Manrope Variable", Manrope, sans-serif`;

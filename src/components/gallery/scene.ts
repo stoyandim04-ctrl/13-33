@@ -3,28 +3,33 @@
 // globe behind „За нас“ and the logo. The same windows travel through every
 // stretch; only their layout changes (timeline.ts).
 //
-// Every window shows a poster; only the few windows that matter right now
-// (the biggest in the ribbon, the one under the pointer on the wall) play
-// their clip, through a small pool of <video> elements.
+// Every window shows the best still of its site (4K on a large screen, loaded
+// when the window matters); a click plays the site's clip inside the window,
+// a second click opens the site. Under the pointer a window bends like paper.
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 import { MARK_BLUE, MARK_CYAN, MARK_POLYGONS, tracePolygon } from "@/components/brand/logo-geometry";
-import { CH, clamp01, easeInOut, easeOut, seg, smooth, within } from "@/components/gallery/timeline";
+import { CH, clamp01, easeInOut, easeOut, moodAt, seg, smooth, within } from "@/components/gallery/timeline";
 
 export interface GalleryWindow {
   /** Index of the project it belongs to. */
   project: number;
   poster: string;
+  poster4k: string;
   mp4: string;
 }
 
+/** One line of the title: parts in the sans and in the display serif. */
+export type TitleLine = { text: string; serif: boolean }[];
+
 export interface TitleSpec {
-  lines: string[];
+  lines: TitleLine[];
   small: string;
   lang: string;
-  /** Canvas font string in the display face, for a size in px. */
-  font: (px: number) => string;
+  /** Canvas font strings for a size in px. */
+  sans: (px: number) => string;
+  serif: (px: number) => string;
 }
 
 export interface SceneOptions {
@@ -32,9 +37,9 @@ export interface SceneOptions {
   windows: GalleryWindow[];
   phone: boolean;
   title: TitleSpec;
-  /** The window under the pointer (or tapped) on the wall changed. */
+  /** The window under the pointer (or clicked) changed. */
   onFocus: (window: number | null) => void;
-  /** A window was clicked / tapped twice: open its site. */
+  /** A playing window was clicked again: open its site. */
   onOpen: (window: number) => void;
   /** Where the header keeps the logo, in CSS pixels. */
   logoSlot: () => DOMRect | null;
@@ -44,7 +49,8 @@ export interface SceneOptions {
   onFail: () => void;
 }
 
-const BG = new THREE.Color("#080A0F");
+const PAPER = new THREE.Color("#E8E8EA");
+const NIGHT = new THREE.Color("#0A0D16");
 const FOV = 35;
 const CAM_Z = 10;
 
@@ -86,10 +92,12 @@ const RIBBON_STOPS: [number, V3[], number][] = [
 const CARD_VS = /* glsl */ `
   varying vec2 vUv;
   varying float vDepth;
+  varying vec3 vView;
   void main() {
     vUv = uv;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     vDepth = -mv.z;
+    vView = mv.xyz;
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -102,38 +110,46 @@ const CARD_FS = /* glsl */ `
   uniform float uTime;
   uniform float uPhase;
   uniform float uGlow;
+  uniform float uPaper;
   uniform vec3 uBg;
   varying vec2 vUv;
   varying float vDepth;
+  varying vec3 vView;
 
   float box(vec2 p, vec2 b, float r) {
     vec2 q = abs(p) - b + r;
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
   }
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
   void main() {
     vec2 uv = vUv;
     float back = gl_FrontFacing ? 0.0 : 1.0;
     if (back > 0.5) uv.x = 1.0 - uv.x;
     vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0);
-    float d = box(p, vec2(uAspect * 0.5, 0.5), 0.035);
+    float d = box(p, vec2(uAspect * 0.5, 0.5), 0.03);
     float aa = fwidth(d);
     float alpha = 1.0 - smoothstep(-aa, aa, d);
     if (alpha < 0.01) discard;
 
-    vec3 col = uHasMap > 0.5 ? texture2D(map, uv).rgb : vec3(0.07, 0.09, 0.14);
+    vec3 col = uHasMap > 0.5 ? texture2D(map, uv).rgb : vec3(0.78, 0.78, 0.8);
+    // Paper: light catches the bends, and a fine grain shows.
+    vec3 n = normalize(cross(dFdx(vView), dFdy(vView)));
+    float shade = clamp(0.62 + 0.55 * dot(n, normalize(vec3(-0.55, 0.6, 0.55))), 0.5, 1.25);
+    float grain = hash(floor(vUv * vec2(uAspect * 520.0, 520.0)));
+    col *= mix(1.0, shade * (0.97 + grain * 0.05), uPaper);
     // A soft light that passes over the windows now and then.
     float sweep = fract(uTime * 0.07 + uPhase) * 3.2 - 1.1;
     float band = 1.0 - smoothstep(0.0, 0.16, abs(uv.x * 0.8 + uv.y * 0.45 - sweep));
-    col += vec3(0.26, 0.52, 1.0) * band * 0.05;
-    // A hairline edge in cyan when the window is in focus.
-    float edge = 1.0 - smoothstep(0.0, 0.012, abs(d + 0.006));
-    col = mix(col, vec3(0.058, 0.578, 1.0), edge * uGlow * 0.9);
-    col *= mix(1.0, 0.42, back);
-    col *= 1.0 - uDim;
-    // Depth fog and fading into the dark.
+    col += vec3(1.0) * band * 0.04;
+    // A hairline in the logo's blue when the window is in focus.
+    float edge = 1.0 - smoothstep(0.0, 0.01, abs(d + 0.005));
+    col = mix(col, vec3(0.018, 0.147, 1.0), edge * uGlow);
+    // The back of a window is plain paper.
+    col = mix(col, vec3(0.8, 0.8, 0.82), back * 0.75);
+    // Depth fog, dimming and fading all go towards the background.
     float fog = smoothstep(14.0, 26.0, vDepth);
-    col = mix(col, uBg, clamp(fog + uFade, 0.0, 1.0));
+    col = mix(col, uBg, clamp(fog + uFade + uDim, 0.0, 1.0));
     gl_FragColor = vec4(col, alpha);
     #include <colorspace_fragment>
   }
@@ -156,7 +172,7 @@ const TITLE_FS = /* glsl */ `
     float fr = max(r - c.a, 0.0);
     float fb = max(b - c.a, 0.0);
     float ghost = max(max(g1, g2) - c.a, 0.0);
-    vec3 col = c.rgb * c.a + cyan * fr + blue * fb + vec3(0.5, 0.68, 1.0) * ghost;
+    vec3 col = c.rgb * c.a + cyan * fr + blue * fb + vec3(0.25) * ghost;
     float a = clamp(c.a + fr + fb + ghost, 0.0, 1.0) * uOpacity;
     if (a < 0.02) discard;
     gl_FragColor = vec4(col / max(c.a + fr + fb + ghost, 0.001), a);
@@ -168,6 +184,7 @@ const BG_VS = /* glsl */ `
   varying vec2 vUv;
   void main() { vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }
 `;
+// Display (sRGB) colours: no colour-space conversion here.
 const BG_FS = /* glsl */ `
   uniform float uMood;
   uniform float uAspect;
@@ -176,17 +193,14 @@ const BG_FS = /* glsl */ `
   float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
   void main() {
     vec2 p = vUv; p.x *= uAspect;
-    vec3 base = mix(vec3(0.031, 0.039, 0.059), vec3(0.016, 0.022, 0.039), uMood);
-    vec2 a = vec2(0.12 * uAspect, 0.92 + 0.03 * sin(uTime * 0.2));
-    vec2 b = vec2(0.92 * uAspect, 0.08);
-    vec2 c = vec2(mix(0.5, 0.68, step(1.0, uAspect)) * uAspect, 0.5);
-    float ga = exp(-pow(length(p - a) / 0.62, 2.0));
-    float gb = exp(-pow(length(p - b) / 0.55, 2.0));
-    float gc = exp(-pow(length(p - c) / 0.6, 2.0));
-    vec3 col = base;
-    col += vec3(0.14, 0.42, 1.0) * ga * 0.16 * (1.0 - uMood * 0.6);
-    col += vec3(0.27, 0.78, 1.0) * gb * 0.07 * (1.0 - uMood * 0.5);
-    col += vec3(0.14, 0.42, 1.0) * gc * 0.14 * uMood;
+    vec2 c = vec2(0.5 * uAspect, 0.55);
+    float r = length(p - c) / max(uAspect, 1.0);
+    vec3 paper = vec3(0.910, 0.910, 0.918) + 0.018 * (1.0 - smoothstep(0.0, 0.8, r)) - 0.03 * smoothstep(0.45, 1.0, r);
+    vec3 night = vec3(0.039, 0.051, 0.086);
+    vec2 g = vec2(mix(0.5, 0.68, step(1.0, uAspect)) * uAspect, 0.5);
+    night += vec3(0.14, 0.42, 1.0) * exp(-pow(length(p - g) / 0.6, 2.0)) * 0.14;
+    night += vec3(0.27, 0.78, 1.0) * exp(-pow(length(p - vec2(0.1 * uAspect, 0.9)) / 0.5, 2.0)) * 0.05;
+    vec3 col = mix(paper, night, uMood);
     col += (hash(vUv * 900.0 + fract(uTime)) - 0.5) / 255.0 * 2.0;
     gl_FragColor = vec4(col, 1.0);
   }
@@ -199,11 +213,15 @@ interface Card {
   pos: Float32Array;
   a: Float32Array;
   b: Float32Array;
+  /** Face normal per vertex of layout `a`. */
+  n: Float32Array;
   win: number;
-  /** Only shown in the globe (the globe needs more windows than we have). */
+  /** Only shown in the globe and the ribbon (they need more windows than we have). */
   echo: boolean;
-  poster: THREE.Texture | null;
   focus: number;
+  /** How much it bends like paper, and where the pointer is on it (uv). */
+  paper: number;
+  puv: THREE.Vector2;
   seed: [number, number, number, number, number, number];
 }
 
@@ -226,7 +244,7 @@ export class GalleryScene {
   private logoScene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 80);
   private cards: Card[] = [];
-  private slots: Slot[] = [];
+  private slot: Slot;
   private curve = new THREE.CatmullRomCurve3(K_HERO.map((v) => new THREE.Vector3(...v)), false, "centripetal");
   private title!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private titleCanvas = document.createElement("canvas");
@@ -236,6 +254,13 @@ export class GalleryScene {
   private pmrem: THREE.PMREMGenerator;
   private envTex: THREE.Texture;
   private segs: number;
+  private rows: number;
+
+  /** Stills: the 1280 ones for every window, 4K ones while a window matters. */
+  private base = new Map<number, THREE.Texture>();
+  private hi = new Map<number, { tex: THREE.Texture | null; used: number }>();
+  private useHi: boolean;
+  private bgColor = new THREE.Color();
 
   private target = 0;
   private p = 0;
@@ -250,8 +275,9 @@ export class GalleryScene {
   private pointer = new THREE.Vector2(0, 0);
   private pointerSeen = false;
   private hover: Card | null = null;
-  private picked: Card | null = null;
-  private down: { x: number; y: number; t: number; type: string } | null = null;
+  private hoverUv = new THREE.Vector2(0.5, 0.5);
+  private playing: Card | null = null;
+  private down: { x: number; y: number; t: number } | null = null;
   private spin = 0;
   private spinVel = 0;
   private dragging = false;
@@ -267,14 +293,15 @@ export class GalleryScene {
   constructor(o: SceneOptions) {
     this.o = o;
     const r = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
-    r.setClearColor(BG, 1);
+    r.setClearColor(PAPER, 1);
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.autoClear = false;
     this.renderer = r;
-    this.segs = o.phone ? 12 : 20;
+    this.segs = o.phone ? 12 : 22;
+    this.rows = o.phone ? 6 : 10;
+    this.useHi = !o.phone && Math.max(window.innerWidth, window.innerHeight) * (window.devicePixelRatio || 1) >= 1800;
     this.camera.position.set(0, 0, CAM_Z);
 
-    // Background: dark with the blue and cyan of the logo, very soft.
     this.bg = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 2),
       new THREE.ShaderMaterial({
@@ -309,22 +336,18 @@ export class GalleryScene {
 
     this.buildCards();
 
-    // Videos: a small pool, reused by whichever windows matter right now.
-    const n = o.phone ? 1 : 3;
-    for (let i = 0; i < n; i++) {
-      const video = document.createElement("video");
-      video.muted = true;
-      video.loop = true;
-      video.playsInline = true;
-      video.setAttribute("playsinline", "");
-      video.setAttribute("muted", "");
-      video.preload = "auto";
-      const texture = new THREE.VideoTexture(video);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      const slot: Slot = { video, texture, card: null, ready: false };
-      video.addEventListener("playing", () => (slot.ready = true));
-      this.slots.push(slot);
-    }
+    // One video: the window that was clicked plays its clip.
+    const video = document.createElement("video");
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("muted", "");
+    video.preload = "auto";
+    const texture = new THREE.VideoTexture(video);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    this.slot = { video, texture, card: null, ready: false };
+    video.addEventListener("playing", () => (this.slot.ready = true));
 
     // The logo, in 3D: its own scene, drawn last, lit by a soft room.
     this.pmrem = new THREE.PMREMGenerator(r);
@@ -367,19 +390,16 @@ export class GalleryScene {
     window.removeEventListener("pointerup", this.onUp);
     this.o.canvas.removeEventListener("webglcontextlost", this.onLost);
     document.removeEventListener("visibilitychange", this.onVisibility);
-    for (const s of this.slots) {
-      s.video.pause();
-      s.video.removeAttribute("src");
-      s.video.load();
-      s.texture.dispose();
-    }
-    const posters = new Set<THREE.Texture>();
+    this.slot.video.pause();
+    this.slot.video.removeAttribute("src");
+    this.slot.video.load();
+    this.slot.texture.dispose();
     for (const c of this.cards) {
       c.geo.dispose();
       c.mat.dispose();
-      if (c.poster) posters.add(c.poster);
     }
-    posters.forEach((t) => t.dispose());
+    this.base.forEach((t) => t.dispose());
+    this.hi.forEach((h) => h.tex?.dispose());
     this.title.geometry.dispose();
     this.title.material.dispose();
     this.titleTex.dispose();
@@ -400,46 +420,34 @@ export class GalleryScene {
 
   private buildCards() {
     const loader = new THREE.TextureLoader();
-    const posters = new Map<string, THREE.Texture>();
-    const poster = (url: string, onLoad: (t: THREE.Texture) => void) => {
-      const have = posters.get(url);
-      if (have) {
-        if (have.image) onLoad(have);
-        else have.userData.wait.push(onLoad);
-        return have;
-      }
-      const tex = new THREE.Texture();
-      tex.userData.wait = [onLoad];
-      posters.set(url, tex);
-      loader.load(url, (t) => {
-        tex.image = t.image;
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.anisotropy = 4;
-        tex.needsUpdate = true;
-        for (const f of tex.userData.wait as ((t: THREE.Texture) => void)[]) f(tex);
-      });
-      return tex;
-    };
-
     const n = this.o.windows.length;
+    for (let w = 0; w < n; w++) {
+      const tex = loader.load(this.o.windows[w].poster, () => this.showStill(w));
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      this.base.set(w, tex);
+    }
+
     const echoes = this.o.phone ? 12 : 22;
+    const cols = this.segs + 1;
+    const count = cols * (this.rows + 1);
     for (let i = 0; i < n + echoes; i++) {
       const echo = i >= n;
       const win = i % n;
       const geo = new THREE.BufferGeometry();
-      const count = (this.segs + 1) * 2;
       const pos = new Float32Array(count * 3);
       const uv = new Float32Array(count * 2);
       const idx: number[] = [];
       for (let j = 0; j <= this.segs; j++) {
-        for (let v = 0; v < 2; v++) {
-          const k = j * 2 + v;
+        for (let r = 0; r <= this.rows; r++) {
+          const k = j * (this.rows + 1) + r;
           uv[k * 2] = j / this.segs;
-          uv[k * 2 + 1] = v;
-        }
-        if (j < this.segs) {
-          const a = j * 2;
-          idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+          uv[k * 2 + 1] = r / this.rows;
+          if (j < this.segs && r < this.rows) {
+            const a = k;
+            const b = k + this.rows + 1;
+            idx.push(a, b, a + 1, a + 1, b, b + 1);
+          }
         }
       }
       geo.setAttribute("position", new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
@@ -459,27 +467,67 @@ export class GalleryScene {
           uTime: { value: 0 },
           uPhase: { value: rand(i, 9) },
           uGlow: { value: 0 },
-          uBg: { value: BG.clone() },
+          uPaper: { value: 0 },
+          uBg: { value: PAPER.clone() },
         },
       });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.frustumCulled = false;
       mesh.userData.card = i;
       this.scene.add(mesh);
-      const card: Card = {
+      this.cards.push({
         mesh, geo, mat, pos,
         a: new Float32Array(count * 3),
         b: new Float32Array(count * 3),
-        win, echo, poster: null, focus: 0,
+        n: new Float32Array(count * 3),
+        win, echo, focus: 0, paper: 0, puv: new THREE.Vector2(0.5, 0.5),
         seed: [rand(i, 1), rand(i, 2), rand(i, 3), rand(i, 4), rand(i, 5), rand(i, 6)],
-      };
-      card.poster = poster(this.o.windows[win].poster, (t) => {
-        if (!this.slots.some((s) => s.card === card && s.ready)) {
-          mat.uniforms.map.value = t;
-          mat.uniforms.uHasMap.value = 1;
-        }
       });
-      this.cards.push(card);
+    }
+  }
+
+  /** Puts the best still we have on every window of `win` (unless it plays). */
+  private showStill(win: number) {
+    const hi = this.hi.get(win)?.tex;
+    const tex = hi ?? this.base.get(win);
+    if (!tex?.image) return;
+    for (const c of this.cards) {
+      if (c.win !== win || (this.slot.card === c && this.slot.ready)) continue;
+      c.mat.uniforms.map.value = tex;
+      c.mat.uniforms.uHasMap.value = 1;
+    }
+  }
+
+  /** The 4K still of a window, loaded once it matters; at most a few kept. */
+  private wantHi(win: number, now: number) {
+    if (!this.useHi) return;
+    const have = this.hi.get(win);
+    if (have) {
+      have.used = now;
+      return;
+    }
+    const entry = { tex: null as THREE.Texture | null, used: now };
+    this.hi.set(win, entry);
+    new THREE.ImageBitmapLoader().setOptions({ imageOrientation: "flipY" }).load(this.o.windows[win].poster4k, (bmp) => {
+      if (this.disposed || this.hi.get(win) !== entry) return bmp.close();
+      const t = new THREE.Texture(bmp);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+      t.flipY = false;
+      t.needsUpdate = true;
+      entry.tex = t;
+      this.showStill(win);
+    });
+    // Keep the memory in check: drop the least recently wanted.
+    if (this.hi.size > 5) {
+      let oldest: number | null = null;
+      for (const [k, v] of this.hi) if (k !== win && (oldest === null || v.used < this.hi.get(oldest)!.used)) oldest = k;
+      if (oldest !== null) {
+        const old = this.hi.get(oldest)!;
+        this.hi.delete(oldest);
+        this.showStill(oldest);
+        old.tex?.dispose();
+      }
     }
   }
 
@@ -525,7 +573,7 @@ export class GalleryScene {
   // ---------- title ----------
 
   private drawTitle() {
-    const { lines, small, lang, font } = this.o.title;
+    const { lines, small, lang, sans, serif } = this.o.title;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = Math.round(this.w * dpr);
     const H = Math.round(this.h * dpr);
@@ -533,52 +581,55 @@ export class GalleryScene {
     cv.width = W;
     cv.height = H;
     cv.setAttribute("lang", lang);
-    const ctx = cv.getContext("2d")!;
-    (ctx as CanvasRenderingContext2D & { lang?: string }).lang = lang;
+    const ctx = cv.getContext("2d")! as CanvasRenderingContext2D & { lang?: string; letterSpacing?: string };
+    ctx.lang = lang;
     ctx.clearRect(0, 0, W, H);
     const portrait = this.w / this.h < 0.9;
 
-    // On a phone each line breaks in two, so the words can stay large.
-    let rows = lines;
-    if (portrait) {
-      rows = lines.flatMap((l) => {
-        const words = l.split(" ");
-        if (words.length < 2) return [l];
-        let best = 1;
-        let bestDiff = Infinity;
-        for (let k = 1; k < words.length; k++) {
-          const diff = Math.abs(words.slice(0, k).join(" ").length - words.slice(k).join(" ").length);
-          if (diff < bestDiff) [best, bestDiff] = [k, diff];
-        }
-        return [words.slice(0, best).join(" "), words.slice(best).join(" ")];
+    // As in the reference: each line pairs a word in the sans with one in
+    // the serif. On a phone every part gets its own row.
+    const rows: TitleLine[] = portrait ? lines.flatMap((l) => l.map((part) => [part])) : lines;
+    const setFont = (part: { serif: boolean }, px: number) => {
+      ctx.font = part.serif ? serif(px * 1.2) : sans(px);
+      ctx.letterSpacing = part.serif ? `${(-0.02 * px).toFixed(1)}px` : `${(-0.045 * px).toFixed(1)}px`;
+    };
+    const widthOf = (row: TitleLine, px: number) =>
+      row.reduce((sum, part, i) => {
+        setFont(part, px);
+        return sum + ctx.measureText(part.text).width + (i ? px * 0.24 : 0);
+      }, 0);
+    const widest = Math.max(...rows.map((r) => widthOf(r, 100)));
+    // Two staggered lines, as in the reference: the first to the left, the
+    // second to the right, the small line between them.
+    const maxW = W * (portrait ? 0.86 : 0.62);
+    const fs = Math.min((100 * maxW) / widest, H * (portrait ? 0.105 : 0.16));
+    const lh = fs * (portrait ? 1.08 : 1.4);
+    const block = lh * (rows.length - 1);
+    const top = H * (portrait ? 0.38 : 0.47) - block / 2;
+    const margin = W * (portrait ? 0.07 : 0.1);
+    ctx.textBaseline = "alphabetic";
+    // The grey copy under the letters first (the reference's soft depth),
+    // then the ink.
+    for (const pass of [0, 1]) {
+      rows.forEach((row, i) => {
+        const y = top + i * lh;
+        let x = i % 2 === 0 ? margin : W - margin - widthOf(row, fs);
+        row.forEach((part, k) => {
+          if (k) x += fs * 0.24;
+          setFont(part, fs);
+          ctx.fillStyle = pass ? "#111113" : "rgba(17,17,19,0.16)";
+          ctx.fillText(part.text, x + (pass ? 0 : fs * 0.03), y + (pass ? 0 : fs * 0.045));
+          x += ctx.measureText(part.text).width;
+        });
       });
     }
-    ctx.font = font(100);
-    const widest = Math.max(...rows.map((l) => ctx.measureText(l).width));
-    const maxW = W * (portrait ? 0.86 : 0.8);
-    const fs = Math.min((100 * maxW) / widest, H * (portrait ? 0.12 : 0.2));
-    ctx.font = font(fs);
-    ctx.textBaseline = "alphabetic";
-    const lh = fs * (portrait ? 1.02 : 1.38);
-    const block = lh * (rows.length - 1);
-    const top = H * (portrait ? 0.4 : 0.47) - block / 2;
-    const margin = W * (portrait ? 0.07 : 0.08);
-    rows.forEach((l, i) => {
-      const y = top + i * lh;
-      const lw = ctx.measureText(l).width;
-      const x = i % 2 === 0 ? margin : W - margin - lw;
-      // A faint blue echo under the letters gives them depth.
-      ctx.fillStyle = "rgba(36,107,255,0.45)";
-      ctx.fillText(l, x + fs * 0.025, y + fs * 0.035);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(l, x, y);
-    });
 
     // The small line, between the big ones (under them on a phone).
-    const sfs = Math.max(12 * dpr, Math.min(fs * 0.14, 17 * dpr));
+    const sfs = Math.max(12 * dpr, Math.min(fs * 0.14, 16 * dpr));
     ctx.font = `400 ${sfs}px "Manrope Variable", Manrope, sans-serif`;
-    ctx.fillStyle = "rgba(225,232,245,0.72)";
-    const boxW = portrait ? W * 0.8 : Math.min(W * 0.26, sfs * 22);
+    ctx.letterSpacing = "0px";
+    ctx.fillStyle = "rgba(17,17,19,0.62)";
+    const boxW = portrait ? W * 0.8 : Math.min(W * 0.24, sfs * 22);
     const words = small.split(" ");
     const out: string[] = [];
     let cur = "";
@@ -612,7 +663,7 @@ export class GalleryScene {
   };
 
   private onDown = (e: PointerEvent) => {
-    this.down = { x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType };
+    this.down = { x: e.clientX, y: e.clientY, t: performance.now() };
     this.lastX = e.clientX;
     if (within(this.p, CH.about, 0) > 0.5) this.dragging = true;
   };
@@ -626,11 +677,11 @@ export class GalleryScene {
     this.pointer.set((e.clientX / this.w) * 2 - 1, -(e.clientY / this.h) * 2 + 1);
     const hit = this.pick();
     if (!hit) return;
-    // Mouse: a click opens. Touch: the first tap turns the window to you and
-    // plays it, the second opens the site.
-    if (d.type === "mouse" || this.picked === hit) this.o.onOpen(hit.win);
+    // The first click plays the site inside the window, the second opens it.
+    if (this.playing === hit) this.o.onOpen(hit.win);
     else {
-      this.picked = hit;
+      this.playing = hit;
+      this.nextPick = 0;
       this.o.onFocus(hit.win);
     }
   };
@@ -642,7 +693,8 @@ export class GalleryScene {
 
   private onVisibility = () => {
     this.visible = document.visibilityState === "visible";
-    if (!this.visible) for (const s of this.slots) s.video.pause();
+    if (!this.visible) this.slot.video.pause();
+    else if (this.slot.card) void this.slot.video.play().catch(() => {});
   };
 
   private fail() {
@@ -652,7 +704,7 @@ export class GalleryScene {
   }
 
   private interactive() {
-    return this.p > CH.dive[1] && this.p < CH.wall[1];
+    return this.p > CH.dive[1] - 0.02 && this.p < CH.wall[1];
   }
 
   private pick(): Card | null {
@@ -661,7 +713,9 @@ export class GalleryScene {
     const ribbon = this.p < CH.exit[1];
     const meshes = this.cards.filter((c) => (ribbon || !c.echo) && c.mesh.visible).map((c) => c.mesh);
     const hit = this.ray.intersectObjects(meshes, false)[0];
-    return hit ? this.cards[hit.object.userData.card as number] : null;
+    if (!hit) return null;
+    if (hit.uv) this.hoverUv.copy(hit.uv);
+    return this.cards[hit.object.userData.card as number];
   }
 
   // ---------- layout ----------
@@ -699,9 +753,7 @@ export class GalleryScene {
     // On a tall screen the close-up has its own shape, already narrow.
     const tall = this.sx < 0.6;
     const at = (key: V3[], j: number): V3 =>
-      tall && key === K_CLOSE
-        ? K_CLOSE_TALL[j]
-        : [key[j][0] * this.sx, key[j][1] * (tall ? 1.15 : 1), key[j][2]];
+      tall && key === K_CLOSE ? K_CLOSE_TALL[j] : [key[j][0] * this.sx, key[j][1] * (tall ? 1.15 : 1), key[j][2]];
     for (let j = 0; j < pts.length; j++) {
       const A = at(a, j);
       const B = at(b, j);
@@ -711,40 +763,80 @@ export class GalleryScene {
     return t0 + (t1 - t0) * k;
   }
 
-  /** Vertices of a card bent along the ribbon, from arc length s. */
-  private ribbonVerts(out: Float32Array, s: number, w: number, h: number, L: number, twist: number, wob: number) {
+  /** Vertices (and normals) of a card bent along the ribbon, from arc length s. */
+  private ribbonVerts(out: Float32Array, nrm: Float32Array, s: number, w: number, h: number, L: number, twist: number, wob: number) {
     const P = new THREE.Vector3();
     const T = new THREE.Vector3();
     const N = new THREE.Vector3();
+    const F = new THREE.Vector3();
     const up = new THREE.Vector3(0, 1, 0);
+    const R = this.rows;
     for (let j = 0; j <= this.segs; j++) {
-      const sj = s + (j / this.segs) * w;
-      const u = clamp01(sj / L);
+      const u = clamp01((s + (j / this.segs) * w) / L);
       this.curve.getPointAt(u, P);
       this.curve.getTangentAt(u, T);
       N.copy(up).addScaledVector(T, -T.dot(up)).normalize();
       N.applyAxisAngle(T, twist * Math.sin(u * Math.PI * 2.2 + 0.6) + wob);
-      for (let v = 0; v < 2; v++) {
-        const k = (j * 2 + v) * 3;
-        const o = (v - 0.5) * h;
+      F.crossVectors(T, N).normalize();
+      for (let r = 0; r <= R; r++) {
+        const k = (j * (R + 1) + r) * 3;
+        const o = (r / R - 0.5) * h;
         out[k] = P.x + N.x * o;
         out[k + 1] = P.y + N.y * o;
         out[k + 2] = P.z + N.z * o;
+        nrm[k] = F.x;
+        nrm[k + 1] = F.y;
+        nrm[k + 2] = F.z;
       }
     }
   }
 
-  private flatVerts(out: Float32Array, c: THREE.Vector3, q: THREE.Quaternion, w: number, h: number) {
+  private flatVerts(out: Float32Array, nrm: Float32Array | null, c: THREE.Vector3, q: THREE.Quaternion, w: number, h: number) {
     const r = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const u = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+    const f = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
+    const R = this.rows;
     for (let j = 0; j <= this.segs; j++) {
       const x = (j / this.segs - 0.5) * w;
-      for (let v = 0; v < 2; v++) {
-        const k = (j * 2 + v) * 3;
-        const y = (v - 0.5) * h;
+      for (let rr = 0; rr <= R; rr++) {
+        const k = (j * (R + 1) + rr) * 3;
+        const y = (rr / R - 0.5) * h;
         out[k] = c.x + r.x * x + u.x * y;
         out[k + 1] = c.y + r.y * x + u.y * y;
         out[k + 2] = c.z + r.z * x + u.z * y;
+        if (nrm) {
+          nrm[k] = f.x;
+          nrm[k + 1] = f.y;
+          nrm[k + 2] = f.z;
+        }
+      }
+    }
+  }
+
+  /** Paper: the sheet lifts under the pointer, its far corners curl a little
+      and a slow wave runs through it. */
+  private bendPaper(card: Card, w: number, h: number, time: number) {
+    const k = card.paper;
+    if (k < 0.002) return;
+    const R = this.rows;
+    const { x: pu, y: pv } = card.puv;
+    const asp = w / h;
+    for (let j = 0; j <= this.segs; j++) {
+      const u = j / this.segs;
+      for (let r = 0; r <= R; r++) {
+        const v = r / R;
+        const du = (u - pu) * asp;
+        const dv = v - pv;
+        const lift = Math.exp(-(du * du + dv * dv) / 0.16) * 0.3;
+        const cu = Math.max(0, Math.abs(u - 0.5) * 2 - 0.35) / 0.65;
+        const cv = Math.max(0, Math.abs(v - 0.5) * 2 - 0.35) / 0.65;
+        const curl = (cu * cu * cu + cv * cv * cv * 0.6) * 0.22;
+        const wave = Math.sin(u * 7 - time * 2.6 + v * 2) * 0.025 * (1 - lift * 2.5);
+        const d = (lift + curl + wave) * h * k;
+        const i = (j * (R + 1) + r) * 3;
+        card.a[i] += card.n[i] * d;
+        card.a[i + 1] += card.n[i + 1] * d;
+        card.a[i + 2] += card.n[i + 2] * d;
       }
     }
   }
@@ -754,11 +846,11 @@ export class GalleryScene {
     const n = this.o.windows.length;
     const { vw, vh } = this.view();
     const aspect = this.camera.aspect;
-    const cols = aspect < 0.9 ? 2 : aspect < 1.3 ? 3 : 5;
+    const cols = aspect < 0.9 ? 2 : aspect < 1.3 ? 4 : Math.min(6, Math.ceil(Math.sqrt(n * 1.6)));
     const rows = Math.ceil(n / cols);
-    const areaW = aspect < 0.9 ? vw * 0.9 : vw * 0.68;
+    const areaW = aspect < 0.9 ? vw * 0.9 : vw * 0.7;
     const areaH = vh * (aspect < 0.9 ? 0.56 : 0.66);
-    const gap = 0.12 * this.cs;
+    const gap = 0.1 * this.cs;
     let cw = (areaW - gap * (cols - 1)) / cols;
     let ch = cw / 1.6;
     if (ch * rows + gap * (rows - 1) > areaH) {
@@ -767,8 +859,8 @@ export class GalleryScene {
     }
     const gw = cols * cw + (cols - 1) * gap;
     const gh = rows * ch + (rows - 1) * gap;
-    const cx = aspect < 0.9 ? 0 : vw * 0.5 - gw / 2 - vw * 0.06;
-    const cy = aspect < 0.9 ? -vh * 0.19 : -vh * 0.07;
+    const cx = aspect < 0.9 ? 0 : vw * 0.5 - gw / 2 - vw * 0.05;
+    const cy = aspect < 0.9 ? -vh * 0.19 : -vh * 0.08;
     const col = i % cols;
     const row = Math.floor(i / cols);
     return {
@@ -811,13 +903,15 @@ export class GalleryScene {
     this.camera.position.y += (py * 0.15 - this.camera.position.y) * 0.05;
     this.camera.lookAt(0, 0, 0);
 
+    const mood = moodAt(p);
     const bgu = this.bg.material.uniforms;
     bgu.uTime.value = time;
-    bgu.uMood.value = smooth(seg(p, [CH.glitch[0], CH.glitch[1]])) * (1 - smooth(seg(p, [CH.cta[0], CH.cta[0] + 0.06])) * 0.5);
+    bgu.uMood.value = mood;
+    this.bgColor.copy(PAPER).lerp(NIGHT, mood);
 
     this.updateTitle(p, time);
 
-    // Hover on the wall (and on the ribbon close up).
+    // Under the pointer (the ribbon close up and the wall).
     let hover: Card | null = null;
     if (this.pointerSeen && this.interactive() && !this.dragging) hover = this.pick();
     if (hover !== this.hover) {
@@ -825,10 +919,11 @@ export class GalleryScene {
       this.o.canvas.style.cursor = hover ? "pointer" : "";
       if (hover && within(p, CH.wall, 0.01) > 0.5) this.o.onFocus(hover.win);
     }
-    if (this.picked && !this.interactive()) this.picked = null;
+    if (hover) hover.puv.lerp(this.hoverUv, 0.25);
+    if (this.playing && !this.interactive()) this.playing = null;
 
     this.layoutCards(p, time, dt);
-    this.updateVideos(p, now);
+    this.updateMedia(p, now);
     this.updateLogo(p, time);
 
     for (const c of this.cards) c.mat.uniforms.uTime.value = time;
@@ -902,6 +997,7 @@ export class GalleryScene {
     const R = portrait ? 1.9 : 2.25;
     const gq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.28, gAngle, 0.05));
     const all = this.cards.length;
+    const onWall = within(p, CH.wall, 0) > 0;
 
     for (let i = 0; i < all; i++) {
       const card = this.cards[i];
@@ -910,9 +1006,11 @@ export class GalleryScene {
       let fade = 0;
       let dim = 0;
       let show = true;
-      const focusTarget =
-        (this.hover === card || this.picked === card) && this.interactive() ? 1 : 0;
-      card.focus += (focusTarget - card.focus) * Math.min(1, dt * 8);
+      let cw = w;
+      let ch = h;
+      const active = this.interactive() && (this.hover === card || this.playing === card);
+      card.focus += ((active ? 1 : 0) - card.focus) * Math.min(1, dt * 8);
+      card.paper += ((this.interactive() && this.hover === card ? 1 : 0) - card.paper) * Math.min(1, dt * 5);
 
       if (ribbon) {
         let s = ((((sBase + i * pitch) % total) + total) % total) - pitch * 0.5;
@@ -920,21 +1018,20 @@ export class GalleryScene {
         if (s < 0 || s + w > L) show = false;
         else {
           const wob = Math.sin(time * 0.7 + i * 1.7) * 0.05;
-          this.ribbonVerts(card.a, s, w, h, L, twist, wob);
-          // Ends of the ribbon melt into the dark.
+          this.ribbonVerts(card.a, card.n, s, w, h, L, twist, wob);
+          // Ends of the ribbon melt into the background.
           const edge = Math.min(s, L - s - w);
           fade = Math.max(ribbonFade, 1 - smooth(clamp01(edge / 1.6)));
-          // The window under the pointer turns to face you.
+          // The window under the pointer (or playing) turns to face you.
           if (card.focus > 0.001) {
-            const m = Math.floor(this.segs / 2) * 2 * 3;
-            c.set((card.a[m] + card.a[m + 3]) / 2, (card.a[m + 1] + card.a[m + 4]) / 2, (card.a[m + 2] + card.a[m + 5]) / 2);
+            const m = (Math.floor(this.segs / 2) * (this.rows + 1) + Math.floor(this.rows / 2)) * 3;
+            c.set(card.a[m], card.a[m + 1], card.a[m + 2]);
             camDir.copy(this.camera.position).sub(c).normalize();
             q.setFromRotationMatrix(new THREE.Matrix4().lookAt(camDir, new THREE.Vector3(), new THREE.Vector3(0, 1, 0)));
             c.addScaledVector(camDir, 0.3);
-            this.flatVerts(card.b, c, q, w * 1.06, h * 1.06);
+            this.flatVerts(card.b, null, c, q, w * 1.06, h * 1.06);
             lerpInto(card.a, card.b, card.focus * 0.7);
           }
-          card.pos.set(card.a);
         }
       } else if (!card.echo && p < CH.glitch[1] + 0.02) {
         // Drop → wall.
@@ -948,45 +1045,51 @@ export class GalleryScene {
         const from = rest.clone().add(new THREE.Vector3(Math.cos(ang) * vw * 0.7, Math.abs(Math.sin(ang)) * vh * 0.9 + vh * 0.3, 2));
         c.copy(from).lerp(rest, fall).lerp(slot.c, snap);
         const restScale = 0.55 + r5 * 0.5;
-        const sw = THREE.MathUtils.lerp(slot.w * restScale, slot.w, snap);
-        const sh = THREE.MathUtils.lerp(slot.h * restScale, slot.h, snap);
+        cw = THREE.MathUtils.lerp(slot.w * restScale, slot.w, snap);
+        ch = THREE.MathUtils.lerp(slot.h * restScale, slot.h, snap);
         // On the wall the windows sway a little and lean towards the pointer.
         const sway = snap * (1 - globeIn);
-        let rx = ((r6 - 0.5) * 1.2 * (1 - fall) + Math.sin(time * 0.6 + i) * 0.04 * sway);
-        let ry = ((r1 - 0.5) * 1.4 * (1 - fall) + Math.cos(time * 0.5 + i * 1.3) * 0.06 * sway);
+        let rx = (r6 - 0.5) * 1.2 * (1 - fall) + Math.sin(time * 0.6 + i) * 0.04 * sway;
+        let ry = (r1 - 0.5) * 1.4 * (1 - fall) + Math.cos(time * 0.5 + i * 1.3) * 0.06 * sway;
         const rz = (r2 - 0.5) * (1 - fall) * 0.9 + (r3 - 0.5) * 0.2 * (1 - snap);
         if (card.focus > 0.001) {
-          rx += -this.pointer.y * 0.25 * card.focus;
-          ry += this.pointer.x * 0.25 * card.focus;
+          rx += -this.pointer.y * 0.18 * card.focus;
+          ry += this.pointer.x * 0.18 * card.focus;
           c.z += 0.35 * card.focus;
         }
         q.setFromEuler(e.set(rx, ry, rz));
         const grow = 1 + card.focus * 0.06;
-        this.flatVerts(card.a, c, q, sw * grow, sh * grow);
+        cw *= grow;
+        ch *= grow;
+        this.flatVerts(card.a, card.n, c, q, cw, ch);
         fade = 1 - fall;
         show = fall > 0;
-        dim = this.hover && this.hover !== card && within(p, CH.wall, 0) > 0 ? 0.35 : 0;
+        const other = (this.hover ?? this.playing) !== null && !active;
+        dim = onWall && other ? 0.18 : 0;
         if (globeIn > 0) {
           this.globeVerts(card.b, i, all, gq, gCenter, R, w * 0.42);
           lerpInto(card.a, card.b, globeIn);
         }
-        card.pos.set(card.a);
       } else {
-        // The globe (echo windows join it here).
+        // The globe (the extra windows join it here).
         this.globeVerts(card.a, i, all, gq, gCenter, R, w * 0.42);
-        card.pos.set(card.a);
         const z = (card.a[2] + card.a[card.a.length - 1]) / 2 - gCenter.z;
-        dim = clamp01((-z / R) * 0.55 + 0.25);
+        dim = clamp01((-z / R) * 0.55 + 0.2);
         fade = card.echo ? 1 - globeIn : 0;
-        fade = Math.max(fade, globeAway * 0.55);
+        fade = Math.max(fade, globeAway * 0.6);
         show = globeIn > 0;
       }
 
+      if (show) {
+        this.bendPaper(card, cw, ch, time);
+        card.pos.set(card.a);
+      }
       card.mesh.visible = show && fade < 0.995;
       u.uFade.value = fade;
       u.uDim.value += (dim - u.uDim.value) * 0.15;
       u.uGlow.value = card.focus;
-      u.uAspect.value = 1.6;
+      u.uPaper.value = card.paper;
+      (u.uBg.value as THREE.Color).copy(this.bgColor);
       if (card.mesh.visible) {
         (card.geo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
         card.geo.computeBoundingSphere();
@@ -1004,67 +1107,58 @@ export class GalleryScene {
     const q = new THREE.Quaternion().setFromRotationMatrix(
       new THREE.Matrix4().lookAt(nrm, new THREE.Vector3(), new THREE.Vector3(0, 1, 0)),
     );
-    this.flatVerts(out, c, q, w, w / 1.6);
+    this.flatVerts(out, null, c, q, w, w / 1.6);
   }
 
-  // ---------- video ----------
+  // ---------- stills and the clip ----------
 
-  private updateVideos(p: number, now: number) {
+  private updateMedia(p: number, now: number) {
     if (now < this.nextPick) return;
-    this.nextPick = now + 250;
-    const want: Card[] = [];
-    if (p < CH.exit[0]) {
-      // The biggest windows on screen.
-      const v = new THREE.Vector3();
-      const scored = this.cards
-        .filter((c) => c.mesh.visible && c.mat.uniforms.uFade.value < 0.4)
-        .map((c) => {
-          const m = Math.floor(this.segs / 2) * 2 * 3;
-          v.set(c.pos[m], c.pos[m + 1], c.pos[m + 2]);
-          const d = v.distanceTo(this.camera.position);
-          v.project(this.camera);
-          const on = Math.abs(v.x) < 0.9 && Math.abs(v.y) < 0.9 && v.z < 1;
-          return { c, score: on ? 1 / d : -1 };
-        })
-        .filter((s) => s.score > 0)
-        .sort((a, b) => b.score - a.score);
-      want.push(...scored.slice(0, this.slots.length).map((s) => s.c));
-    } else if (p < CH.wall[1] + 0.01 && p > CH.drop[1] - 0.02) {
-      const focus = this.picked ?? this.hover;
-      if (focus) want.push(focus);
-    }
-    if (this.hover && !want.includes(this.hover) && this.interactive()) want.unshift(this.hover);
-    want.length = Math.min(want.length, this.slots.length);
+    this.nextPick = now + 200;
 
-    // Free the slots nobody wants any more.
-    for (const s of this.slots) {
-      if (s.card && !want.includes(s.card)) this.release(s);
+    // 4K stills for the windows that are large on screen or in focus.
+    if (this.useHi) {
+      if (p < CH.exit[0] && p > CH.dive[0]) {
+        const v = new THREE.Vector3();
+        const m = (Math.floor(this.segs / 2) * (this.rows + 1) + Math.floor(this.rows / 2)) * 3;
+        this.cards
+          .filter((c) => c.mesh.visible && c.mat.uniforms.uFade.value < 0.4)
+          .map((c) => {
+            v.set(c.pos[m], c.pos[m + 1], c.pos[m + 2]);
+            const d = v.distanceTo(this.camera.position);
+            v.project(this.camera);
+            return { c, score: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 && v.z < 1 ? 1 / d : -1 };
+          })
+          .filter((s) => s.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 3)
+          .forEach((s) => this.wantHi(s.c.win, now));
+      }
+      if (this.hover) this.wantHi(this.hover.win, now);
+      if (this.playing) this.wantHi(this.playing.win, now);
     }
-    for (const card of want) {
-      if (this.slots.some((s) => s.card === card)) continue;
-      const s = this.slots.find((x) => !x.card);
-      if (!s) break;
-      s.card = card;
+
+    // The clip of the window that was clicked.
+    const s = this.slot;
+    const want = this.playing;
+    if (s.card && s.card !== want) {
+      const old = s.card;
+      s.video.pause();
+      s.card = null;
       s.ready = false;
-      s.video.src = this.o.windows[card.win].mp4;
+      this.showStill(old.win);
+    }
+    if (want && s.card !== want) {
+      s.card = want;
+      s.ready = false;
+      s.video.src = this.o.windows[want.win].mp4;
       s.video.currentTime = 0;
       void s.video.play().catch(() => {});
     }
-    for (const s of this.slots) {
-      if (s.card && s.ready && s.card.mat.uniforms.map.value !== s.texture) {
-        s.card.mat.uniforms.map.value = s.texture;
-        s.card.mat.uniforms.uHasMap.value = 1;
-      }
+    if (s.card && s.ready && s.card.mat.uniforms.map.value !== s.texture) {
+      s.card.mat.uniforms.map.value = s.texture;
+      s.card.mat.uniforms.uHasMap.value = 1;
     }
-  }
-
-  private release(s: Slot) {
-    const card = s.card!;
-    s.video.pause();
-    s.card = null;
-    s.ready = false;
-    card.mat.uniforms.map.value = card.poster?.image ? card.poster : null;
-    card.mat.uniforms.uHasMap.value = card.poster?.image ? 1 : 0;
   }
 
   // ---------- logo ----------

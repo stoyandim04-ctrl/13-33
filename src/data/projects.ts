@@ -13,9 +13,10 @@
 // no audio track; `npm run media` shows the ffmpeg settings) into /public/projects/<slug>/, and set `liveUrl` if the site
 // is public and the client agreed to be shown.
 //
-// The list was confirmed on 21.10.2026 (Notion: „Новият сайт на 13:33 — 3D
-// галерия от проекти“): these five, no client or fitness sites. A new
-// project is one more entry here plus `npm run media:gallery <slug>`.
+// The list (21.10.2026): our concepts and own product - Варовик, Цукиби,
+// OBSIDIAN, Black Clove, VELION LAB, FERAL, VAELO, РОЗА 1903; no client or
+// fitness sites. A new project is one more entry here plus
+// `npm run media:gallery <slug>` and picking its best stills.
 
 export type ProjectStatus =
   | "concept" // our own exploration, no client
@@ -70,7 +71,8 @@ export interface Project {
   kind: ProjectKind;
   /** Windows in the 3D gallery: clips recorded from the site
       (scripts/build-gallery-media.mjs) as public/gallery/<slug>-<n>.*,
-      n = 1…windows. The last one is the phone view. */
+      n = 1…windows: a 4K still of the best place on the page, and the
+      clip that plays when the window is clicked. Laptop view only. */
   windows: number;
   /** Sector / type of business it is for. */
   sector: string;
@@ -95,7 +97,7 @@ export interface Project {
 }
 
 const media = (slug: string) => ({
-  poster: `/gallery/${slug}-1.webp`,
+  poster: `/gallery/${slug}-1@4k.webp`,
   video: {
     mp4: `/gallery/${slug}-1.mp4`,
     webm: `/gallery/${slug}-1.webm`,
@@ -105,6 +107,7 @@ const media = (slug: string) => ({
 /** Poster and clip of one window of a project in the gallery (n from 1). */
 export const windowMedia = (slug: string, n: number) => ({
   poster: `/gallery/${slug}-${n}.webp`,
+  poster4k: `/gallery/${slug}-${n}@4k.webp`,
   mp4: `/gallery/${slug}-${n}.mp4`,
   webm: `/gallery/${slug}-${n}.webm`,
 });
@@ -117,7 +120,7 @@ export const projects: Project[] = [
     nameEn: "Varovik",
     slug: "varovik",
     kind: "site",
-    windows: 4,
+    windows: 3,
     category: "Сайт с филм при скрол",
     categoryEn: "Scroll-driven film website",
     sector: "Жилищна сграда",
@@ -146,7 +149,7 @@ export const projects: Project[] = [
     nameEn: "Tsukibi 月火",
     slug: "tsukibi",
     kind: "site",
-    windows: 4,
+    windows: 3,
     category: "Сайт с интерактивно меню",
     categoryEn: "Interactive menu website",
     sector: "Азиатски ресторант",
@@ -173,7 +176,7 @@ export const projects: Project[] = [
     name: "OBSIDIAN No. 01",
     slug: "obsidian",
     kind: "landing",
-    windows: 4,
+    windows: 3,
     category: "Кинематографична продуктова страница",
     categoryEn: "Cinematic product page",
     sector: "Парфюмен бранд",
@@ -200,7 +203,7 @@ export const projects: Project[] = [
     name: "Black Clove",
     slug: "black-clove",
     kind: "landing",
-    windows: 4,
+    windows: 3,
     category: "Продуктова страница",
     categoryEn: "Product page",
     sector: "Храна — черен чесън",
@@ -226,7 +229,8 @@ export const projects: Project[] = [
     name: "VELION LAB",
     slug: "velion",
     kind: "platform",
-    windows: 4,
+    // The site is a phone app even on a laptop: one window is enough.
+    windows: 1,
     category: "Продукт с онлайн програма",
     categoryEn: "Online programme product",
     sector: "Онлайн програма",
@@ -239,6 +243,78 @@ export const projects: Project[] = [
     liveUrl: "https://velion-lab.com",
     need: "Програмата трябва да обясни деликатна тема спокойно и ясно и да доведе до записване.",
     approach: ["Разказ на части — истината, методът, един ден вътре, сравнение.", "Една цена и един бутон за начало."],
+    year: 2026,
+  },
+  {
+    // Real site of ours (sites/zver, 13-33-zver.vercel.app). Brand, flavours,
+    // ingredients and prices are invented; nothing is sold.
+    name: "FERAL",
+    slug: "feral",
+    kind: "store",
+    windows: 3,
+    category: "3D сайт за енергийна напитка",
+    categoryEn: "3D energy drink website",
+    sector: "Напитки",
+    summary:
+      "Сайт за измислена енергийна напитка: 3D кенчета водят през страницата при скрол, всеки вкус оцветява целия сайт, магазинът е в края.",
+    summaryEn:
+      "A site for an invented energy drink: 3D cans lead through the page as you scroll, every flavour recolours the whole site, the shop is at the end.",
+    role: ["Бранд и визуална концепция", "3D кенчета в браузъра", "Анимация при скрол", "Магазин (демо)"],
+    status: "concept",
+    ...media("feral"),
+    liveUrl: "https://13-33-zver.vercel.app",
+    need:
+      "Енергийната напитка се продава с характер. Страницата трябва да е толкова шумна и бърза, колкото самият продукт, и пак да води спокойно до покупка.",
+    approach: [
+      "Кенчетата са истинска 3D геометрия в браузъра и следват скрола от секция в секция.",
+      "Изборът на вкус сменя цвета на целия сайт; гърбът на кенчето показва състава и предупреждението за кофеина.",
+      "Магазин с вкус, кашон и количка в края; на сайта ясно пише, че е концепция и нищо не се продава.",
+    ],
+    year: 2026,
+  },
+  {
+    // Real site of ours (sites/vaelo, 13-33-vaelo.vercel.app). Brand, clothes
+    // and prices are invented; photos and 360° turns generated for it.
+    name: "VAELO",
+    slug: "vaelo",
+    kind: "store",
+    windows: 3,
+    category: "Магазин за дрехи с 360° изглед",
+    categoryEn: "Clothing store with 360° views",
+    sector: "Мода",
+    summary:
+      "Концепция за премиум марка дрехи: колекцията обикаля около името, всяка дреха се завърта на 360° и се разглежда отблизо, с количка в края.",
+    summaryEn:
+      "A concept for a premium clothing brand: the collection orbits the name, every piece turns 360° and can be seen up close, with a cart at the end.",
+    role: ["Бранд", "Генерирани снимки и 360° завъртания", "Интерактивна колекция", "Магазин (демо)"],
+    status: "concept",
+    ...media("vaelo"),
+    liveUrl: "https://13-33-vaelo.vercel.app",
+    need: "Дрехата се купува, когато я видиш от всички страни. Онлайн обикновено има една снимка.",
+    approach: ["Орбита от дрехи около името", "Гардероб, в който посочената дреха се обръща с лице", "Визьор на цял екран: лице, профил, гръб"],
+    year: 2026,
+  },
+  {
+    // Real site of ours (branch claude/rosa-1903-perfume-site-nd12bz, Vercel
+    // project 13-33-sites). The perfume house is invented.
+    name: "РОЗА 1903",
+    nameEn: "ROSA 1903",
+    slug: "rosa",
+    kind: "site",
+    windows: 3,
+    category: "Кинематографичен сайт за парфюм",
+    categoryEn: "Cinematic perfume website",
+    sector: "Парфюмерия — българска роза",
+    summary:
+      "Концепция за измислена парфюмерийна къща от Розовата долина: мъгла, листенца и стъклен флакон в 3D, сцена след сцена при скрол.",
+    summaryEn:
+      "A concept for an invented perfume house from the Rose Valley: mist, petals and a glass bottle in 3D, scene after scene as you scroll.",
+    role: ["Визуална концепция", "3D флакон в браузъра", "Сцени при скрол"],
+    status: "concept",
+    ...media("rosa"),
+    liveUrl: "https://13-33-sites-88v2w108i-stoyandim04-8394s-projects.vercel.app",
+    need: "Българската роза е история от над сто години. Сайтът трябва да я разкаже като филм.",
+    approach: ["Сцени на цял екран, водени от скрола", "Стъклен флакон в 3D", "Мъгла и листенца"],
     year: 2026,
   },
 ];

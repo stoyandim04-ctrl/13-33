@@ -3,15 +3,15 @@
 
   1. Subject & audience — business owners in Bulgaria. In three seconds:
      "this studio builds things that feel alive; I can start here."
-  2. Reference — 3D portfolio galleries (Three.js): the work itself flies
-     through the page as windows of real, moving sites.
-  3. Palette — the logo's blue on near-black: background #080A0F (+2 close
-     shades), electric blue #246BFF (the action colour), cyan #44C8FF (accent,
-     edges, labels), white text, cool grey #8A93A6 for quiet text, white
-     hairlines at 10%. Light comes only as soft blue/cyan glow in the scene.
+  2. Reference — the 3D portfolio gallery from the brief's video: light grey
+     paper, black type, the work itself flying through the page.
+  3. Palette — paper #E8E8EA (+2 close shades), ink #111113 for text, grey
+     #66666E for quiet text, ink hairlines at 12%; the logo's blue #246BFF is
+     the one action colour (cyan #44C8FF only inside the logo). „За нас“ in
+     the gallery is the one dark stretch (#0A0D16).
   4. Type — Manrope for text (it carries the Bulgarian Cyrillic forms;
-     lang="bg" switches them on). The big words in a condensed-looking serif
-     with Bulgarian forms too (lib/display-font.ts: Playfair or Cormorant).
+     lang="bg" switches them on). The title pairs a Manrope word with a
+     Playfair word, with Bulgarian forms (lib/display-font.ts).
   5. Signature — the gallery: a ribbon of our sites through the title, a wall,
      a globe, the logo in 3D.
 */
@@ -21,19 +21,19 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-background: #080a0f;
-  --color-surface: #0e121a;
-  --color-surface-2: #151a24;
-  --color-foreground: #f5f7fb;
-  --color-muted: #151a24;
-  --color-muted-foreground: #8a93a6;
+  --color-background: #e8e8ea;
+  --color-surface: #dfdfe2;
+  --color-surface-2: #d4d4d8;
+  --color-foreground: #111113;
+  --color-muted: #d4d4d8;
+  --color-muted-foreground: #66666e;
   --color-primary: #246bff;
   --color-primary-foreground: #ffffff;
-  --color-accent: #44c8ff;
-  --color-ice: #44c8ff;
-  --color-border: rgb(255 255 255 / 0.1);
-  --color-ring: #44c8ff;
-  --color-destructive: #ff5a5f;
+  --color-accent: #246bff;
+  --color-ice: #246bff;
+  --color-border: rgb(17 17 19 / 0.12);
+  --color-ring: #246bff;
+  --color-destructive: #d43c32;
 
   --font-sans: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, sans-serif;
@@ -59,7 +59,7 @@
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     background: var(--color-background);
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
@@ -150,7 +150,7 @@
 }
 .rainbow:hover {
   transform: translateY(-2px);
-  box-shadow: 0 18px 44px -16px rgb(36 107 255 / 0.65);
+  box-shadow: 0 16px 36px -16px rgb(36 107 255 / 0.6);
 }
 .rainbow:active {
   transform: none;
@@ -266,7 +266,7 @@
 }
 @media (hover: hover) {
   .svc-list:hover .svc-name {
-    color: rgb(245 247 251 / 0.22);
+    color: rgb(17 17 19 / 0.22);
   }
   .svc-list li:hover .svc-name {
     color: var(--color-foreground);
@@ -276,7 +276,7 @@
 
 /* ---------- Manifest: three sentences, lit word by word by the scroll ---------- */
 .manifest-word {
-  color: rgb(245 247 251 / 0.16);
+  color: rgb(17 17 19 / 0.16);
   transition: color 0.6s;
 }
 .manifest-word.is-on {
@@ -441,6 +441,14 @@
   font-weight: var(--serif-weight, 460);
   letter-spacing: -0.01em;
 }
+/* Over the dark stretch of the gallery the header turns light. */
+.scene-dark #site-header {
+  --color-foreground: #f5f7fb;
+  --color-muted-foreground: #a3a9b8;
+  --color-border: rgb(255 255 255 / 0.16);
+  color: var(--color-foreground);
+  transition: color 0.4s;
+}
 /* The header's flat logo steps aside for the 3D one on the home page. */
 .has-3d-logo .logo-slot {
   opacity: 0;
@@ -454,7 +462,7 @@
 /* The first words of the about text: the logo's blue → cyan, with a soft
    chromatic pulse. */
 .chroma {
-  background: linear-gradient(90deg, #246bff, #44c8ff 60%, #9fe3ff);
+  background: linear-gradient(90deg, #4d86ff, #44c8ff 60%, #9fe3ff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -473,7 +481,7 @@
 }
 /* A fine, still grain over the scene. */
 .grain {
-  opacity: 0.07;
-  mix-blend-mode: overlay;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }

@@ -243,4 +243,5 @@ export const EN: Record<string, string> = {
   "Магазин": "Online store",
   "Платформа": "Platform",
   "Портал": "Portal",
+  "Пусни сайта": "Play the site",
 };

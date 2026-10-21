@@ -4,11 +4,11 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { useContent } from "@/data/content";
 import { KIND_LABEL, projects, STATUS_LABEL } from "@/data/projects";
 import { useLang } from "@/lib/i18n";
-import { displayCanvasFont } from "@/lib/display-font";
+import { displayCanvasFont, sansCanvasFont } from "@/lib/display-font";
 import { RainbowLink } from "@/components/ui/rainbow-button";
 import { galleryWindows } from "@/components/gallery/windows";
 import { GalleryLite } from "@/components/gallery/gallery-lite";
-import { ANCHOR, CH, LENGTH, seg, smooth, within } from "@/components/gallery/timeline";
+import { ANCHOR, CH, LENGTH, moodAt, seg, smooth, within } from "@/components/gallery/timeline";
 import type { GalleryScene } from "@/components/gallery/scene";
 
 type Mode = "pending" | "3d" | "lite";
@@ -77,7 +77,16 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
   const len = phone ? LENGTH.phone : LENGTH.desktop;
 
   const title = React.useMemo(
-    () => ({ lines: [...gallery.title], small: gallery.small, lang, font: displayCanvasFont }),
+    () => ({
+      lines: gallery.title.map(([a, b]) => [
+        { text: a, serif: false },
+        { text: b, serif: true },
+      ]),
+      small: gallery.small,
+      lang,
+      sans: sansCanvasFont,
+      serif: displayCanvasFont,
+    }),
     [gallery, lang],
   );
   const titleRef = React.useRef(title);
@@ -96,6 +105,8 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
       if (lift) el.style.transform = `translate3d(0, ${(1 - v) * lift}px, 0)`;
     };
     show("hint", 1 - smooth(seg(p, [0.004, 0.03])));
+    // „За нас“ is dark: the header turns light with it.
+    document.documentElement.classList.toggle("scene-dark", moodAt(p) > 0.5);
     show("wall", within(p, [CH.wall[0], CH.wall[1]], 0.015), 14);
     show("about", within(p, [CH.about[0] + 0.01, CH.about[1] - 0.005], 0.02), 24);
     show("cta", smooth(seg(p, [CH.cta[0] + 0.01, CH.cta[0] + 0.05])), 24);
@@ -171,7 +182,7 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
       alive = false;
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
-      document.documentElement.classList.remove("has-3d-logo");
+      document.documentElement.classList.remove("has-3d-logo", "scene-dark");
       s?.dispose();
       scene.current = null;
     };
@@ -203,7 +214,7 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
         {/* The first screen's words live in the scene; here they are for
             readers and search engines. */}
         <h1 className="sr-only">
-          {gallery.title.join(" ")}
+          {gallery.title.map((l) => l.join(" ")).join(" ")}
         </h1>
         <p className="sr-only">{gallery.small}</p>
 
@@ -226,7 +237,7 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
             </p>
             <div className="min-w-0 flex-1 basis-64">
               <p className="text-muted-foreground line-clamp-2 text-[0.875rem] sm:line-clamp-3 leading-snug">{lang === "en" && project.summaryEn ? project.summaryEn : project.summary}</p>
-              <p className="text-label mt-2 tracking-[0.16em] text-[var(--color-accent)] uppercase">
+              <p className="text-label text-primary mt-2 tracking-[0.16em] uppercase">
                 {tr(KIND_LABEL[project.kind])} · {tr(STATUS_LABEL[project.status])}
               </p>
             </div>
@@ -269,14 +280,14 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
           className="invisible absolute inset-0 flex flex-col justify-end px-5 pt-24 pb-16 opacity-0 sm:px-8 md:justify-center md:pb-0 lg:px-14"
         >
           <div className="max-w-[46rem]">
-            <p className="text-label text-muted-foreground flex items-center gap-2 uppercase">
+            <p className="text-label flex items-center gap-2 text-white/60 uppercase">
               <span className="inline-block size-1.5 rounded-full bg-[var(--color-accent)]" />
               {gallery.aboutLabel}
             </p>
-            <h2 className="text-foreground mt-6 text-[clamp(1.6rem,1rem+2.6vw,3.4rem)] leading-[1.08] font-[400] tracking-[-0.025em]">
+            <h2 className="mt-6 text-white text-[clamp(1.6rem,1rem+2.6vw,3.4rem)] leading-[1.08] font-[400] tracking-[-0.025em]">
               <span className="chroma">{gallery.aboutLead}</span> {gallery.aboutBody}
             </h2>
-            <p className="text-muted-foreground mt-6 max-w-[28rem] text-[0.9375rem]">{gallery.aboutNote}</p>
+            <p className="mt-6 max-w-[28rem] text-[0.9375rem] text-white/60">{gallery.aboutNote}</p>
           </div>
         </div>
 

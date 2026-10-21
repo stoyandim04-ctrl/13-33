@@ -43,3 +43,7 @@ export const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(
 export function within(p: number, [a, b]: Span, fade = 0.02) {
   return smooth(clamp01((p - a + fade) / fade)) * smooth(clamp01((b + fade - p) / fade));
 }
+
+/** How dark the scene is: light paper, the dark of „За нас“, light again. */
+export const moodAt = (p: number) =>
+  smooth(seg(p, CH.glitch)) * (1 - smooth(seg(p, [CH.about[1] - 0.005, CH.logo[0] + 0.025])));

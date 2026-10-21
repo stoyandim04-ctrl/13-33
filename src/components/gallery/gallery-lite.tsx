@@ -27,86 +27,80 @@ export function GalleryLite() {
   const { gallery } = useContent();
   const { lang, tr } = useLang();
   const windows = React.useMemo(() => galleryWindows(true), []);
-  const strip = React.useRef<HTMLDivElement>(null);
-  const still = React.useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
-
-  // Only the card in the middle of the strip plays its clip.
+  // A tap plays the site inside its card (and stops the one before).
+  const [playing, setPlaying] = React.useState<number | null>(null);
+  const videos = React.useRef<(HTMLVideoElement | null)[]>([]);
   React.useEffect(() => {
-    const el = strip.current;
-    if (!el || still) return;
-    const videos = Array.from(el.querySelectorAll("video"));
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          const v = e.target as HTMLVideoElement;
-          if (e.intersectionRatio > 0.7) void v.play().catch(() => {});
-          else v.pause();
-        }
-      },
-      { root: el, threshold: [0, 0.7, 1] },
-    );
-    videos.forEach((v) => io.observe(v));
-    return () => io.disconnect();
-  }, [still]);
+    videos.current.forEach((v, i) => {
+      if (!v) return;
+      if (i === playing) void v.play().catch(() => {});
+      else v.pause();
+    });
+  }, [playing]);
 
   return (
     <>
       <section className="relative flex min-h-svh flex-col justify-center px-5 pt-24 pb-16 sm:px-8 lg:px-14">
         <LogoMark className="h-10 w-auto" />
         <h1 className="font-serif mt-10 text-[clamp(3rem,1rem+9vw,10rem)] leading-[0.95]">
-          <span className="block">{gallery.title[0]}</span>
-          <span className="block text-right">{gallery.title[1]}</span>
+          {gallery.title.map(([a, b], i) => (
+            <span key={i} className={i % 2 ? "block text-right" : "block"}>
+              <span className="font-sans font-[500] tracking-[-0.045em]">{a}</span> <span className="text-[1.2em]">{b}</span>
+            </span>
+          ))}
         </h1>
         <p className="text-muted-foreground mt-8 max-w-[26rem] text-[0.9375rem]">{gallery.small}</p>
       </section>
 
       <section id="proekti" aria-label={tr("Проекти")} className="py-10">
-        <div ref={strip} className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 sm:px-8 lg:px-14 [scrollbar-width:none]">
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 sm:px-8 lg:px-14 [scrollbar-width:none]">
           {windows.map((w, i) => {
             const p = projects[w.project];
             const name = lang === "en" && p.nameEn ? p.nameEn : p.name;
             return (
-              <a
-                key={i}
-                href={p.liveUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group border-border bg-surface relative w-[82vw] max-w-[34rem] shrink-0 snap-center overflow-hidden rounded-2xl border"
-              >
-                <video
-                  className="aspect-[16/10] w-full object-cover"
-                  poster={w.poster}
-                  muted
-                  loop
-                  playsInline
-                  preload="none"
-                  aria-hidden="true"
+              <div key={i} className="border-border bg-surface relative w-[82vw] max-w-[34rem] shrink-0 snap-center overflow-hidden rounded-2xl border">
+                <button
+                  type="button"
+                  onClick={() => setPlaying((v) => (v === i ? null : i))}
+                  aria-label={tr("Пусни сайта")}
+                  className="block w-full"
                 >
-                  <source src={w.webm} type="video/webm" />
-                  <source src={w.mp4} type="video/mp4" />
-                </video>
+                  <video
+                    ref={(el) => void (videos.current[i] = el)}
+                    className="aspect-[16/10] w-full object-cover"
+                    poster={w.poster}
+                    muted
+                    loop
+                    playsInline
+                    preload="none"
+                    aria-hidden="true"
+                  >
+                    <source src={w.webm} type="video/webm" />
+                    <source src={w.mp4} type="video/mp4" />
+                  </video>
+                </button>
                 <span className="flex items-center justify-between gap-3 px-4 py-3">
                   <span className="font-serif text-[1.375rem] leading-none">{name}</span>
-                  <span className="text-label text-[var(--color-accent)] uppercase">
+                  <a href={p.liveUrl} target="_blank" rel="noreferrer" className="text-label text-primary uppercase">
                     {tr(KIND_LABEL[p.kind])} · {tr(STATUS_LABEL[p.status])}
                     <ArrowUpRight aria-hidden="true" className="ml-1 inline size-3.5" />
-                  </span>
+                  </a>
                 </span>
-              </a>
+              </div>
             );
           })}
         </div>
       </section>
 
-      <section id="za-nas" className="px-5 py-24 sm:px-8 md:py-36 lg:px-14">
-        <p className="text-label text-muted-foreground flex items-center gap-2 uppercase">
+      <section id="za-nas" className="bg-[#0A0D16] px-5 py-24 text-white sm:px-8 md:py-36 lg:px-14">
+        <p className="text-label flex items-center gap-2 text-white/60 uppercase">
           <span className="inline-block size-1.5 rounded-full bg-[var(--color-accent)]" />
           {gallery.aboutLabel}
         </p>
         <h2 className="mt-6 max-w-[52rem] text-[clamp(1.6rem,1rem+2.6vw,3.4rem)] leading-[1.08] font-[400] tracking-[-0.025em]">
           <span className="chroma">{gallery.aboutLead}</span> {gallery.aboutBody}
         </h2>
-        <p className="text-muted-foreground mt-6 max-w-[28rem] text-[0.9375rem]">{gallery.aboutNote}</p>
+        <p className="mt-6 max-w-[28rem] text-[0.9375rem] text-white/60">{gallery.aboutNote}</p>
       </section>
 
       <section id="kontakt" className="flex min-h-[80svh] flex-col items-center justify-center px-5 text-center">

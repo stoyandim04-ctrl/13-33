@@ -32,8 +32,8 @@ export interface Content {
   works: { heading: string; subheading: string; label: string; action: string };
   /** The 3D gallery on the home page (components/gallery). */
   gallery: {
-    /** The two big lines of the first screen. */
-    title: [string, string];
+    /** The two big lines of the first screen: [sans part, serif part]. */
+    title: [[string, string], [string, string]];
     small: string;
     scroll: string;
     wallHint: string;
@@ -83,10 +83,10 @@ const bg: Content = {
     action: "Отвори сайта",
   },
   gallery: {
-    title: ["Превръщаме идеите", "в дигитални продукти"],
+    title: [["Превръщаме", "идеите"], ["в дигитални", "продукти"]],
     small: "Уеб приложения, платформи и сайтове — със силен дизайн и функции, съобразени с бизнеса ти.",
     scroll: "Скролни",
-    wallHint: "Посочи прозорец. Натисни, за да отвориш сайта.",
+    wallHint: "Натисни прозорец, за да видиш сайта в движение. Второ натискане го отваря.",
     open: "Виж",
     aboutLabel: "За нас · Нашият подход",
     aboutLead: "Идеята е твоя.",
@@ -199,10 +199,10 @@ const en: Content = {
     action: "Open the site",
   },
   gallery: {
-    title: ["We turn ideas", "into digital products"],
+    title: [["We turn", "ideas"], ["into digital", "products"]],
     small: "Web apps, platforms and websites — strong design, and features shaped around your business.",
     scroll: "Scroll",
-    wallHint: "Point at a window. Click to open the site.",
+    wallHint: "Click a window to see the site in motion. Click again to open it.",
     open: "See",
     aboutLabel: "About · Our approach",
     aboutLead: "The idea is yours.",
