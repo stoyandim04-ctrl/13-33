@@ -236,4 +236,11 @@ export const EN: Record<string, string> = {
   "Твоят проект": "Your project",
   "Следва": "Next",
   "obsidian · концепция на 13:33": "obsidian · a 13:33 concept",
+
+  // gallery
+  "Проекти": "Work",
+  "Лендинг": "Landing page",
+  "Магазин": "Online store",
+  "Платформа": "Platform",
+  "Портал": "Portal",
 };

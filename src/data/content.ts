@@ -30,6 +30,23 @@ export interface Content {
     secondary: { label: string; href: string };
   };
   works: { heading: string; subheading: string; label: string; action: string };
+  /** The 3D gallery on the home page (components/gallery). */
+  gallery: {
+    /** The two big lines of the first screen. */
+    title: [string, string];
+    small: string;
+    scroll: string;
+    wallHint: string;
+    open: string;
+    aboutLabel: string;
+    /** The first words of the about text, in the colours of the logo. */
+    aboutLead: string;
+    aboutBody: string;
+    aboutNote: string;
+    ctaTitle: string;
+    ctaLead: string;
+    cta: string;
+  };
   /** Three statements instead of paragraphs. Lit word by word by the scroll. */
   manifest: string[];
   services: { label: string; title: string; lead: string; items: Service[] };
@@ -48,8 +65,7 @@ export interface Content {
 const bg: Content = {
   nav: [
     { label: "Проекти", href: "#proekti" },
-    { label: "Услуги", href: "#uslugi" },
-    { label: "Процес", href: "#proces" },
+    { label: "За нас", href: "#za-nas" },
     { label: "Контакт", href: "#kontakt" },
   ],
   hero: {
@@ -65,6 +81,21 @@ const bg: Content = {
     subheading: "Концепции на студиото. Истински сайтове, които можеш да отвориш.",
     label: "ПРОЕКТИ",
     action: "Отвори сайта",
+  },
+  gallery: {
+    title: ["Превръщаме идеите", "в дигитални продукти"],
+    small: "Уеб приложения, платформи и сайтове — със силен дизайн и функции, съобразени с бизнеса ти.",
+    scroll: "Скролни",
+    wallHint: "Посочи прозорец. Натисни, за да отвориш сайта.",
+    open: "Виж",
+    aboutLabel: "За нас · Нашият подход",
+    aboutLead: "Идеята е твоя.",
+    aboutBody:
+      "Ние я превръщаме в продукт: уеб приложения, платформи и сайтове. Ясен обхват, преглед преди публикуване и първа версия до 4 работни дни след капарото.",
+    aboutNote: "Всеки прозорец е истински сайт, който можеш да отвориш. Концепциите са означени.",
+    ctaTitle: "Обсъди идеята си",
+    ctaLead: "Разкажи на консултанта. Цената виждаш веднага.",
+    cta: "Обсъди идеята си",
   },
   manifest: [
     "Слушаме повече, отколкото говорим.",
@@ -150,8 +181,7 @@ const bg: Content = {
 const en: Content = {
   nav: [
     { label: "Work", href: "#proekti" },
-    { label: "Services", href: "#uslugi" },
-    { label: "Process", href: "#proces" },
+    { label: "About", href: "#za-nas" },
     { label: "Contact", href: "#kontakt" },
   ],
   hero: {
@@ -167,6 +197,21 @@ const en: Content = {
     subheading: "The studio's concepts. Real sites you can open.",
     label: "WORK",
     action: "Open the site",
+  },
+  gallery: {
+    title: ["We turn ideas", "into digital products"],
+    small: "Web apps, platforms and websites — strong design, and features shaped around your business.",
+    scroll: "Scroll",
+    wallHint: "Point at a window. Click to open the site.",
+    open: "See",
+    aboutLabel: "About · Our approach",
+    aboutLead: "The idea is yours.",
+    aboutBody:
+      "We turn it into a product: web apps, platforms and websites. A clear scope, a review before launch, and the first version within 4 working days of the deposit.",
+    aboutNote: "Every window is a real site you can open. Concepts are labelled.",
+    ctaTitle: "Talk through your idea",
+    ctaLead: "Tell the consultant. You see the price right away.",
+    cta: "Talk through your idea",
   },
   manifest: [
     "We listen more than we talk.",

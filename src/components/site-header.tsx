@@ -6,6 +6,7 @@ import { useContent } from "@/data/content";
 import { useLang, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { RainbowLink } from "@/components/ui/rainbow-button";
+import { LogoMark } from "@/components/brand/logo-mark";
 
 /** On the home page anchors stay anchors; elsewhere they lead home first. */
 const toHome = (hash: string, onHome: boolean) => (onHome ? hash : `/${hash}`);
@@ -78,13 +79,16 @@ export function SiteHeader() {
       <header
         className={cn(
           "fixed inset-x-0 top-0 z-[200] transition-[background-color,backdrop-filter,border-color] duration-500",
-          solid && !open
+          // On the home page the scene runs under the header: no bar.
+          solid && !open && !onHome
             ? "bg-background/90 border-border border-b"
             : "border-b border-transparent",
         )}
       >
         <div className="container-wide flex h-16 items-center justify-between px-5 sm:px-8 md:h-[4.5rem] lg:px-14">
-          <Link to="/" className="flex items-baseline gap-2.5" aria-label={tr("13:33 — Digital Studio, начало")}>
+          <Link to="/" className="flex items-center gap-2.5" aria-label={tr("13:33 — Digital Studio, начало")}>
+            {/* On the home page the 3D logo of the gallery sits exactly here. */}
+            <LogoMark data-logo-slot="" className="logo-slot h-7 w-auto" />
             <span className="font-display text-[1.375rem] font-[650] tracking-[-0.03em]">13:33</span>
             <span className="text-label text-muted-foreground hidden tracking-[0.22em] uppercase sm:inline">
               Digital Studio

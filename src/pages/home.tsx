@@ -1,72 +1,37 @@
 import * as React from "react";
 import { useLocation } from "react-router-dom";
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 
-import { useContent } from "@/data/content";
-import { projects, STATUS_LABEL } from "@/data/projects";
-import { useLang } from "@/lib/i18n";
-import { GridHero } from "@/components/ui/grid-hero";
-import { WorksWheel, type WorksWheelItem } from "@/components/ui/works-wheel";
-import { Services } from "@/components/sections/services";
-import { Process } from "@/components/sections/process";
-import { Contact } from "@/components/sections/contact";
+import { Gallery } from "@/components/gallery/gallery";
 
+// The home page is one scroll story: the 3D gallery of our sites
+// (components/gallery). Without WebGL, on a slow device or with reduced
+// motion it is the same story as plain cards (gallery-lite.tsx).
 export default function Home() {
   const { hash, key } = useLocation();
-  const { works } = useContent();
-  const { lang, tr } = useLang();
+  const [mode, setMode] = React.useState<"3d" | "lite" | null>(null);
 
-  // A project in the wheel links straight to its own site (new tab). Projects
-  // without a public address stay in the wheel, without a link.
-  const wheelItems = React.useMemo<WorksWheelItem[]>(
-    () =>
-      projects.map<WorksWheelItem>((p) => ({
-        id: p.slug,
-        title: lang === "en" && p.nameEn ? p.nameEn : p.name,
-        image: p.poster,
-        video: p.video,
-        meta: lang === "en" && p.categoryEn ? p.categoryEn : p.category,
-        badge: tr(STATUS_LABEL[p.status]),
-        href: p.liveUrl,
-      })).concat({
-        // The last card: what comes next. It leads to the start of a project.
-        id: "next",
-        title: tr("Твоят проект"),
-        image: projects[0]?.poster ?? "",
-        href: "/zapochni",
-        folder: { title: tr("Твоят проект"), note: tr("Следва"), images: projects.slice(0, 3).map((p) => p.poster) },
-      }),
-    [lang, tr],
-  );
-
-  // Arriving from another page with a hash ("/#proekti"): the browser tried to
-  // jump before React rendered, so jump once the page exists.
+  // Smooth wheel scrolling while the scene runs (touch stays native).
   React.useEffect(() => {
-    if (!hash) return;
+    if (mode !== "3d") return;
+    const lenis = new Lenis({ autoRaf: true, lerp: 0.09, anchors: true });
+    return () => lenis.destroy();
+  }, [mode]);
+
+  // Arriving from another page with a hash ("/#proekti"): jump once the
+  // gallery exists.
+  React.useEffect(() => {
+    if (!hash || !mode) return;
     const el = document.getElementById(decodeURIComponent(hash.slice(1)));
     if (!el) return;
     const id = requestAnimationFrame(() => el.scrollIntoView({ behavior: "auto" }));
     return () => cancelAnimationFrame(id);
-  }, [hash, key]);
+  }, [hash, key, mode]);
 
   React.useEffect(() => {
     document.title = "13:33 — Digital Studio";
   }, []);
 
-  return (
-    <>
-      <GridHero id="nachalo" />
-      <WorksWheel
-        id="proekti"
-        className="scroll-mt-0"
-        items={wheelItems}
-        label={works.label}
-        action={works.action}
-        heading={works.heading}
-        subheading={works.subheading}
-      />
-      <Services />
-      <Process />
-      <Contact />
-    </>
-  );
+  return <Gallery onMode={setMode} />;
 }

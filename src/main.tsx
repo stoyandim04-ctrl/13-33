@@ -7,8 +7,10 @@ import "@/index.css";
 import App from "@/App";
 import { LangProvider } from "@/lib/i18n";
 import { captureSource } from "@/lib/source";
+import { setupDisplayFont } from "@/lib/display-font";
 
 captureSource();
+void setupDisplayFont();
 
 /**
  * Vercel Web Analytics: cookieless page views, no consent banner needed.
