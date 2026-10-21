@@ -5,3 +5,6 @@ dist
 !.env.example
 *.tsbuildinfo
 .DS_Store
+
+# Gallery candidates before picking (scripts/pick-gallery-media.mjs)
+public/gallery/*-c[0-9]*
