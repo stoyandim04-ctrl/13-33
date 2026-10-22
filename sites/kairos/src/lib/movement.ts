@@ -107,14 +107,14 @@ export function materials(lite: boolean) {
   const cot = T.cotes();
   const ray = T.sunray();
   return {
-    gold: new THREE.MeshStandardMaterial({ color: 0xd7ab5e, metalness: 1, roughness: 0.26 }),
-    goldDark: new THREE.MeshStandardMaterial({ color: 0xb98a46, metalness: 1, roughness: 0.34 }),
+    gold: new THREE.MeshStandardMaterial({ color: 0xd49a3a, metalness: 1, roughness: 0.26 }),
+    goldDark: new THREE.MeshStandardMaterial({ color: 0xa8752c, metalness: 1, roughness: 0.34 }),
     rose: new THREE.MeshStandardMaterial({ color: 0xe0a585, metalness: 1, roughness: 0.3 }),
     steel: new THREE.MeshStandardMaterial({ color: 0xd9dde2, metalness: 1, roughness: 0.18 }),
-    plate: new THREE.MeshStandardMaterial({ color: 0xa8adb4, metalness: 1, roughness: 0.55, roughnessMap: perl, bumpMap: perl, bumpScale: 0.6 }),
-    bridge: new THREE.MeshStandardMaterial({ color: 0xc4c8ce, metalness: 1, roughness: 0.38, roughnessMap: cot, bumpMap: cot, bumpScale: 0.4 }),
+    plate: new THREE.MeshStandardMaterial({ color: 0x8e949c, metalness: 1, roughness: 0.42, roughnessMap: perl }),
+    bridge: new THREE.MeshStandardMaterial({ color: 0xb4b9c0, metalness: 1, roughness: 0.3, roughnessMap: cot }),
     sunray: new THREE.MeshStandardMaterial({ color: 0xb8bcc2, metalness: 1, roughness: 0.32, roughnessMap: ray }),
-    blued: new THREE.MeshStandardMaterial({ color: 0x2b4fd0, metalness: 0.85, roughness: 0.22, emissive: 0x050c30 }),
+    blued: new THREE.MeshStandardMaterial({ color: 0x1f3fc8, metalness: 0.85, roughness: 0.22, emissive: 0x050c30 }),
     ruby: lite
       ? new THREE.MeshStandardMaterial({ color: 0xc0102c, metalness: 0.1, roughness: 0.05, emissive: 0x4a0010 })
       : new THREE.MeshPhysicalMaterial({
@@ -141,7 +141,7 @@ export function materials(lite: boolean) {
       side: THREE.DoubleSide,
       depthWrite: false,
     }),
-    handGold: new THREE.MeshStandardMaterial({ color: 0xf0c878, metalness: 1, roughness: 0.16 }),
+    handGold: new THREE.MeshStandardMaterial({ color: 0xe8b456, metalness: 1, roughness: 0.16 }),
   };
 }
 export type Mats = ReturnType<typeof materials>;

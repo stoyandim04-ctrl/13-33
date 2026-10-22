@@ -170,7 +170,6 @@ export default function App() {
         <i />
         <i />
       </div>
-      <div className="grain" aria-hidden />
 
       {/* Горе: марката и звукът. */}
       <header ref={hud} className={`hud-top ${entered ? "is-on" : ""}`}>

@@ -5,8 +5,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
-import { buildMovement, materials, POS, Z, CASE_R } from "./movement";
-import { mote, shaft } from "./textures";
+import { buildMovement, materials, POS } from "./movement";
 import { SHOTS, type Shot } from "./shots";
 
 /*
@@ -23,8 +22,8 @@ const GRADE = {
     uVig: { value: 1.1 },
     uAb: { value: 0.0015 },
     uFlash: { value: 0 },
-    uLift: { value: new THREE.Vector3(0.0, 0.02, 0.035) },
-    uGain: { value: new THREE.Vector3(1.06, 0.98, 0.9) },
+    uLift: { value: new THREE.Vector3(0.0, 0.004, 0.012) },
+    uGain: { value: new THREE.Vector3(1.05, 0.97, 0.88) },
     uRes: { value: new THREE.Vector2(1, 1) },
   },
   vertexShader: /* glsl */ `
@@ -37,28 +36,23 @@ const GRADE = {
     uniform vec3 uLift, uGain;
     uniform vec2 uRes;
     varying vec2 vUv;
-    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main() {
       vec2 c = vUv - 0.5;
       float d = length(c);
-      // Хроматична аберация към ръбовете — като стар обектив.
-      vec2 off = c * d * uAb * 10.0;
-      vec3 col;
-      col.r = texture2D(tDiffuse, vUv - off).r;
-      col.g = texture2D(tDiffuse, vUv).g;
-      col.b = texture2D(tDiffuse, vUv + off).b;
+      vec3 col = clamp(texture2D(tDiffuse, vUv).rgb, 0.0, 1.0);
       // Тийл в сенките, кехлибар в светлото.
       float l = dot(col, vec3(0.299, 0.587, 0.114));
       col = mix(col + uLift * (1.0 - l), col * uGain, smoothstep(0.0, 0.8, l));
-      col = mix(vec3(l), col, 1.08);
+      // Плътност: по-дълбоки сенки, наситени цветове.
+      col = max(col - 0.012, 0.0) * 1.03;
+      col = col * col * (3.0 - 2.0 * col) * 0.35 + col * 0.65;
+      l = dot(col, vec3(0.299, 0.587, 0.114));
+      col = clamp(mix(vec3(l), col, 1.22), 0.0, 1.0);
       // Винетка.
       col *= smoothstep(1.05, 0.15, d * uVig);
-      // Зърно.
-      float g = hash(vUv * uRes + fract(uTime * 13.0) * 100.0) - 0.5;
-      col += g * 0.045;
       // Бяла светкавица при минаване през стъкло/циферблат.
       col = mix(col, vec3(1.0, 0.96, 0.9), uFlash);
-      gl_FragColor = vec4(col, 1.0);
+      gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
     }
   `,
 };
@@ -87,8 +81,6 @@ export class Stage {
   private probe = new THREE.PointLight(0xffd9a8, 0, 18, 1.6);
   private key = new THREE.SpotLight(0xffc98a, 260, 0, 0.42, 0.75, 1.2);
   private rim = new THREE.SpotLight(0x4fb2c8, 160, 0, 0.5, 0.8, 1.2);
-  private dust!: THREE.Points;
-  private shafts = new THREE.Group();
   private setOffset = 0;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -136,17 +128,18 @@ export class Stage {
     this.watch.add(dialLight);
     this.dialLight = dialLight;
 
-    this.buildAir();
     this.buildPath();
 
     const rp = new RenderPass(this.scene, this.camera);
-    this.composer = new EffectComposer(this.renderer);
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.lite ? 2 : 4 });
+    this.composer = new EffectComposer(this.renderer, rt);
     this.composer.addPass(rp);
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0.5, 0.92);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.16, 0.35, 0.95);
     this.composer.addPass(this.bloom);
+    // Градацията е след тонмапинга — работи върху крайните цветове (0–1).
+    this.composer.addPass(new OutputPass());
     this.grade = new ShaderPass(GRADE);
     this.composer.addPass(this.grade);
-    this.composer.addPass(new OutputPass());
 
     this.resize();
     // Шейдърите се компилират предварително — първото скролване не засича.
@@ -154,58 +147,6 @@ export class Stage {
   }
 
   private dialLight!: THREE.PointLight;
-
-  /** Прах във въздуха и светлинни лъчи през задното стъкло — дават мащаба. */
-  private buildAir() {
-    const N = this.lite ? 900 : 2400;
-    const pos = new Float32Array(N * 3);
-    const seed = new Float32Array(N);
-    for (let i = 0; i < N; i++) {
-      const r = Math.sqrt(Math.random()) * (CASE_R - 1);
-      const a = Math.random() * Math.PI * 2;
-      pos[i * 3] = Math.cos(a) * r;
-      pos[i * 3 + 1] = Math.sin(a) * r;
-      pos[i * 3 + 2] = lerp(Z.dial + 0.2, Z.back - 0.3, Math.random());
-      seed[i] = Math.random();
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    g.setAttribute("seed", new THREE.BufferAttribute(seed, 1));
-    const mat = new THREE.PointsMaterial({
-      size: 0.035,
-      map: mote(),
-      color: 0xffe0b0,
-      transparent: true,
-      opacity: 0.0,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      sizeAttenuation: true,
-    });
-    this.dust = new THREE.Points(g, mat);
-    this.watch.add(this.dust);
-
-    const tex = shaft();
-    for (let i = 0; i < 7; i++) {
-      const m = new THREE.MeshBasicMaterial({
-        map: tex,
-        color: i % 3 ? 0xffd6a0 : 0x9fd8e8,
-        transparent: true,
-        opacity: 0,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        fog: false,
-      });
-      const p = new THREE.Mesh(new THREE.PlaneGeometry(1.2 + Math.random() * 1.6, 14), m);
-      const a = (i / 7) * Math.PI * 2 + Math.random();
-      const r = 3 + Math.random() * 9;
-      p.position.set(Math.cos(a) * r, Math.sin(a) * r, 3);
-      p.rotation.set(Math.PI / 2 - 0.5, 0, a + Math.random());
-      p.userData.base = 0.05 + Math.random() * 0.08;
-      this.shafts.add(p);
-    }
-    this.watch.add(this.shafts);
-  }
 
   private buildPath() {
     this.posCurve = new THREE.CatmullRomCurve3(SHOTS.map((s) => s.pos.clone()), false, "centripetal");
@@ -290,26 +231,12 @@ export class Stage {
 
     // Атмосфера.
     const inside = this.mix(a, b, e, "inside", 0);
-    this.fog.density = lerp(0.002, 0.045, inside);
-    this.fog.color.setRGB(lerp(0.012, 0.03, inside), lerp(0.014, 0.034, inside), lerp(0.018, 0.04, inside));
+    this.fog.density = lerp(0.002, 0.018, inside);
+    this.fog.color.setRGB(lerp(0.008, 0.006, inside), lerp(0.01, 0.009, inside), lerp(0.014, 0.014, inside));
     (this.scene.background as THREE.Color).copy(this.fog.color);
     this.probe.position.copy(this.camera.position);
     this.probe.intensity = 1.2 * inside;
     this.dialLight.intensity = 14 * this.mix(a, b, e, "dial", 0);
-    (this.dust.material as THREE.PointsMaterial).opacity = 0.5 * inside;
-    const dpos = this.dust.geometry.attributes.position as THREE.BufferAttribute;
-    if (inside > 0.01) {
-      const arr = dpos.array as Float32Array;
-      for (let i = 0; i < dpos.count; i++) {
-        arr[i * 3 + 2] += Math.sin(this.elapsed * 0.4 + i) * 0.0006;
-        arr[i * 3] += Math.cos(this.elapsed * 0.3 + i * 1.7) * 0.0005;
-      }
-      dpos.needsUpdate = true;
-    }
-    this.shafts.children.forEach((s, i) => {
-      const m = (s as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      m.opacity = (s.userData.base as number) * inside * (0.7 + 0.3 * Math.sin(this.elapsed * 0.4 + i));
-    });
     this.key.intensity = lerp(260, 60, inside);
     this.rim.intensity = lerp(160, 40, inside);
 
@@ -329,8 +256,7 @@ export class Stage {
     // Пост-обработка.
     this.grade.uniforms.uTime.value = this.elapsed;
     this.grade.uniforms.uFlash.value = this.mix(a, b, e, "flash", 0);
-    this.grade.uniforms.uAb.value = 0.001 + 0.0015 * inside;
-    this.bloom.strength = lerp(0.28, 0.42, inside);
+    this.bloom.strength = 0.16;
     this.composer.render(dt);
     return { time: mv.time, display, ticked: mv.ticked, tick: mv.tick, rate, inside };
   }

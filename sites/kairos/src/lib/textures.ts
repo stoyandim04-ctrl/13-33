@@ -100,7 +100,7 @@ export function sunray() {
 }
 
 /**
-  Циферблатът: дълбоко нощно синьо с авантюрин (искри), минутна скала, подциферблат
+  Циферблатът: плътен дълбок син лак, минутна скала, подциферблат
   за малката секундарка и надписите. Рисува се огледално, защото гледаме платината
   отзад: x на текстурата е обърнат така, че отпред да се чете правилно.
 */
@@ -111,20 +111,11 @@ export function dial(subdial: { x: number; y: number; r: number }, R: number) {
   const P = (x: number, y: number) => [S / 2 - x * k, S / 2 - y * k] as const; // огледално по x, y надолу
 
   const bg = g.createRadialGradient(S * 0.45, S * 0.4, 0, S / 2, S / 2, S * 0.7);
-  bg.addColorStop(0, "#1a2a4a");
-  bg.addColorStop(0.55, "#0c1428");
-  bg.addColorStop(1, "#04070f");
+  bg.addColorStop(0, "#15306a");
+  bg.addColorStop(0.55, "#0a1a44");
+  bg.addColorStop(1, "#030a1e");
   g.fillStyle = bg;
   g.fillRect(0, 0, S, S);
-
-  // Авантюрин — ситни медни искри.
-  for (let i = 0; i < 2600; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const r = Math.sqrt(Math.random()) * S * 0.5;
-    const s = Math.random() < 0.04 ? 2.2 : 1;
-    g.fillStyle = `rgba(255,${200 + Math.random() * 40},${150 + Math.random() * 60},${0.25 + Math.random() * 0.6})`;
-    g.fillRect(S / 2 + Math.cos(a) * r, S / 2 + Math.sin(a) * r, s, s);
-  }
 
   g.save();
   g.translate(S / 2, S / 2);
@@ -189,26 +180,4 @@ export function dial(subdial: { x: number; y: number; r: number }, R: number) {
   return t;
 }
 
-/** Мек кръгъл спрайт за праха във въздуха. */
-export function mote() {
-  const [c, g] = canvas(64, 64);
-  const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grd.addColorStop(0, "rgba(255,255,255,1)");
-  grd.addColorStop(0.35, "rgba(255,255,255,0.35)");
-  grd.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = grd;
-  g.fillRect(0, 0, 64, 64);
-  return new THREE.CanvasTexture(c);
-}
 
-/** Вертикален градиент за светлинните лъчи (плътен в основата, изтънява). */
-export function shaft() {
-  const [c, g] = canvas(4, 256);
-  const grd = g.createLinearGradient(0, 0, 0, 256);
-  grd.addColorStop(0, "rgba(255,255,255,0)");
-  grd.addColorStop(0.25, "rgba(255,255,255,0.55)");
-  grd.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = grd;
-  g.fillRect(0, 0, 4, 256);
-  return new THREE.CanvasTexture(c);
-}
