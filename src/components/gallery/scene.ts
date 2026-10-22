@@ -852,7 +852,7 @@ export class GalleryScene {
     const cols = aspect < 0.9 ? 3 : aspect < 1.3 ? 4 : Math.min(6, Math.ceil(Math.sqrt(n * 1.6)));
     const rows = Math.ceil(n / cols);
     const areaW = aspect < 0.9 ? vw * 0.9 : vw * 0.7;
-    const areaH = vh * (aspect < 0.9 ? 0.6 : 0.66);
+    const areaH = vh * (aspect < 0.9 ? 0.52 : 0.66);
     const gap = 0.1 * this.cs;
     let cw = (areaW - gap * (cols - 1)) / cols;
     let ch = cw / 1.6;
@@ -863,7 +863,7 @@ export class GalleryScene {
     const gw = cols * cw + (cols - 1) * gap;
     const gh = rows * ch + (rows - 1) * gap;
     const cx = aspect < 0.9 ? 0 : vw * 0.5 - gw / 2 - vw * 0.05;
-    const cy = aspect < 0.9 ? -vh * 0.19 : -vh * 0.08;
+    const cy = aspect < 0.9 ? -vh * 0.2 : -vh * 0.08;
     const col = i % cols;
     const row = Math.floor(i / cols);
     return {
@@ -921,7 +921,9 @@ export class GalleryScene {
     if (hover !== this.hover) {
       this.hover = hover;
       this.o.canvas.style.cursor = hover ? "pointer" : "";
-      if (hover && within(p, CH.wall, 0.01) > 0.5) this.o.onFocus(hover.win);
+      // On the wall: the window under the pointer, else the one playing,
+      // else nothing (the invitation shows).
+      if (within(p, CH.wall, 0.01) > 0.5) this.o.onFocus(hover?.win ?? this.playing?.win ?? null);
     }
     if (hover) hover.puv.lerp(this.hoverUv, 0.25);
     if (this.playing && !this.interactive()) this.playing = null;

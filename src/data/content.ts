@@ -36,6 +36,9 @@ export interface Content {
     title: [[string, string], [string, string]];
     small: string;
     scroll: string;
+    /** The wall before a window is chosen: an invitation to look around. */
+    wallTitle: string;
+    wallLead: string;
     wallHint: string;
     open: string;
     aboutLabel: string;
@@ -86,6 +89,8 @@ const bg: Content = {
     title: [["Превръщаме", "идеите"], ["в дигитални", "продукти"]],
     small: "Уеб приложения, платформи и сайтове — със силен дизайн и функции, съобразени с бизнеса ти.",
     scroll: "Скролни",
+    wallTitle: "Разгледай проектите",
+    wallLead: "Сайтове, които сме направили. Всеки е истински — посочи го, за да видиш какво е.",
     wallHint: "Натисни прозорец, за да видиш сайта в движение. Второ натискане го отваря.",
     open: "Виж",
     aboutLabel: "За нас · Нашият подход",
@@ -202,6 +207,8 @@ const en: Content = {
     title: [["We turn", "ideas"], ["into digital", "products"]],
     small: "Web apps, platforms and websites — strong design, and features shaped around your business.",
     scroll: "Scroll",
+    wallTitle: "Explore the work",
+    wallLead: "Sites we have made. Every one is real — point at it to see what it is.",
     wallHint: "Click a window to see the site in motion. Click again to open it.",
     open: "See",
     aboutLabel: "About · Our approach",

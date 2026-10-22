@@ -67,7 +67,8 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
   const { lang, tr } = useLang();
   const [phone] = React.useState(isPhone);
   const windows = React.useMemo(() => galleryWindows(phone), [phone]);
-  const [focus, setFocus] = React.useState(0);
+  /** The window shown on the wall's caption; null: the invitation. */
+  const [focus, setFocus] = React.useState<number | null>(null);
 
   const section = React.useRef<HTMLElement>(null);
   const canvas = React.useRef<HTMLCanvasElement>(null);
@@ -149,7 +150,7 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
           windows,
           phone,
           title: titleRef.current,
-          onFocus: (w) => w !== null && setFocus(w),
+          onFocus: setFocus,
           onOpen: (w) => {
             const url = projects[windows[w].project].liveUrl;
             if (url) openSite(url);
@@ -192,9 +193,9 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
     scene.current?.setTitle(title);
   }, [title]);
 
-  const win = windows[focus] ?? windows[0];
-  const project = projects[win.project];
-  const name = lang === "en" && project.nameEn ? project.nameEn : project.name;
+  const win = focus === null ? null : windows[focus] ?? null;
+  const project = win ? projects[win.project] : null;
+  const name = project ? (lang === "en" && project.nameEn ? project.nameEn : project.name) : "";
   const anchorTop = (p: number) => `calc(${p} * (${len * 100}svh - 100svh))`;
 
   return (
@@ -228,6 +229,8 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
           ref={(el) => void (layers.current.wall = el)}
           className="invisible absolute inset-x-0 top-20 px-5 opacity-0 sm:px-8 md:top-24 lg:px-14"
         >
+          {win && project ? (
+            <>
           <div key={win.project} className="ww-rise flex max-w-[52rem] flex-wrap items-start gap-x-8 gap-y-3">
             <p className="font-serif text-[clamp(1.75rem,1.2rem+2vw,3rem)] leading-none whitespace-nowrap">
               <span className="text-muted-foreground mr-2 align-top font-sans text-[0.8125rem] tracking-[0.1em] tabular-nums">
@@ -248,7 +251,15 @@ function Gallery3d({ onFail }: { onFail: () => void }) {
               </RainbowLink>
             ) : null}
           </div>
-          <p className="text-muted-foreground/80 mt-4 text-[0.8125rem]">{gallery.wallHint}</p>
+          <p className="text-muted-foreground/80 mt-4 hidden text-[0.8125rem] sm:block">{gallery.wallHint}</p>
+            </>
+          ) : (
+            <div key="invite" className="ww-rise max-w-[40rem]">
+              <p className="font-serif text-[clamp(2rem,1.3rem+2.6vw,3.75rem)] leading-none">{gallery.wallTitle}</p>
+              <p className="text-muted-foreground mt-4 max-w-[30rem] text-[0.9375rem] leading-snug">{gallery.wallLead}</p>
+              <p className="text-muted-foreground/80 mt-3 text-[0.8125rem]">{gallery.wallHint}</p>
+            </div>
+          )}
           {/* Keyboard and screen readers: the projects as plain links. */}
           <ul className="sr-only">
             {projects.map((p) =>
