@@ -36,7 +36,7 @@ export function perlage() {
       const y = row * step * 0.86;
       for (let i = 0; i < 26; i++) {
         const k = i / 26;
-        g.strokeStyle = `rgba(${i % 2 ? 255 : 0},${i % 2 ? 255 : 0},${i % 2 ? 255 : 0},${0.05 + 0.08 * (1 - k)})`;
+        g.strokeStyle = `rgba(${i % 2 ? 255 : 0},${i % 2 ? 255 : 0},${i % 2 ? 255 : 0},${0.03 + 0.04 * (1 - k)})`;
         g.lineWidth = 1.6;
         g.beginPath();
         g.arc(x, y, r * (1 - k), 0, Math.PI * 2);
@@ -76,6 +76,31 @@ export function cotes() {
   }
   const t = tex(c, 1 / 6);
   t.rotation = 0.5;
+  return t;
+}
+
+/**
+  Кръгово шлифоване (circular graining) за колелата: фини концентрични следи,
+  центрирани на оста — геометрията на всяко колело е в собствени координати,
+  така че кръговете са около неговата ос. 1 плочка = 14 мм.
+*/
+export function graining() {
+  const S = 1024;
+  const [c, g] = canvas(S, S);
+  g.fillStyle = "#808080";
+  g.fillRect(0, 0, S, S);
+  for (let r = 1; r < S * 0.72; r += 1.5) {
+    const v = 110 + Math.random() * 60;
+    g.strokeStyle = `rgba(${v},${v},${v},0.55)`;
+    g.lineWidth = 1;
+    g.beginPath();
+    g.arc(S / 2, S / 2, r, 0, Math.PI * 2);
+    g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 16;
+  t.repeat.set(1 / 14, 1 / 14);
+  t.offset.set(0.5, 0.5);
   return t;
 }
 

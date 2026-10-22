@@ -106,15 +106,17 @@ export function materials(lite: boolean) {
   const perl = T.perlage();
   const cot = T.cotes();
   const ray = T.sunray();
+  const grain = T.graining();
+  // Цветовете на металите са близо до измерените (позлата, родий, полирана стомана).
   return {
-    gold: new THREE.MeshStandardMaterial({ color: 0xd49a3a, metalness: 1, roughness: 0.26 }),
-    goldDark: new THREE.MeshStandardMaterial({ color: 0xa8752c, metalness: 1, roughness: 0.34 }),
-    rose: new THREE.MeshStandardMaterial({ color: 0xe0a585, metalness: 1, roughness: 0.3 }),
-    steel: new THREE.MeshStandardMaterial({ color: 0xd9dde2, metalness: 1, roughness: 0.18 }),
-    plate: new THREE.MeshStandardMaterial({ color: 0x8e949c, metalness: 1, roughness: 0.42, roughnessMap: perl }),
-    bridge: new THREE.MeshStandardMaterial({ color: 0xb4b9c0, metalness: 1, roughness: 0.3, roughnessMap: cot }),
-    sunray: new THREE.MeshStandardMaterial({ color: 0xb8bcc2, metalness: 1, roughness: 0.32, roughnessMap: ray }),
-    blued: new THREE.MeshStandardMaterial({ color: 0x1f3fc8, metalness: 0.85, roughness: 0.22, emissive: 0x050c30 }),
+    gold: new THREE.MeshPhysicalMaterial({ color: 0xe3bd72, metalness: 1, roughness: 0.3, roughnessMap: grain, specularIntensity: 1 }),
+    goldDark: new THREE.MeshPhysicalMaterial({ color: 0xc9a05c, metalness: 1, roughness: 0.36, roughnessMap: grain }),
+    rose: new THREE.MeshStandardMaterial({ color: 0xe6b49a, metalness: 1, roughness: 0.28 }),
+    steel: new THREE.MeshStandardMaterial({ color: 0xc8ccd1, metalness: 1, roughness: 0.07 }),
+    plate: new THREE.MeshStandardMaterial({ color: 0x9da1a8, metalness: 1, roughness: 0.5, roughnessMap: perl, bumpMap: perl, bumpScale: 0.12 }),
+    bridge: new THREE.MeshStandardMaterial({ color: 0xc7cacf, metalness: 1, roughness: 0.34, roughnessMap: cot, bumpMap: cot, bumpScale: 0.08 }),
+    sunray: new THREE.MeshStandardMaterial({ color: 0xbfc2c7, metalness: 1, roughness: 0.32, roughnessMap: ray }),
+    blued: new THREE.MeshStandardMaterial({ color: 0x24409a, metalness: 0.9, roughness: 0.16 }),
     ruby: lite
       ? new THREE.MeshStandardMaterial({ color: 0xc0102c, metalness: 0.1, roughness: 0.05, emissive: 0x4a0010 })
       : new THREE.MeshPhysicalMaterial({
@@ -127,21 +129,21 @@ export function materials(lite: boolean) {
           attenuationColor: new THREE.Color(0x8a0016),
           attenuationDistance: 0.5,
           clearcoat: 1,
-          emissive: 0x1a0006,
+          emissive: 0x080002,
         }),
-    platinum: new THREE.MeshStandardMaterial({ color: 0xe3e5e8, metalness: 1, roughness: 0.12 }),
+    platinum: new THREE.MeshStandardMaterial({ color: 0xd8dadd, metalness: 1, roughness: 0.09 }),
     glass: new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
       metalness: 0,
       roughness: 0.02,
       transparent: true,
-      opacity: 0.05,
+      opacity: 0.04,
       clearcoat: 1,
-      envMapIntensity: 0.5,
+      envMapIntensity: 0.9,
       side: THREE.DoubleSide,
       depthWrite: false,
     }),
-    handGold: new THREE.MeshStandardMaterial({ color: 0xe8b456, metalness: 1, roughness: 0.16 }),
+    handGold: new THREE.MeshStandardMaterial({ color: 0xe9c47c, metalness: 1, roughness: 0.1 }),
   };
 }
 export type Mats = ReturnType<typeof materials>;
@@ -230,8 +232,8 @@ function extrude(shape: THREE.Shape, depth: number, bevel = 0.04, curve = 24) {
     depth,
     bevelEnabled: bevel > 0,
     bevelThickness: bevel,
-    bevelSize: bevel * 0.8,
-    bevelSegments: 2,
+    bevelSize: bevel * 0.9,
+    bevelSegments: 3,
     curveSegments: curve,
   });
   g.translate(0, 0, -depth / 2);
@@ -769,6 +771,13 @@ export function buildMovement(m: Mats) {
     minuteW.rotation.z = thMin;
     hourW.rotation.z = meshAngle(thMin, 10, 40, betas.mh);
   }
+
+  root.traverse((o) => {
+    const me = o as THREE.Mesh;
+    if (!me.isMesh || me.material === m.glass) return;
+    me.castShadow = true;
+    me.receiveShadow = true;
+  });
 
   return { root, update, setHands, jewels, state, caseG };
 }

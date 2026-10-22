@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
+import { BokehPass } from "three/examples/jsm/postprocessing/BokehPass.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
@@ -23,7 +25,7 @@ const GRADE = {
     uAb: { value: 0.0015 },
     uFlash: { value: 0 },
     uLift: { value: new THREE.Vector3(0.0, 0.004, 0.012) },
-    uGain: { value: new THREE.Vector3(1.05, 0.97, 0.88) },
+    uGain: { value: new THREE.Vector3(1.02, 1.0, 0.97) },
     uRes: { value: new THREE.Vector2(1, 1) },
   },
   vertexShader: /* glsl */ `
@@ -45,9 +47,9 @@ const GRADE = {
       col = mix(col + uLift * (1.0 - l), col * uGain, smoothstep(0.0, 0.8, l));
       // Плътност: по-дълбоки сенки, наситени цветове.
       col = max(col - 0.012, 0.0) * 1.03;
-      col = col * col * (3.0 - 2.0 * col) * 0.35 + col * 0.65;
+      col = col * col * (3.0 - 2.0 * col) * 0.25 + col * 0.75;
       l = dot(col, vec3(0.299, 0.587, 0.114));
-      col = clamp(mix(vec3(l), col, 1.22), 0.0, 1.0);
+      col = clamp(mix(vec3(l), col, 1.1), 0.0, 1.0);
       // Винетка.
       col *= smoothstep(1.05, 0.15, d * uVig);
       // Бяла светкавица при минаване през стъкло/циферблат.
@@ -78,16 +80,24 @@ export class Stage {
   private tgtCurve!: THREE.CatmullRomCurve3;
   private t0: number;
   private fog = new THREE.FogExp2(0x030405, 0.002);
-  private probe = new THREE.PointLight(0xffd9a8, 0, 18, 1.6);
-  private key = new THREE.SpotLight(0xffc98a, 260, 0, 0.42, 0.75, 1.2);
-  private rim = new THREE.SpotLight(0x4fb2c8, 160, 0, 0.5, 0.8, 1.2);
+  private probe = new THREE.PointLight(0xfff2e2, 0, 14, 2);
+  // Два студийни прожектора със сенки: един през задното стъкло (механизмът), един отпред (циферблатът).
+  private key = new THREE.DirectionalLight(0xfff0dc, 2.6);
+  private front = new THREE.DirectionalLight(0xfff4e8, 2.2);
+  private bokeh?: BokehPass;
+  private focus = 50;
+  private frame = 0;
+  private ray = new THREE.Raycaster();
   private setOffset = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.lite = window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !this.lite, powerPreference: "high-performance" });
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.85;
+    // AgX — мек, фотографски тонмапинг: светлото не пресища, сенките остават плътни.
+    this.renderer.toneMapping = THREE.AgXToneMapping;
+    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     const now = new Date();
     this.t0 = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() + now.getMilliseconds() / 1000;
@@ -101,29 +111,45 @@ export class Stage {
     ]).catch(() => {});
 
     const pmrem = new THREE.PMREMGenerator(this.renderer);
-    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environmentIntensity = 0.32;
+    // Истинско студийно HDRI (Poly Haven, CC0) — металите отразяват реални софтбоксове.
+    try {
+      const hdr = await new HDRLoader().loadAsync("studio.hdr");
+      hdr.mapping = THREE.EquirectangularReflectionMapping;
+      this.scene.environment = pmrem.fromEquirectangular(hdr).texture;
+      hdr.dispose();
+    } catch {
+      this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    }
+    this.scene.environmentIntensity = 0.75;
+    this.scene.environmentRotation.set(0.3, 0.8, 0);
     this.scene.background = new THREE.Color(0x030405);
     this.scene.fog = this.fog;
 
     const mats = materials(this.lite);
     this.movement = buildMovement(mats);
+    this.glassMat = mats.glass;
     this.watch.add(this.movement.root);
     this.scene.add(this.watch);
 
-    // Светлина: топъл ключ отгоре вляво, студен контражур отзад, „сонда“ до камерата вътре.
-    this.key.position.set(-60, 90, -40);
-    this.key.target.position.set(0, 0, 0);
-    this.rim.position.set(70, 30, 80);
-    this.rim.target.position.set(0, 0, 0);
-    this.scene.add(this.key, this.key.target, this.rim, this.rim.target, this.probe);
-    const inner = new THREE.PointLight(0xffb070, 7, 30, 1.6);
-    inner.position.set(-6, 10, 9);
-    this.watch.add(inner);
-    const innerCool = new THREE.PointLight(0x58b8d8, 5, 26, 1.6);
-    innerCool.position.set(10, -10, 8);
-    this.watch.add(innerCool);
-    const dialLight = new THREE.PointLight(0xffe2b8, 0, 40, 1.2);
+    // Светлината е в координатите на часовника — сенките падат правилно по платината.
+    const shadow = (l: THREE.DirectionalLight) => {
+      l.castShadow = true;
+      l.shadow.mapSize.set(this.lite ? 1024 : 2048, this.lite ? 1024 : 2048);
+      const c = l.shadow.camera;
+      c.left = c.bottom = -21;
+      c.right = c.top = 21;
+      c.near = 1;
+      c.far = 120;
+      l.shadow.bias = -0.0004;
+      l.shadow.normalBias = 0.02;
+      l.shadow.radius = 3;
+    };
+    this.key.position.set(-18, 22, 48);
+    this.front.position.set(-22, 26, -46);
+    shadow(this.key);
+    shadow(this.front);
+    this.watch.add(this.key, this.key.target, this.front, this.front.target, this.probe);
+    const dialLight = new THREE.PointLight(0xffefd8, 0, 40, 1.2);
     dialLight.position.set(-8, 12, -14);
     this.watch.add(dialLight);
     this.dialLight = dialLight;
@@ -134,7 +160,12 @@ export class Stage {
     const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.lite ? 2 : 4 });
     this.composer = new EffectComposer(this.renderer, rt);
     this.composer.addPass(rp);
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.16, 0.35, 0.95);
+    // Макро обектив: малка дълбочина на рязкост, фокусът следва това, което е в центъра.
+    if (!this.lite) {
+      this.bokeh = new BokehPass(this.scene, this.camera, { focus: 50, aperture: 0.00005, maxblur: 0.009 });
+      this.composer.addPass(this.bokeh);
+    }
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.08, 0.3, 0.97);
     this.composer.addPass(this.bloom);
     // Градацията е след тонмапинга — работи върху крайните цветове (0–1).
     this.composer.addPass(new OutputPass());
@@ -147,6 +178,8 @@ export class Stage {
   }
 
   private dialLight!: THREE.PointLight;
+  private focusTarget = 50;
+  private glassMat?: THREE.Material;
 
   private buildPath() {
     this.posCurve = new THREE.CatmullRomCurve3(SHOTS.map((s) => s.pos.clone()), false, "centripetal");
@@ -231,14 +264,29 @@ export class Stage {
 
     // Атмосфера.
     const inside = this.mix(a, b, e, "inside", 0);
-    this.fog.density = lerp(0.002, 0.018, inside);
+    this.fog.density = lerp(0.001, 0.008, inside);
     this.fog.color.setRGB(lerp(0.008, 0.006, inside), lerp(0.01, 0.009, inside), lerp(0.014, 0.014, inside));
     (this.scene.background as THREE.Color).copy(this.fog.color);
     this.probe.position.copy(this.camera.position);
-    this.probe.intensity = 1.2 * inside;
-    this.dialLight.intensity = 14 * this.mix(a, b, e, "dial", 0);
-    this.key.intensity = lerp(260, 60, inside);
-    this.rim.intensity = lerp(160, 40, inside);
+    this.probe.intensity = 0.25 * inside;
+    this.scene.environmentIntensity = lerp(0.75, 0.42, inside);
+    const dial = this.mix(a, b, e, "dial", 0);
+    this.dialLight.intensity = 3 * dial;
+    this.key.intensity = 2.6 * (1 - 0.6 * dial);
+    this.front.intensity = 2.4 * dial;
+
+    // Автофокус: на всеки няколко кадъра — лъч от центъра на кадъра.
+    if (this.bokeh) {
+      if (this.frame++ % 4 === 0) {
+        this.ray.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+        const hit = this.ray.intersectObject(this.movement.root, true).find((h) => (h.object as THREE.Mesh).material !== this.glassMat);
+        if (hit) this.focusTarget = hit.distance;
+      }
+      this.focus += (this.focusTarget - this.focus) * 0.15;
+      const u = this.bokeh.uniforms as Record<string, THREE.IUniform>;
+      u.focus.value = this.focus;
+      u.aperture.value = lerp(0.00003, 0.0022, inside);
+    }
 
     // Времето: забавяне вътре; часовникът тиктака винаги.
     const rate = this.mix(a, b, e, "rate", 1);
@@ -256,7 +304,7 @@ export class Stage {
     // Пост-обработка.
     this.grade.uniforms.uTime.value = this.elapsed;
     this.grade.uniforms.uFlash.value = this.mix(a, b, e, "flash", 0);
-    this.bloom.strength = 0.16;
+    this.bloom.strength = 0.08;
     this.composer.render(dt);
     return { time: mv.time, display, ticked: mv.ticked, tick: mv.tick, rate, inside };
   }
