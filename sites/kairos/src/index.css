@@ -108,7 +108,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: calc((100vh - 100vw / 2.39) / 2 * var(--lb));
+  height: calc((100vh - 100vw / 2.1) / 2 * var(--lb));
   min-height: 0;
   background: #000;
 }
@@ -135,7 +135,7 @@
 
 .chapter {
   position: fixed;
-  z-index: 20;
+  z-index: 32;
   left: clamp(1rem, 5vw, 5rem);
   bottom: clamp(5.5rem, 16vh, 10rem);
   max-width: min(30rem, calc(100vw - 2rem));
