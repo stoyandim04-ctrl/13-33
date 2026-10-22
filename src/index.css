@@ -441,14 +441,6 @@
   font-weight: var(--serif-weight, 460);
   letter-spacing: -0.01em;
 }
-/* Over the dark stretch of the gallery the header turns light. */
-.scene-dark #site-header {
-  --color-foreground: #f5f7fb;
-  --color-muted-foreground: #a3a9b8;
-  --color-border: rgb(255 255 255 / 0.16);
-  color: var(--color-foreground);
-  transition: color 0.4s;
-}
 /* The header's flat logo steps aside for the 3D one on the home page. */
 .has-3d-logo .logo-slot {
   opacity: 0;
@@ -462,7 +454,7 @@
 /* The first words of the about text: the logo's blue → cyan, with a soft
    chromatic pulse. */
 .chroma {
-  background: linear-gradient(90deg, #4d86ff, #44c8ff 60%, #9fe3ff);
+  background: linear-gradient(90deg, #246bff, #44c8ff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -483,5 +475,9 @@
 .grain {
   opacity: 0.05;
   mix-blend-mode: multiply;
+}
+.tone-dark .grain {
+  opacity: 0.08;
+  mix-blend-mode: screen;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }

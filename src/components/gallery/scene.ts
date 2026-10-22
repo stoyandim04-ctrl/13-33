@@ -9,8 +9,9 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
-import { MARK_BLUE, MARK_CYAN, MARK_POLYGONS, tracePolygon } from "@/components/brand/logo-geometry";
-import { CH, clamp01, easeInOut, easeOut, moodAt, seg, smooth, within } from "@/components/gallery/timeline";
+import { MARK_CYAN, MARK_POLYGONS, tracePolygon } from "@/components/brand/logo-geometry";
+import { CH, clamp01, easeInOut, easeOut, seg, smooth, within } from "@/components/gallery/timeline";
+import { isDark, PALETTE, toneAt } from "@/components/gallery/palette";
 
 export interface GalleryWindow {
   /** Index of the project it belongs to. */
@@ -50,8 +51,9 @@ export interface SceneOptions {
   onFail: () => void;
 }
 
-const PAPER = new THREE.Color("#E8E8EA");
-const NIGHT = new THREE.Color("#0A0D16");
+/** A hex colour as display (sRGB) values, for shaders that skip conversion. */
+const srgb = (hex: string, out = new THREE.Vector3()) =>
+  out.set(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255);
 const FOV = 35;
 const CAM_Z = 10;
 
@@ -147,7 +149,7 @@ const CARD_FS = /* glsl */ `
     float edge = 1.0 - smoothstep(0.0, 0.01, abs(d + 0.005));
     col = mix(col, vec3(0.018, 0.147, 1.0), edge * uGlow);
     // The back of a window is plain paper.
-    col = mix(col, vec3(0.8, 0.8, 0.82), back * 0.75);
+    col = mix(col, mix(uBg, vec3(0.55), 0.18), back * 0.8);
     // Depth fog, dimming and fading all go towards the background.
     float fog = smoothstep(14.0, 26.0, vDepth);
     col = mix(col, uBg, clamp(fog + uFade + uDim, 0.0, 1.0));
@@ -187,21 +189,24 @@ const BG_VS = /* glsl */ `
 `;
 // Display (sRGB) colours: no colour-space conversion here.
 const BG_FS = /* glsl */ `
-  uniform float uMood;
+  uniform vec3 uBg;
+  uniform vec3 uGlow;
+  uniform float uDark;
   uniform float uAspect;
   uniform float uTime;
   varying vec2 vUv;
   float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
   void main() {
     vec2 p = vUv; p.x *= uAspect;
-    vec2 c = vec2(0.5 * uAspect, 0.55);
-    float r = length(p - c) / max(uAspect, 1.0);
-    vec3 paper = vec3(0.910, 0.910, 0.918) + 0.018 * (1.0 - smoothstep(0.0, 0.8, r)) - 0.03 * smoothstep(0.45, 1.0, r);
-    vec3 night = vec3(0.039, 0.051, 0.086);
+    float r = length(p - vec2(0.5 * uAspect, 0.55)) / max(uAspect, 1.0);
+    // Light grounds: a soft light in the middle, a slight vignette. Dark
+    // grounds: a deep glow of their own colour.
+    vec3 light = uBg + 0.02 * (1.0 - smoothstep(0.0, 0.8, r)) - 0.035 * smoothstep(0.45, 1.05, r);
     vec2 g = vec2(mix(0.5, 0.68, step(1.0, uAspect)) * uAspect, 0.5);
-    night += vec3(0.14, 0.42, 1.0) * exp(-pow(length(p - g) / 0.6, 2.0)) * 0.14;
-    night += vec3(0.27, 0.78, 1.0) * exp(-pow(length(p - vec2(0.1 * uAspect, 0.9)) / 0.5, 2.0)) * 0.05;
-    vec3 col = mix(paper, night, uMood);
+    vec3 dark = uBg * (1.0 - 0.25 * smoothstep(0.4, 1.1, r));
+    dark += uGlow * exp(-pow(length(p - g) / 0.65, 2.0)) * 0.22;
+    dark += uGlow * exp(-pow(length(p - vec2(0.1 * uAspect, 0.92 + 0.03 * sin(uTime * 0.2))) / 0.5, 2.0)) * 0.12;
+    vec3 col = mix(light, dark, uDark);
     col += (hash(vUv * 900.0 + fract(uTime)) - 0.5) / 255.0 * 2.0;
     gl_FragColor = vec4(col, 1.0);
   }
@@ -296,7 +301,7 @@ export class GalleryScene {
   constructor(o: SceneOptions) {
     this.o = o;
     const r = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
-    r.setClearColor(PAPER, 1);
+    r.setClearColor(new THREE.Color(PALETTE.hero.bg), 1);
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.autoClear = false;
     this.renderer = r;
@@ -312,7 +317,13 @@ export class GalleryScene {
         fragmentShader: BG_FS,
         depthWrite: false,
         depthTest: false,
-        uniforms: { uMood: { value: 0 }, uAspect: { value: 1 }, uTime: { value: 0 } },
+        uniforms: {
+          uBg: { value: srgb(PALETTE.hero.bg) },
+          uGlow: { value: srgb(PALETTE.hero.glow) },
+          uDark: { value: isDark(PALETTE.hero.bg) ? 1 : 0 },
+          uAspect: { value: 1 },
+          uTime: { value: 0 },
+        },
       }),
     );
     this.bg.frustumCulled = false;
@@ -321,6 +332,11 @@ export class GalleryScene {
 
     // The title lives in the scene, so the ribbon can pass in front of it
     // and behind it.
+    // The canvas lives (hidden) in the document, so its text takes the
+    // page's language and with it the Bulgarian letter forms.
+    Object.assign(this.titleCanvas.style, { position: "fixed", left: "0", top: "0", width: "1px", height: "1px", opacity: "0", pointerEvents: "none" });
+    this.titleCanvas.setAttribute("aria-hidden", "true");
+    o.canvas.parentElement?.appendChild(this.titleCanvas);
     this.titleTex = new THREE.CanvasTexture(this.titleCanvas);
     this.titleTex.colorSpace = THREE.SRGBColorSpace;
     this.titleTex.minFilter = THREE.LinearFilter;
@@ -406,6 +422,7 @@ export class GalleryScene {
     this.title.geometry.dispose();
     this.title.material.dispose();
     this.titleTex.dispose();
+    this.titleCanvas.remove();
     this.bg.geometry.dispose();
     this.bg.material.dispose();
     this.logo.traverse((o) => {
@@ -471,7 +488,7 @@ export class GalleryScene {
           uPhase: { value: rand(i, 9) },
           uGlow: { value: 0 },
           uPaper: { value: 0 },
-          uBg: { value: PAPER.clone() },
+          uBg: { value: new THREE.Color(PALETTE.hero.bg) },
         },
       });
       const mesh = new THREE.Mesh(geo, mat);
@@ -548,8 +565,8 @@ export class GalleryScene {
     // Blue → cyan across the mark.
     geo.computeBoundingBox();
     const bb = geo.boundingBox!;
-    const a = new THREE.Color(MARK_BLUE);
-    const b = new THREE.Color(MARK_CYAN);
+    const a = new THREE.Color(PALETTE.logo[0]);
+    const b = new THREE.Color(PALETTE.logo[1]);
     const pos = geo.attributes.position;
     const col = new Float32Array(pos.count * 3);
     const c = new THREE.Color();
@@ -577,6 +594,8 @@ export class GalleryScene {
 
   private drawTitle() {
     const { lines, small, lang, sans, serif } = this.o.title;
+    const hero = PALETTE.hero;
+    const shadow = isDark(hero.bg) ? "rgba(0,0,0,0.3)" : "rgba(17,17,19,0.16)";
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = Math.round(this.w * dpr);
     const H = Math.round(this.h * dpr);
@@ -620,7 +639,7 @@ export class GalleryScene {
         row.forEach((part, k) => {
           if (k) x += fs * 0.24;
           setFont(part, fs);
-          ctx.fillStyle = pass ? "#111113" : "rgba(17,17,19,0.16)";
+          ctx.fillStyle = pass ? hero.ink : shadow;
           ctx.fillText(part.text, x + (pass ? 0 : fs * 0.03), y + (pass ? 0 : fs * 0.045));
           x += ctx.measureText(part.text).width;
         });
@@ -631,7 +650,7 @@ export class GalleryScene {
     const sfs = Math.max(12 * dpr, Math.min(fs * 0.14, 16 * dpr));
     ctx.font = `400 ${sfs}px "Manrope Variable", Manrope, sans-serif`;
     ctx.letterSpacing = "0px";
-    ctx.fillStyle = "rgba(17,17,19,0.62)";
+    ctx.fillStyle = hero.quiet;
     const boxW = portrait ? W * 0.8 : Math.min(W * 0.24, sfs * 22);
     const words = small.split(" ");
     const out: string[] = [];
@@ -907,11 +926,13 @@ export class GalleryScene {
     this.camera.lookAt(0, 0, 0);
     this.camera.updateMatrixWorld();
 
-    const mood = moodAt(p);
+    const tone = toneAt(p);
     const bgu = this.bg.material.uniforms;
     bgu.uTime.value = time;
-    bgu.uMood.value = mood;
-    this.bgColor.copy(PAPER).lerp(NIGHT, mood);
+    srgb(tone.bg, bgu.uBg.value);
+    srgb(tone.glow, bgu.uGlow.value);
+    bgu.uDark.value += ((isDark(tone.bg) ? 1 : 0) - bgu.uDark.value) * 0.2;
+    this.bgColor.set(tone.bg);
 
     this.updateTitle(p, time);
 
