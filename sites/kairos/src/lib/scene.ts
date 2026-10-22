@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
 import { BokehPass } from "three/examples/jsm/postprocessing/BokehPass.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
@@ -59,6 +58,42 @@ const GRADE = {
   `,
 };
 
+/**
+  HDRI-то е записано като PNG без загуби: RGB е мантисата, A — общият
+  експонент (формат RGBE на Radiance). Декодира се на видеокартата в
+  half-float текстура — така върви навсякъде, където се сервира PNG.
+*/
+async function loadRGBE(renderer: THREE.WebGLRenderer, url: string) {
+  const blob = await (await fetch(url)).blob();
+  const bmp = await createImageBitmap(blob, { premultiplyAlpha: "none", colorSpaceConversion: "none" });
+  const src = new THREE.Texture(bmp);
+  src.flipY = false;
+  src.premultiplyAlpha = false;
+  src.colorSpace = THREE.NoColorSpace;
+  src.minFilter = src.magFilter = THREE.NearestFilter;
+  src.generateMipmaps = false;
+  src.needsUpdate = true;
+  const rt = new THREE.WebGLRenderTarget(bmp.width, bmp.height, { type: THREE.HalfFloatType, depthBuffer: false });
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { t: { value: src } },
+    vertexShader: "varying vec2 v; void main() { v = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+    fragmentShader:
+      "uniform sampler2D t; varying vec2 v; void main() { vec4 c = texture2D(t, vec2(v.x, 1.0 - v.y)); gl_FragColor = vec4(c.rgb * 255.0 * exp2(c.a * 255.0 - 136.0), 1.0); }",
+  });
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+  const sc = new THREE.Scene();
+  sc.add(quad);
+  renderer.setRenderTarget(rt);
+  renderer.render(sc, new THREE.OrthographicCamera());
+  renderer.setRenderTarget(null);
+  src.dispose();
+  mat.dispose();
+  quad.geometry.dispose();
+  bmp.close();
+  rt.texture.mapping = THREE.EquirectangularReflectionMapping;
+  return rt;
+}
+
 const smooth = (t: number) => t * t * (3 - 2 * t);
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -111,11 +146,10 @@ export class Stage {
     ]).catch(() => {});
 
     const pmrem = new THREE.PMREMGenerator(this.renderer);
-    // Истинско студийно HDRI (Poly Haven, CC0) — металите отразяват реални софтбоксове.
+    // Истинско студийно HDRI (Poly Haven „studio_small_09“, CC0) — металите отразяват реални софтбоксове.
     try {
-      const hdr = await new HDRLoader().loadAsync("studio.hdr");
-      hdr.mapping = THREE.EquirectangularReflectionMapping;
-      this.scene.environment = pmrem.fromEquirectangular(hdr).texture;
+      const hdr = await loadRGBE(this.renderer, "studio-rgbe.png");
+      this.scene.environment = pmrem.fromEquirectangular(hdr.texture).texture;
       hdr.dispose();
     } catch {
       this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
