@@ -94,6 +94,9 @@ async function loadRGBE(renderer: THREE.WebGLRenderer, url: string) {
   return rt;
 }
 
+// ?still — без „ръчния“ трус на камерата (за запис на видео, където трусът идва от снимачната камера).
+const STILL = typeof location !== "undefined" && new URLSearchParams(location.search).has("still");
+
 const smooth = (t: number) => t * t * (3 - 2 * t);
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -276,7 +279,7 @@ export class Stage {
       look.y -= lift;
     }
     // Лек „ръчен“ трус — по-силен отвън.
-    const hand = 0.06 * this.mix(a, b, e, "shake", 1);
+    const hand = STILL ? 0 : 0.06 * this.mix(a, b, e, "shake", 1);
     pos.x += Math.sin(this.elapsed * 0.7) * hand;
     pos.y += Math.sin(this.elapsed * 0.53 + 1) * hand;
     this.camera.position.copy(pos).applyMatrix4(this.watch.matrixWorld);
