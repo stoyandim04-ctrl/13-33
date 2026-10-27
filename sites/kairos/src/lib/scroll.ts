@@ -33,7 +33,7 @@ export function useLenis() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // Бавен, тежък скрол — като камера на кран.
-    lenis = new Lenis({ duration: 1.8, easing: (t) => 1 - Math.pow(1 - t, 3), wheelMultiplier: 0.8 });
+    lenis = new Lenis({ duration: 1.8, easing: (t) => 1 - Math.pow(1 - t, 3), wheelMultiplier: 0.8, anchors: { duration: 2.4 } });
     return () => {
       lenis?.destroy();
       lenis = null;

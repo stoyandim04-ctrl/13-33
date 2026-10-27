@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Stage } from "./lib/scene";
 import { Tick } from "./lib/sound";
-import { addJob, lockScroll, scrollToProgress, useLenis } from "./lib/scroll";
+import { addJob, lockScroll, useLenis } from "./lib/scroll";
+import { Atelier, Calibre, Footer, Journal, Quote, Viewing } from "./components/sections";
 
 /*
   KAIROS — един закачен кадър и дълъг скрол. Сцената рисува всичко; текстът
@@ -9,11 +10,12 @@ import { addJob, lockScroll, scrollToProgress, useLenis } from "./lib/scroll";
   React на всеки кадър — цикълът пише направо в DOM.
 */
 
-type Chapter = { id: string; from: number; to: number; no: string; title: string; body: string; side?: "left" | "right" };
+type Chapter = { id: string; from: number; to: number; no: string; title: string; body: string; side?: "left" | "right"; cta: [string, string] };
 
 const CHAPTERS: Chapter[] = [
   {
     id: "glass",
+    cta: ["Explore the calibre", "#calibre"],
     from: 0.205,
     to: 0.3,
     no: "I",
@@ -22,6 +24,7 @@ const CHAPTERS: Chapter[] = [
   },
   {
     id: "train",
+    cta: ["See the gear train in numbers", "#calibre"],
     from: 0.325,
     to: 0.505,
     no: "II",
@@ -31,6 +34,7 @@ const CHAPTERS: Chapter[] = [
   },
   {
     id: "balance",
+    cta: ["How it is finished", "#atelier"],
     from: 0.54,
     to: 0.645,
     no: "III",
@@ -39,6 +43,7 @@ const CHAPTERS: Chapter[] = [
   },
   {
     id: "rubies",
+    cta: ["Why a watch needs rubies", "#journal"],
     from: 0.675,
     to: 0.8,
     no: "IV",
@@ -48,6 +53,7 @@ const CHAPTERS: Chapter[] = [
   },
   {
     id: "dial",
+    cta: ["Book a private viewing", "#viewing"],
     from: 0.84,
     to: 0.925,
     no: "V",
@@ -56,11 +62,6 @@ const CHAPTERS: Chapter[] = [
   },
 ];
 
-const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
-const clock = (s: number) => {
-  const t = ((s % 86400) + 86400) % 86400;
-  return `${pad(t / 3600)}:${pad((t % 3600) / 60)}:${pad(t % 60)}`;
-};
 const fade = (p: number, a: number, b: number, edge = 0.018) =>
   Math.max(0, Math.min(1, (p - a) / edge, (b - p) / edge));
 
@@ -74,15 +75,12 @@ export default function App() {
   const [entered, setEntered] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
 
-  const hud = useRef<HTMLDivElement>(null);
-  const time = useRef<HTMLSpanElement>(null);
-  const rate = useRef<HTMLSpanElement>(null);
-  const bar = useRef<HTMLDivElement>(null);
+  const film = useRef<HTMLElement>(null);
+  const nav = useRef<HTMLElement>(null);
   const chapterRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const prologue = useRef<HTMLDivElement>(null);
   const finale = useRef<HTMLDivElement>(null);
   const boxes = useRef<HTMLDivElement>(null);
-  const now = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     lockScroll(true);
@@ -120,24 +118,30 @@ export default function App() {
     return addJob((t) => {
       const s = stage.current;
       if (!s) return;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      // Филмът е само първата част от страницата; след нея идва обикновеният сайт.
+      const H = window.innerHeight;
+      const filmH = film.current?.offsetHeight ?? 0;
+      const max = filmH - H;
+      const y = window.scrollY;
+      const p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+      // Когато сайтът е покрил целия екран, сцената не се рисува.
+      if (y > filmH + 4) {
+        nav.current?.classList.add("is-solid");
+        return;
+      }
+      nav.current?.classList.toggle("is-solid", y > filmH - H * 0.4);
       s.progress = p;
       const f = s.render(t);
       if (f.ticked) sound.current.tick(f.tick, f.rate, f.inside);
       sound.current.ambience(f.inside, f.rate);
 
-      if (time.current) time.current.textContent = clock(f.display);
-      if (rate.current) rate.current.textContent = `×${f.rate.toFixed(2)}`;
-      if (bar.current) bar.current.style.transform = `scaleX(${p})`;
       if (boxes.current) boxes.current.style.setProperty("--lb", String(f.inside));
       if (prologue.current) prologue.current.style.opacity = String(fade(p, -1, 0.06, 0.04));
       if (finale.current) {
-        const o = Math.max(0, Math.min(1, (p - 0.965) / 0.03));
+        const o = Math.max(0, Math.min(1, (p - 0.955) / 0.035));
         finale.current.style.opacity = String(o);
         finale.current.style.pointerEvents = o > 0.5 ? "auto" : "none";
       }
-      if (now.current) now.current.textContent = clock(f.time);
       for (const c of CHAPTERS) {
         const el = chapterRefs.current[c.id];
         if (!el) continue;
@@ -145,6 +149,7 @@ export default function App() {
         el.style.opacity = String(o);
         el.style.transform = `translate3d(0, ${(1 - o) * 14}px, 0)`;
         el.style.filter = `blur(${(1 - o) * 6}px)`;
+        el.style.pointerEvents = o > 0.6 ? "auto" : "none";
       }
     });
   }, []);
@@ -171,31 +176,31 @@ export default function App() {
         <i />
       </div>
 
-      {/* Горе: марката и звукът. */}
-      <header ref={hud} className={`hud-top ${entered ? "is-on" : ""}`}>
-        <span className="brand">KAIROS</span>
-        <span className="mono hidden sm:inline">Calibre K-13 · 18 000 A/h</span>
-        <button type="button" className="mono sound" onClick={toggleSound} aria-pressed={soundOn}>
-          <span className={`eq ${soundOn ? "is-on" : ""}`} aria-hidden>
-            <b />
-            <b />
-            <b />
-          </span>
-          Sound {soundOn ? "on" : "off"}
-        </button>
+      {/* Горе: менюто на сайта. */}
+      <header ref={nav} className={`nav ${entered ? "is-on" : ""}`}>
+        <a className="brand" href="#top">
+          KAIROS
+        </a>
+        <nav className="nav-links" aria-label="Main">
+          <a href="#calibre">Calibre K-13</a>
+          <a href="#atelier">Atelier</a>
+          <a href="#journal">Journal</a>
+          <a href="#viewing">Viewings</a>
+        </nav>
+        <div className="nav-right">
+          <button type="button" className="mono sound" onClick={toggleSound} aria-pressed={soundOn}>
+            <span className={`eq ${soundOn ? "is-on" : ""}`} aria-hidden>
+              <b />
+              <b />
+              <b />
+            </span>
+            <span className="hidden sm:inline">Sound {soundOn ? "on" : "off"}</span>
+          </button>
+          <a className="pill pill-sm" href="#viewing">
+            Book a viewing
+          </a>
+        </div>
       </header>
-
-      {/* Долу: времето на механизма (забавя се заедно с него) и напредъкът. */}
-      <footer className={`hud-bottom ${entered ? "is-on" : ""}`}>
-        <div className="mono">
-          Movement time <span ref={time} className="ink">--:--:--</span>
-          <span className="sep">·</span>
-          <span ref={rate}>×1.00</span>
-        </div>
-        <div className="track">
-          <div ref={bar} className="track-fill" />
-        </div>
-      </footer>
 
       {/* Пролог. */}
       <div ref={prologue} className="prologue">
@@ -222,29 +227,39 @@ export default function App() {
           </p>
           <h2 className="title">{c.title}</h2>
           <p className="body">{c.body}</p>
+          <a className="mono chapter-cta" href={c.cta[1]}>
+            {c.cta[0]} <span aria-hidden>→</span>
+          </a>
         </div>
       ))}
 
-      {/* Финал. */}
+      {/* Краят на филма: часовникът отпред и пътят към сайта. */}
       <div ref={finale} className="finale" style={{ opacity: 0 }}>
-        <p className="mono eyebrow">KAIROS · καιρός — the right moment</p>
-        <p className="mega">13:33</p>
-        <p className="lead">
-          The hands stopped. The train didn’t — it’s <span ref={now} className="ink">--:--:--</span> inside.
-        </p>
+        <p className="mono eyebrow">Calibre K-13 · Edition I · Platinum</p>
+        <h2 className="finale-title">Made for the right moment.</h2>
+        <p className="lead">A hand-wound pocket watch with a movement you have now seen from the inside.</p>
         <div className="end-actions">
-          <button type="button" className="pill" onClick={() => scrollToProgress(0)}>
-            Enter again
-          </button>
-          <a className="mono link" href="https://digistudio13.com" target="_blank" rel="noreferrer">
-            A concept by 13:33 ↗
+          <a className="pill" href="#viewing">
+            Book a private viewing
+          </a>
+          <a className="mono link" href="#calibre">
+            Discover the calibre ↓
           </a>
         </div>
-        <p className="mono note">KAIROS and calibre K-13 are invented. The movement on this page is real geometry — it keeps time.</p>
       </div>
 
-      {/* Скролът — само дължина; всичко се вижда върху платното. */}
-      <main aria-label="KAIROS — scroll through the movement" style={{ height: "1500vh" }} />
+      {/* Филмът — само дължина; всичко се вижда върху платното. */}
+      <main id="top">
+        <section ref={film} aria-label="KAIROS — scroll through the movement" style={{ height: "1500vh" }} />
+        <div className="site">
+          <Calibre />
+          <Atelier />
+          <Quote />
+          <Journal />
+          <Viewing />
+          <Footer />
+        </div>
+      </main>
 
       {/* Вход: зареждане и избор на звук. */}
       <div className={`gate ${entered ? "is-gone" : ""}`}>
