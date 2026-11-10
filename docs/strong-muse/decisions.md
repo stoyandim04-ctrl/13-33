@@ -13,12 +13,13 @@
 - 2026-10-10: Anna asked (via the user) for the biceps photo in the hero and the rest of the new shoot in the About section. Hero uses a background-removed cutout of that photo (`anna-flex-cutout.webp`, removed locally with rembg/isnet); About keeps the waterfall feature and adds a three-frame photo strip (`anna-window`, `anna-gym`, `anna-rest`). The frame words (ГРАЦИЯ/СИЛА/ФОКУС) are typography, not claims. Program covers still use the original `anna-cutout.webp`.
 
 - 2026-10-10: Vercel project `strong-muse` now tracks `feat/strong-muse-prototype` as its production branch, and its Ignored Build Step skips every other branch (`[ "$VERCEL_GIT_COMMIT_REF" != "feat/strong-muse-prototype" ]`). A push to this branch publishes https://strong-muse.vercel.app.
+- 2026-11-10: Anna sent a professional studio shoot (6 photos). About became a trainer profile (portrait `anna-portrait` + inset `anna-studio-pink`, name, slogan, the three planned formats grouped from the confirmed program data). Each program card and its dialog now uses its own photo (`anna-start`, `anna-strong`, `anna-hiit`, `anna-coaching`) instead of the cutout composition. The casual strip photos (window, gym, rest) and `anna-cutout.webp` were removed as unused. No bio or credentials were added.
 - 2026-10-10: the user asked to remove the waterfall feature card from About; About is now only the three-frame photo strip (frames numbered 01–03). The waterfall photo remains as the contact-section background.
 
 ## Implementation choices, still subject to design review
 
 - Shared root dependencies, no move of the studio checkout or source, independent Vite root and output. No workspace migration is needed for this first app.
-- Blush/rose pink grid, plum ink, Sofia Sans Condensed headings + Cormorant Garamond italics, film grain, letterbox intro, graded photo with vignette. Program covers: one cutout of Anna framed four ways under a cover word (START/STRONG/HIIT/COACH). These are proposals, not client-approved brand tokens.
+- Blush/rose pink grid, plum ink, Sofia Sans Condensed headings + Cormorant Garamond italics, film grain, letterbox intro, graded photo with vignette. Program covers: one studio photo per program under a cover word (START/STRONG/HIIT/COACH). These are proposals, not client-approved brand tokens.
 - Program details use a native modal dialog, no sales action. Mobile menu also uses native dialog for focus containment and Escape behavior.
 - Unknown bio/contact information is visibly pending in the review prototype; replace with approved facts before launch.
 - `noindex` and concept notice remain until explicit release approval. They are not access control; no private originals or actual nutrition PDFs belong in public assets.

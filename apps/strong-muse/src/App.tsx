@@ -9,17 +9,18 @@ const links = [
   { href: "#contact", label: "Контакт" },
 ];
 
-const CUTOUT = "/anna/anna-cutout.webp";
 const PHOTO = "/anna/anna-waterfall.webp";
 const HERO = "/anna/anna-flex-cutout.webp";
+const PORTRAIT = "/anna/anna-portrait.webp";
+const STUDIO = "/anna/anna-studio-pink.webp";
 
-// Photos Anna supplied on 2026-10-10. The words are typography for the frames,
-// not claims about her.
-const frames = [
-  { src: "/anna/anna-window.webp", w: 933, h: 1400, word: "ГРАЦИЯ", alt: "Анна Димитрова в профил пред светъл прозорец, ръцете вдигнати" },
-  { src: "/anna/anna-gym.webp", w: 960, h: 640, word: "СИЛА", alt: "Анна Димитрова показва бицепс в залата" },
-  { src: "/anna/anna-rest.webp", w: 933, h: 1400, word: "ФОКУС", alt: "Анна Димитрова облегната на кушетка" },
-];
+// The three formats Strong Muse plans, grouped from the confirmed program data.
+const focusAreas = Object.entries(
+  programs.reduce<Record<string, string[]>>((acc, p) => {
+    (acc[p.category] ??= []).push(p.name);
+    return acc;
+  }, {}),
+).map(([category, names]) => ({ category, names: names.join(" · ") }));
 
 // Reveals sections once as they enter the viewport. Content stays visible
 // without JS and under reduced motion (see `.motion` in style.css).
@@ -73,9 +74,9 @@ function ProgramDialog({
     >
       {program && (
         <>
-          <div className={`dialog-cover cover-${program.id}`} aria-hidden="true">
+          <div className="dialog-cover" aria-hidden="true">
+            <img src={program.photo} alt="" style={{ objectPosition: program.focus }} />
             <span className="cover-word">{program.word}</span>
-            <img src={CUTOUT} alt="" />
           </div>
           <div className="dialog-body">
             <button
@@ -229,28 +230,50 @@ export default function App() {
           </a>
         </section>
 
-        <section id="about" className="feature wrap" aria-labelledby="about-title">
-          <h2 id="about-title" className="sr-only">
-            За Анна
-          </h2>
-          <ul className="film" aria-label="Снимки на Анна">
-            {frames.map((f, i) => (
-              <li
-                key={f.src}
-                className={`film-frame ${f.w > f.h ? "wide" : "tall"}`}
-                data-reveal
-                style={{ "--i": i } as CSSProperties}
-              >
-                <figure>
-                  <img src={f.src} alt={f.alt} width={f.w} height={f.h} loading="lazy" />
-                  <figcaption aria-hidden="true">
-                    <span>SM · 0{i + 1}</span>
-                    <strong>{f.word}</strong>
-                  </figcaption>
-                </figure>
-              </li>
-            ))}
-          </ul>
+        <section id="about" className="about wrap" aria-labelledby="about-title">
+          <div className="about-media" data-reveal>
+            <img
+              className="about-main"
+              src={PORTRAIT}
+              alt="Анна Димитрова с ръце на кръста в залата"
+              width={1200}
+              height={1799}
+              loading="lazy"
+            />
+            <img
+              className="about-inset"
+              src={STUDIO}
+              alt="Анна Димитрова в розов екип до фитнес топки"
+              width={1000}
+              height={1500}
+              loading="lazy"
+            />
+            <span className="about-badge" aria-hidden="true">
+              ✷ STRONG MUSE
+            </span>
+          </div>
+          <div className="about-copy" data-reveal style={{ "--i": 1 } as CSSProperties}>
+            <p className="eyebrow">01 / ТРЕНЬОРЪТ ЗАД STRONG MUSE</p>
+            <h2 id="about-title">
+              Анна <em>Димитрова.</em>
+            </h2>
+            <p className="about-quote">„Бъди своето вдъхновение“</p>
+            <p className="about-note">
+              Историята на Анна ще бъде добавена след нейното одобрение.
+            </p>
+            <ul className="about-focus">
+              {focusAreas.map((f, i) => (
+                <li key={f.category}>
+                  <span>0{i + 1}</span>
+                  <strong>{f.category}</strong>
+                  <em>{f.names}</em>
+                </li>
+              ))}
+            </ul>
+            <a href="#programs" className="button dark">
+              Разгледай програмите <ArrowUpRight size={18} />
+            </a>
+          </div>
         </section>
 
         <section id="programs" className="section wrap" aria-labelledby="programs-title">
@@ -267,14 +290,14 @@ export default function App() {
             {programs.map((p, i) => (
               <article
                 key={p.id}
-                className={`program-card cover-${p.id}`}
+                className="program-card"
                 data-reveal
                 style={{ "--i": i } as CSSProperties}
               >
                 <div className="cover" aria-hidden="true">
+                  <img src={p.photo} alt="" loading="lazy" style={{ objectPosition: p.focus }} />
                   {p.duration && <span className="cover-meta">{p.duration}</span>}
                   <span className="cover-word">{p.word}</span>
-                  <img src={CUTOUT} alt="" loading="lazy" />
                   <span className="planned-label">Предстояща програма</span>
                 </div>
                 <div className="card-label">

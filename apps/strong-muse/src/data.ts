@@ -7,6 +7,9 @@ export type Program = {
   status: "planned";
   /** Display word on the card cover — typography only, not a claim. */
   word: string;
+  /** Cover photo from Anna's studio shoot and its crop focus. */
+  photo: string;
+  focus: string;
 };
 
 // Names, durations and subtitles are confirmed in the supplied Notion export.
@@ -20,6 +23,8 @@ export const programs: Program[] = [
     category: "Предизвикателство",
     status: "planned",
     word: "START",
+    photo: "/anna/anna-start.webp",
+    focus: "50% 2%",
   },
   {
     id: "strong",
@@ -29,6 +34,8 @@ export const programs: Program[] = [
     category: "Предизвикателство",
     status: "planned",
     word: "STRONG",
+    photo: "/anna/anna-strong.webp",
+    focus: "50% 28%",
   },
   {
     id: "hiit",
@@ -37,6 +44,8 @@ export const programs: Program[] = [
     category: "Домашни HIIT тренировки",
     status: "planned",
     word: "HIIT",
+    photo: "/anna/anna-hiit.webp",
+    focus: "72% 45%",
   },
   {
     id: "coaching",
@@ -45,6 +54,8 @@ export const programs: Program[] = [
     category: "Онлайн коучинг",
     status: "planned",
     word: "COACH",
+    photo: "/anna/anna-coaching.webp",
+    focus: "50% 30%",
   },
 ];
 

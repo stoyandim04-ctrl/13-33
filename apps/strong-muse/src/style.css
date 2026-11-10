@@ -417,80 +417,103 @@ summary:focus-visible {
   background: rgba(255, 248, 251, 0.8);
 }
 
-/* ---------- Featured cinematic card ---------- */
-.feature {
-  margin-top: 8px;
-}
 
-/* About: contact-sheet frames on the pink grid.
-   Phones: a swipeable strip; wider screens: a tilted triptych. */
-.film {
+/* ---------- About: trainer profile ---------- */
+.about {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 74%;
-  align-items: center;
-  gap: 14px;
-  margin: 22px -16px 0;
-  padding: 10px 16px 18px;
-  list-style: none;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
+  gap: 34px;
+  margin-top: 24px;
 }
-.film::-webkit-scrollbar {
-  display: none;
-}
-.film-frame {
-  scroll-snap-align: center;
-}
-.film-frame figure {
+.about-media {
   position: relative;
-  padding: 7px 7px 0;
-  border-radius: 22px;
-  background: var(--cream);
-  box-shadow: 0 24px 50px -30px rgba(59, 22, 48, 0.6);
-  transition:
-    rotate 0.6s var(--ease),
-    translate 0.6s var(--ease),
-    box-shadow 0.6s var(--ease);
+  padding: 0 14% 12% 0;
 }
-.film-frame img {
+.about-main {
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: 50% 18%;
+  border-radius: 28px;
+  border: 7px solid var(--cream);
+  box-shadow: 0 34px 60px -36px rgba(59, 22, 48, 0.7);
+}
+.about-inset {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 44%;
+  height: auto;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: 16px;
-  filter: contrast(1.06) saturate(0.88);
+  object-position: 45% 25%;
+  border-radius: 22px;
+  border: 6px solid var(--cream);
+  box-shadow: 0 26px 50px -26px rgba(59, 22, 48, 0.75);
+  rotate: 3deg;
 }
-.film-frame:nth-child(1) img {
-  object-position: 50% 30%;
+.about-badge {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: rgba(255, 248, 251, 0.9);
+  color: var(--rose-deep);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
 }
-.film-frame:nth-child(2) img {
-  object-position: 42% 40%;
+.about-copy h2 {
+  margin-top: 12px;
+  font-size: clamp(46px, 8vw, 96px);
 }
-.film-frame:nth-child(3) img {
-  object-position: 50% 30%;
+.about-quote {
+  margin-top: 10px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.2;
 }
-.film-frame figcaption {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 8px 11px;
-}
-.film-frame figcaption span {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+.about-note {
+  margin-top: 16px;
   color: var(--muted);
 }
-.film-frame figcaption strong {
-  font-family: var(--condensed);
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
+.about-focus {
+  margin: 26px 0 28px;
+  padding: 0;
+  list-style: none;
+  border-top: 1.5px solid rgba(42, 19, 32, 0.12);
+}
+.about-focus li {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 2px 10px;
+  padding: 14px 0;
+  border-bottom: 1.5px solid rgba(42, 19, 32, 0.12);
+}
+.about-focus span {
+  grid-row: span 2;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   color: var(--rose-deep);
+  padding-top: 4px;
+}
+.about-focus strong {
+  font-family: var(--condensed);
+  font-size: 21px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.about-focus em {
+  font-family: inherit;
+  font-style: normal;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
 }
 
 /* ---------- Sections ---------- */
@@ -555,49 +578,45 @@ summary:focus-visible {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse at 50% 35%,
-    transparent 55%,
-    rgba(42, 19, 32, 0.28)
+  background: linear-gradient(
+    180deg,
+    rgba(42, 19, 32, 0) 45%,
+    rgba(42, 19, 32, 0.78) 100%
   );
 }
 .cover img {
   position: absolute;
-  z-index: 1;
-  top: var(--fy, 8%);
-  left: 50%;
-  height: var(--fh, 118%);
-  width: auto;
-  max-width: none;
-  translate: calc(-50% + var(--fx, 0%)) 0;
-  filter: drop-shadow(0 16px 18px rgba(42, 19, 32, 0.3)) contrast(1.05);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.04) saturate(0.92);
   transition: transform 0.8s var(--ease);
 }
 .program-card:hover .cover img {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 .cover-word {
   position: absolute;
-  z-index: 0;
-  left: 0;
-  right: 0;
-  top: 5%;
-  text-align: center;
+  z-index: 2;
+  left: 12px;
+  right: 12px;
+  bottom: 42px;
   font-family: var(--condensed);
   font-weight: 900;
-  font-size: 25cqw;
+  font-size: 22cqw;
   line-height: 0.85;
   letter-spacing: -0.01em;
-  color: var(--cover-word, #fff);
+  color: #fff;
   white-space: nowrap;
 }
 .cover-meta {
   position: absolute;
   z-index: 3;
-  bottom: 46px;
-  left: 10px;
+  top: 10px;
+  right: 10px;
   padding: 5px 9px;
   border-radius: 999px;
   background: rgba(255, 248, 251, 0.88);
@@ -622,32 +641,6 @@ summary:focus-visible {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: center;
-}
-/* Poster compositions — one cutout, four framings. */
-.cover-start {
-  --cover-bg: linear-gradient(170deg, #ffe1cf, #f4a9b8 70%, #e98aa9);
-  --cover-word: rgba(255, 255, 255, 0.92);
-  --fh: 112%;
-  --fy: 19%;
-}
-.cover-strong {
-  --cover-bg: linear-gradient(170deg, #f1d0e6, #b06a9a 75%, #6d2f5a);
-  --cover-word: rgba(255, 233, 244, 0.9);
-  --fh: 190%;
-  --fy: 17%;
-}
-.cover-hiit {
-  --cover-bg: linear-gradient(170deg, #ffe9b5, #ffb48a 60%, #f07b88);
-  --cover-word: rgba(255, 255, 255, 0.9);
-  --fh: 132%;
-  --fx: 10%;
-  --fy: 17%;
-}
-.cover-coaching {
-  --cover-bg: linear-gradient(170deg, #e7e0f7, #c7a7d8 60%, #8e6aa6);
-  --cover-word: rgba(255, 255, 255, 0.88);
-  --fh: 290%;
-  --fy: 17%;
 }
 .card-label {
   position: relative;
@@ -874,27 +867,26 @@ dialog::backdrop {
   overflow: hidden;
   aspect-ratio: 16 / 10;
   isolation: isolate;
-  background: var(--cover-bg);
+  background: var(--plum);
   container-type: inline-size;
-  --fh: 150%;
-  --fy: 20%;
 }
-.dialog-cover.cover-coaching {
-  --fh: 260%;
-}
-.dialog-cover .cover-word {
-  top: 5%;
-  font-size: 22cqw;
+.dialog-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(42, 19, 32, 0.75));
 }
 .dialog-cover img {
   position: absolute;
-  top: var(--fy);
-  left: 50%;
-  height: var(--fh);
-  width: auto;
-  max-width: none;
-  translate: -50% 0;
-  filter: drop-shadow(0 16px 18px rgba(42, 19, 32, 0.3));
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dialog-cover .cover-word {
+  bottom: 18px;
+  left: 20px;
+  font-size: 18cqw;
 }
 .dialog-body {
   position: relative;
@@ -981,6 +973,11 @@ dialog::backdrop {
 
 /* ---------- Breakpoints ---------- */
 @media (max-width: 699px) {
+  .planned-label {
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
   /* The flex photo is wide: size it by width so both fists stay in frame. */
   .hero-figure {
     top: 78px;
@@ -995,33 +992,6 @@ dialog::backdrop {
 @media (min-width: 700px) {
   .wrap {
     padding-inline: 32px;
-  }
-  .film {
-    grid-auto-flow: row;
-    grid-template-columns: 1fr 1.35fr 1fr;
-    gap: 28px;
-    margin: 36px 0 0;
-    padding: 12px 8px 20px;
-    overflow: visible;
-  }
-  .film-frame.wide img {
-    aspect-ratio: 3 / 2;
-  }
-  .film-frame:nth-child(1) figure {
-    rotate: -3deg;
-    translate: 0 18px;
-  }
-  .film-frame:nth-child(2) figure {
-    rotate: 1.5deg;
-  }
-  .film-frame:nth-child(3) figure {
-    rotate: 2.5deg;
-    translate: 0 30px;
-  }
-  .film-frame figure:hover {
-    rotate: 0deg;
-    translate: 0 -6px;
-    box-shadow: 0 34px 60px -30px rgba(59, 22, 48, 0.7);
   }
   .card-grid {
     gap: 20px;
@@ -1051,6 +1021,14 @@ dialog::backdrop {
   .dialog-body {
     padding: 44px 36px 32px;
     align-self: center;
+  }
+}
+@media (min-width: 900px) {
+  .about {
+    grid-template-columns: 1.05fr 1fr;
+    align-items: center;
+    gap: 64px;
+    margin-top: 48px;
   }
 }
 @media (min-width: 1000px) {
