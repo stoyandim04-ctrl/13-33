@@ -13,6 +13,13 @@
 - 2026-10-10: Anna asked (via the user) for the biceps photo in the hero and the rest of the new shoot in the About section. Hero uses a background-removed cutout of that photo (`anna-flex-cutout.webp`, removed locally with rembg/isnet); About keeps the waterfall feature and adds a three-frame photo strip (`anna-window`, `anna-gym`, `anna-rest`). The frame words (ГРАЦИЯ/СИЛА/ФОКУС) are typography, not claims. Program covers still use the original `anna-cutout.webp`.
 
 - 2026-10-10: Vercel project `strong-muse` now tracks `feat/strong-muse-prototype` as its production branch, and its Ignored Build Step skips every other branch (`[ "$VERCEL_GIT_COMMIT_REF" != "feat/strong-muse-prototype" ]`). A push to this branch publishes https://strong-muse.vercel.app.
+- 2026-11-12: Anna's message (relayed by the user):
+  - Bio text for About, used word for word (claims "дългогодишен състезател и шампион по бикини фитнес" are hers).
+  - Hero photo: the pink outfit by the fitness balls (`anna-hero.webp`); the biceps cutout is retired.
+  - New section BIKINI PREP — „Подготовка на бикини състезателки“, planned, own section with the pink standing photo (`anna-bikini-prep.webp`). Category label „Състезателна подготовка“ is ours.
+  - COACHING cover: the kneeling photo (`anna-coaching.webp`). HIIT cover: a floor-exercise photo — only a chat thumbnail so far, so HIIT shows a plain cover until the full-size file arrives.
+  - Three Balkan Grand Prix stage photos and the hands-on-hips portrait go to About; she wants the stage photos cut out ("изрязани"). Only thumbnails received so far; not on the site yet.
+  - Commercial plan she described (not built, not approved for build): company + bank account this coming week, then domain and online payment; correspondence by e-mail; after payment a client gets a questionnaire and the delivery time of their program; training-only products are sent without a questionnaire. She will write the questionnaires, info and recommendations herself.
 - 2026-11-10: Anna sent a professional studio shoot (6 photos). About became a trainer profile (portrait `anna-portrait` + inset `anna-studio-pink`, name, slogan, the three planned formats grouped from the confirmed program data). Each program card and its dialog now uses its own photo (`anna-start`, `anna-strong`, `anna-hiit`, `anna-coaching`) instead of the cutout composition. The casual strip photos (window, gym, rest) and `anna-cutout.webp` were removed as unused. No bio or credentials were added.
 - 2026-10-10: the user asked to remove the waterfall feature card from About; About is now only the three-frame photo strip (frames numbered 01–03). The waterfall photo remains as the contact-section background.
 

@@ -217,6 +217,7 @@ summary:focus-visible {
 
 /* ---------- Hero ---------- */
 .hero {
+  --hero-pad: 0;
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -224,7 +225,7 @@ summary:focus-visible {
   min-height: max(640px, min(calc(100svh - 34px), 940px));
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
   padding-bottom: 64px;
   background: linear-gradient(
     180deg,
@@ -266,38 +267,6 @@ summary:focus-visible {
   );
   filter: blur(20px);
 }
-.hero-figure {
-  position: absolute;
-  z-index: 0;
-  left: 50%;
-  top: 70px;
-  bottom: 0;
-  translate: -50% 0;
-}
-.hero-figure img {
-  height: 100%;
-  width: auto;
-  max-width: none;
-  /* No filter here: filter + mask on the cutout paints a pale box in Chromium. */
-  -webkit-mask-image: linear-gradient(180deg, #000 50%, transparent 86%);
-  mask-image: linear-gradient(180deg, #000 50%, transparent 86%);
-}
-.hero-word {
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 16%;
-  translate: -50% 0;
-  font-family: var(--condensed);
-  font-weight: 900;
-  font-size: clamp(130px, 40vw, 420px);
-  line-height: 0.8;
-  letter-spacing: -0.02em;
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(196, 80, 138, 0.3);
-  white-space: nowrap;
-  pointer-events: none;
-}
 .hero-side {
   position: absolute;
   top: 50%;
@@ -318,10 +287,46 @@ summary:focus-visible {
 .hero-side.right {
   right: 28px;
 }
-.hero-copy {
+.hero-inner {
   position: relative;
   z-index: 2;
+  display: grid;
+  gap: 26px;
+  padding-top: 78px;
+}
+.hero-copy {
   text-align: center;
+}
+.hero-photo {
+  order: -1;
+  position: relative;
+  justify-self: center;
+  width: min(100%, 460px);
+  aspect-ratio: 4 / 5;
+  max-height: 58svh;
+  border-radius: 28px;
+  border: 7px solid var(--cream);
+  overflow: hidden;
+  background: #1a0e14;
+  box-shadow: 0 40px 70px -40px rgba(59, 22, 48, 0.75);
+}
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 24%;
+}
+.hero-badge {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: rgba(255, 248, 251, 0.9);
+  color: var(--rose-deep);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
 }
 .hero-copy .eyebrow {
   margin-bottom: 14px;
@@ -426,7 +431,6 @@ summary:focus-visible {
 }
 .about-media {
   position: relative;
-  padding: 0 14% 12% 0;
 }
 .about-main {
   display: block;
@@ -479,6 +483,13 @@ summary:focus-visible {
 .about-note {
   margin-top: 16px;
   color: var(--muted);
+}
+.about-bio {
+  margin-top: 18px;
+  max-width: 58ch;
+}
+.about-bio p + p {
+  margin-top: 12px;
 }
 .about-focus {
   margin: 26px 0 28px;
@@ -558,6 +569,7 @@ summary:focus-visible {
   box-shadow: 0 30px 50px -30px rgba(59, 22, 48, 0.8);
 }
 .cover {
+  --cover-bg: linear-gradient(170deg, #ffd9e8, #ec95bf 60%, #c4508a);
   position: relative;
   overflow: hidden;
   aspect-ratio: 4 / 5;
@@ -724,6 +736,55 @@ summary:focus-visible {
   scale: 1.03;
 }
 
+/* ---------- Bikini prep ---------- */
+.prep {
+  padding-top: 72px;
+}
+.prep-card {
+  display: grid;
+  overflow: hidden;
+  border-radius: 30px;
+  background: var(--plum);
+  color: #fff;
+  box-shadow: 0 40px 70px -40px rgba(59, 22, 48, 0.85);
+}
+.prep-photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+.prep-copy {
+  padding: 28px 24px 32px;
+}
+.prep-copy .eyebrow {
+  color: #ffb3d4;
+}
+.prep-copy h2 {
+  margin-top: 12px;
+  font-size: clamp(42px, 7vw, 84px);
+}
+.prep-copy h2 em {
+  color: #ffc3dd;
+}
+.prep-lead {
+  margin: 12px 0 20px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1.2;
+}
+.prep-copy .status-note {
+  margin-bottom: 22px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.prep-copy .button {
+  display: flex;
+  width: fit-content;
+}
+
 /* ---------- FAQ ---------- */
 .faq-section {
   padding-block: 80px 24px;
@@ -863,11 +924,12 @@ dialog::backdrop {
   display: grid;
 }
 .dialog-cover {
+  --cover-bg: linear-gradient(170deg, #ffd9e8, #ec95bf 60%, #c4508a);
   position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 10;
   isolation: isolate;
-  background: var(--plum);
+  background: var(--cover-bg);
   container-type: inline-size;
 }
 .dialog-cover::after {
@@ -978,16 +1040,6 @@ dialog::backdrop {
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
-  /* The flex photo is wide: size it by width so both fists stay in frame. */
-  .hero-figure {
-    top: 78px;
-    bottom: auto;
-    width: min(122vw, 560px);
-  }
-  .hero-figure img {
-    width: 100%;
-    height: auto;
-  }
 }
 @media (min-width: 700px) {
   .wrap {
@@ -1024,6 +1076,41 @@ dialog::backdrop {
   }
 }
 @media (min-width: 900px) {
+  .hero-inner {
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: 48px;
+    padding-top: 96px;
+  }
+  .hero-copy {
+    text-align: left;
+  }
+  .hero h1 {
+    font-size: clamp(56px, 5.6vw, 96px);
+  }
+  .hero-actions {
+    justify-content: flex-start;
+  }
+  .hero-photo {
+    order: 0;
+    width: 100%;
+    max-height: none;
+    height: min(74svh, 700px);
+    aspect-ratio: auto;
+    rotate: 2deg;
+  }
+  .prep-card {
+    grid-template-columns: 0.9fr 1.1fr;
+    align-items: center;
+  }
+  .prep-photo {
+    height: 100%;
+    min-height: 560px;
+    aspect-ratio: auto;
+  }
+  .prep-copy {
+    padding: 48px 56px;
+  }
   .about {
     grid-template-columns: 1.05fr 1fr;
     align-items: center;
@@ -1040,13 +1127,6 @@ dialog::backdrop {
   }
   .hero-side {
     display: block;
-  }
-  .hero-figure {
-    top: 40px;
-  }
-  .hero-figure img {
-    -webkit-mask-image: linear-gradient(180deg, #000 46%, transparent 80%);
-    mask-image: linear-gradient(180deg, #000 46%, transparent 80%);
   }
   .program-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1067,11 +1147,8 @@ dialog::backdrop {
   .letterbox {
     animation: letterbox 2.2s 0.15s var(--ease) both;
   }
-  .hero-figure img {
+  .hero-photo {
     animation: figure-in 2.2s 0.25s var(--ease) both;
-  }
-  .hero-word {
-    animation: fade-in 2.6s 0.6s ease both;
   }
   .hero-copy > * {
     animation: rise 1.3s var(--ease) both;

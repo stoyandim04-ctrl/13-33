@@ -5,16 +5,18 @@ import { nutrition, programs, type Program } from "./data";
 const links = [
   { href: "#about", label: "За Анна" },
   { href: "#programs", label: "Програми" },
+  { href: "#bikini-prep", label: "Bikini prep" },
   { href: "#nutrition", label: "Хранене" },
   { href: "#contact", label: "Контакт" },
 ];
 
 const PHOTO = "/anna/anna-waterfall.webp";
-const HERO = "/anna/anna-flex-cutout.webp";
+const HERO = "/anna/anna-hero.webp";
 const PORTRAIT = "/anna/anna-portrait.webp";
-const STUDIO = "/anna/anna-studio-pink.webp";
 
-// The three formats Strong Muse plans, grouped from the confirmed program data.
+const bikini = programs.find((p) => p.id === "bikini")!;
+
+// The formats Strong Muse plans, grouped from the confirmed program data.
 const focusAreas = Object.entries(
   programs.reduce<Record<string, string[]>>((acc, p) => {
     (acc[p.category] ??= []).push(p.name);
@@ -75,7 +77,9 @@ function ProgramDialog({
       {program && (
         <>
           <div className="dialog-cover" aria-hidden="true">
-            <img src={program.photo} alt="" style={{ objectPosition: program.focus }} />
+            {program.photo && (
+              <img src={program.photo} alt="" style={{ objectPosition: program.focus }} />
+            )}
             <span className="cover-word">{program.word}</span>
           </div>
           <div className="dialog-body">
@@ -188,39 +192,41 @@ export default function App() {
         <section id="home" className="hero" aria-labelledby="hero-title">
           <div className="hero-glow" aria-hidden="true" />
           <div className="hero-leak" aria-hidden="true" />
-          <span className="hero-word" aria-hidden="true">
-            MUSE
-          </span>
-          <div className="hero-figure">
-            <img
-              src={HERO}
-              alt="Анна Димитрова показва бицепси"
-              width={1252}
-              height={1500}
-              fetchPriority="high"
-            />
-          </div>
           <span className="hero-side left" aria-hidden="true">
             СИЛА ✷ ДВИЖЕНИЕ
           </span>
           <span className="hero-side right" aria-hidden="true">
             STRONG ✷ MUSE
           </span>
-          <div className="hero-copy wrap">
-            <p className="eyebrow">STRONG MUSE · АННА ДИМИТРОВА</p>
-            <h1 id="hero-title">
-              <span>СИЛАТА Е В ТЕБ.</span>
-              <br />
-              <span>ДАЙ И ДВИЖЕНИЕ !</span>
-            </h1>
-            <p className="hero-subtitle">Бъди своето вдъхновение</p>
-            <div className="hero-actions">
-              <a href="#programs" className="button dark">
-                Разгледай програмите <ArrowUpRight size={18} />
-              </a>
-              <a className="button ghost" href="#about">
-                За Анна
-              </a>
+          <div className="hero-inner wrap">
+            <div className="hero-copy">
+              <p className="eyebrow">STRONG MUSE · АННА ДИМИТРОВА</p>
+              <h1 id="hero-title">
+                <span>СИЛАТА Е В ТЕБ.</span>
+                <br />
+                <span>ДАЙ И ДВИЖЕНИЕ !</span>
+              </h1>
+              <p className="hero-subtitle">Бъди своето вдъхновение</p>
+              <div className="hero-actions">
+                <a href="#programs" className="button dark">
+                  Разгледай програмите <ArrowUpRight size={18} />
+                </a>
+                <a className="button ghost" href="#about">
+                  За Анна
+                </a>
+              </div>
+            </div>
+            <div className="hero-photo">
+              <img
+                src={HERO}
+                alt="Анна Димитрова в розов екип до фитнес топки"
+                width={1400}
+                height={2100}
+                fetchPriority="high"
+              />
+              <span className="hero-badge" aria-hidden="true">
+                ✷ STRONG MUSE
+              </span>
             </div>
           </div>
           <div className="letterbox top" aria-hidden="true" />
@@ -240,14 +246,6 @@ export default function App() {
               height={1799}
               loading="lazy"
             />
-            <img
-              className="about-inset"
-              src={STUDIO}
-              alt="Анна Димитрова в розов екип до фитнес топки"
-              width={1000}
-              height={1500}
-              loading="lazy"
-            />
             <span className="about-badge" aria-hidden="true">
               ✷ STRONG MUSE
             </span>
@@ -258,9 +256,22 @@ export default function App() {
               Анна <em>Димитрова.</em>
             </h2>
             <p className="about-quote">„Бъди своето вдъхновение“</p>
-            <p className="about-note">
-              Историята на Анна ще бъде добавена след нейното одобрение.
-            </p>
+            {/* Anna's own text, sent 2026-11-12 — keep it word for word. */}
+            <div className="about-bio">
+              <p>
+                Аз съм Анна Димитрова — дългогодишен състезател и шампион по
+                бикини фитнес. Днес съм една щастлива майка и жена, успяла да
+                намери баланса в пълноценното хранене, трениране и
+                възстановяване.
+              </p>
+              <p>
+                Вярвам, че добрата форма се изгражда с постоянство и навици,
+                които можеш да запазиш във времето. Създадох Strong Muse, за да
+                ти помогна да тренираш с желание и мотивация, да се чувстваш
+                по-силна и да намериш своя ритъм — според целите,
+                възможностите и ежедневието ти.
+              </p>
+            </div>
             <ul className="about-focus">
               {focusAreas.map((f, i) => (
                 <li key={f.category}>
@@ -287,7 +298,7 @@ export default function App() {
             </p>
           </div>
           <div className="card-grid program-grid">
-            {programs.map((p, i) => (
+            {programs.filter((p) => p.id !== "bikini").map((p, i) => (
               <article
                 key={p.id}
                 className="program-card"
@@ -295,7 +306,9 @@ export default function App() {
                 style={{ "--i": i } as CSSProperties}
               >
                 <div className="cover" aria-hidden="true">
-                  <img src={p.photo} alt="" loading="lazy" style={{ objectPosition: p.focus }} />
+                  {p.photo && (
+                    <img src={p.photo} alt="" loading="lazy" style={{ objectPosition: p.focus }} />
+                  )}
                   {p.duration && <span className="cover-meta">{p.duration}</span>}
                   <span className="cover-word">{p.word}</span>
                   <span className="planned-label">Предстояща програма</span>
@@ -316,9 +329,36 @@ export default function App() {
           </div>
         </section>
 
+        <section id="bikini-prep" className="prep wrap" aria-labelledby="prep-title">
+          <div className="prep-card" data-reveal>
+            <img
+              className="prep-photo"
+              src={bikini.photo}
+              alt="Анна Димитрова в розов екип, кракът ѝ е на дъмбел"
+              width={900}
+              height={1349}
+              loading="lazy"
+            />
+            <div className="prep-copy">
+              <p className="eyebrow">03 / BIKINI PREP</p>
+              <h2 id="prep-title">
+                Подготовка за <em>сцената.</em>
+              </h2>
+              <p className="prep-lead">{bikini.subtitle}</p>
+              <div className="status-note">
+                <span className="status-dot" />
+                Предстояща програма
+              </div>
+              <button className="button light" onClick={() => setSelected(bikini)}>
+                Виж подробности <ArrowUpRight size={18} />
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section id="nutrition" className="section wrap" aria-labelledby="nutrition-title">
           <div className="section-heading" data-reveal>
-            <p className="eyebrow">03 / ХРАНЕНЕ</p>
+            <p className="eyebrow">04 / ХРАНЕНЕ</p>
             <h2 id="nutrition-title">
               Място за <em>баланс.</em>
             </h2>
@@ -353,7 +393,7 @@ export default function App() {
 
         <section className="faq-section wrap" aria-labelledby="faq-title">
           <div className="section-heading" data-reveal>
-            <p className="eyebrow">04 / ДОБРЕ Е ДА ЗНАЕШ</p>
+            <p className="eyebrow">05 / ДОБРЕ Е ДА ЗНАЕШ</p>
             <h2 id="faq-title">
               Преди първата <em>стъпка.</em>
             </h2>

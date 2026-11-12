@@ -7,12 +7,13 @@ export type Program = {
   status: "planned";
   /** Display word on the card cover — typography only, not a claim. */
   word: string;
-  /** Cover photo from Anna's studio shoot and its crop focus. */
-  photo: string;
-  focus: string;
+  /** Cover photo Anna chose and its crop focus; none yet shows the plain cover. */
+  photo?: string;
+  focus?: string;
 };
 
-// Names, durations and subtitles are confirmed in the supplied Notion export.
+// Names, durations and subtitles are confirmed in the supplied Notion export;
+// BIKINI PREP and its subtitle come from Anna's message of 2026-11-12.
 // No item is confirmed commercially available. Do not add prices or purchase CTAs.
 export const programs: Program[] = [
   {
@@ -44,8 +45,6 @@ export const programs: Program[] = [
     category: "Домашни HIIT тренировки",
     status: "planned",
     word: "HIIT",
-    photo: "/anna/anna-hiit.webp",
-    focus: "72% 45%",
   },
   {
     id: "coaching",
@@ -55,6 +54,16 @@ export const programs: Program[] = [
     status: "planned",
     word: "COACH",
     photo: "/anna/anna-coaching.webp",
+    focus: "72% 45%",
+  },
+  {
+    id: "bikini",
+    name: "BIKINI PREP",
+    subtitle: "Подготовка на бикини състезателки",
+    category: "Състезателна подготовка",
+    status: "planned",
+    word: "PREP",
+    photo: "/anna/anna-bikini-prep.webp",
     focus: "50% 30%",
   },
 ];
